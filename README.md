@@ -66,7 +66,6 @@ Open `Sero.sln` in **Visual Studio 2026**, build (`F6`), and launch `SeroServer.
 
 - [RunPE / Process Hollowing](#-runpe--process-hollowing)
 - [Network Architecture](#-network-architecture)
-- [XMR Miner](#-xmr-miner)
 - [How to Compile](#️-how-to-compile)
 - [Project Structure](#-project-structure)
 - [Roadmap](#️-roadmap)
