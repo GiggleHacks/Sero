@@ -30,7 +30,7 @@ cd SeroC2
 setup.bat          :: installs .NET SDK + VS Build Tools (run as Admin)
 ```
 
-Open `Sero.sln` in **Visual Studio 2022**, build (`F6`), and launch `SeroServer.exe`. Configure and build the client stub from the **Builder** tab.
+Open `Sero.sln` in **Visual Studio 2026**, build (`F6`), and launch `SeroServer.exe`. Configure and build the client stub from the **Builder** tab.
 
 > **Miner module:** Download [xmrig](https://github.com/xmrig/xmrig/releases) and place `xmrig.exe` inside `xmrig-release/`. The miner builder will embed and encrypt it automatically.
 
