@@ -380,26 +380,13 @@ public partial class FileManagerWindow : Window
 
 public class FileEntryVM
 {
-    public string Icon       { get; }
+    public System.Windows.Media.ImageSource? IconImage { get; }
     public string Name       { get; }
     public bool   IsDir      { get; }
     public bool   IsHidden   { get; }
     public string SizeDisplay{ get; }
     public string Modified   { get; }
     public string Attr       { get; }
-
-    private static readonly Dictionary<string, string> ExtIcons = new(StringComparer.OrdinalIgnoreCase)
-    {
-        {".exe", "⚙"}, {".dll", "🔧"}, {".bat", "⚡"}, {".cmd", "⚡"}, {".ps1", "🔵"},
-        {".txt", "📄"}, {".log", "📋"}, {".ini", "📋"}, {".cfg", "📋"}, {".conf", "📋"},
-        {".zip", "📦"}, {".rar", "📦"}, {".7z", "📦"}, {".tar", "📦"}, {".gz", "📦"},
-        {".mp3", "🎵"}, {".wav", "🎵"}, {".flac", "🎵"}, {".ogg", "🎵"},
-        {".mp4", "🎬"}, {".avi", "🎬"}, {".mkv", "🎬"}, {".mov", "🎬"},
-        {".jpg", "🖼"}, {".jpeg", "🖼"}, {".png", "🖼"}, {".gif", "🖼"}, {".bmp", "🖼"},
-        {".pdf", "📕"}, {".doc", "📘"}, {".docx", "📘"}, {".xls", "📗"}, {".xlsx", "📗"},
-        {".ppt", "📙"}, {".pptx", "📙"}, {".lnk", "🔗"}, {".url", "🌐"},
-        {".iso", "💿"}, {".img", "💿"}
-    };
 
     public FileEntryVM(FmEntry e)
     {
@@ -408,24 +395,84 @@ public class FileEntryVM
         IsHidden = e.IsHidden;
         Modified = e.Modified;
         Attr     = e.IsHidden ? "H" : "";
+        IconImage = ShellIcon.Get(e.IsDir ? "" : Path.GetExtension(e.Name), e.IsDir);
 
-        if (e.IsDir)
-        {
-            Icon        = "📁";
-            SizeDisplay = "<DIR>";
-        }
+        if (e.IsDir) SizeDisplay = "<DIR>";
         else
         {
-            var ext = Path.GetExtension(e.Name);
-            Icon        = ExtIcons.TryGetValue(ext, out var ico) ? ico : "📄";
-            SizeDisplay = FormatSize(e.Size);
+            var bytes = e.Size;
+            SizeDisplay = bytes < 1024 ? $"{bytes} B"
+                        : bytes < 1024 * 1024 ? $"{bytes / 1024.0:F1} KB"
+                        : $"{bytes / (1024.0 * 1024):F1} MB";
         }
     }
+}
 
-    private static string FormatSize(long bytes)
+internal static class ShellIcon
+{
+    [System.Runtime.InteropServices.StructLayout(System.Runtime.InteropServices.LayoutKind.Sequential, CharSet = System.Runtime.InteropServices.CharSet.Unicode)]
+    private struct SHFILEINFO
     {
-        if (bytes < 1024)        return $"{bytes} B";
-        if (bytes < 1024 * 1024) return $"{bytes / 1024.0:F1} KB";
-        return $"{bytes / (1024.0 * 1024):F1} MB";
+        public nint hIcon;
+        public int  iIcon;
+        public uint dwAttributes;
+        [System.Runtime.InteropServices.MarshalAs(System.Runtime.InteropServices.UnmanagedType.ByValTStr, SizeConst = 260)] public string szDisplayName;
+        [System.Runtime.InteropServices.MarshalAs(System.Runtime.InteropServices.UnmanagedType.ByValTStr, SizeConst = 80)]  public string szTypeName;
+    }
+
+    [System.Runtime.InteropServices.DllImport("shell32.dll", CharSet = System.Runtime.InteropServices.CharSet.Unicode)]
+    private static extern nint SHGetFileInfo(string path, uint attr, ref SHFILEINFO shfi, uint shfiSize, uint flags);
+
+    [System.Runtime.InteropServices.DllImport("user32.dll")]
+    private static extern bool DestroyIcon(nint hIcon);
+
+    private const uint SHGFI_ICON             = 0x100;
+    private const uint SHGFI_SMALLICON        = 0x001;
+    private const uint SHGFI_USEFILEATTRIBUTES = 0x010;
+    private const uint FILE_ATTRIBUTE_NORMAL   = 0x080;
+    private const uint FILE_ATTRIBUTE_DIRECTORY = 0x010;
+
+    private static readonly Dictionary<string, System.Windows.Media.ImageSource?> _cache = new(StringComparer.OrdinalIgnoreCase);
+    private static readonly object _lock = new();
+
+    public static System.Windows.Media.ImageSource? Get(string extension, bool isDir)
+    {
+        string key = isDir ? "<DIR>" : (string.IsNullOrEmpty(extension) ? "<FILE>" : extension);
+        lock (_lock)
+        {
+            if (_cache.TryGetValue(key, out var cached)) return cached;
+        }
+        var result = Extract(extension, isDir);
+        lock (_lock) { _cache.TryAdd(key, result); }
+        return result;
+    }
+
+    private static System.Windows.Media.ImageSource? Extract(string extension, bool isDir)
+    {
+        try
+        {
+            var shfi = new SHFILEINFO();
+            // Use a fake path — shell resolves icon by extension / type, not actual file
+            string fakePath = isDir ? @"C:\folder" : ("_" + extension);
+            uint   fileAttr = isDir ? FILE_ATTRIBUTE_DIRECTORY : FILE_ATTRIBUTE_NORMAL;
+            uint   flags    = SHGFI_ICON | SHGFI_SMALLICON | SHGFI_USEFILEATTRIBUTES;
+
+            if (SHGetFileInfo(fakePath, fileAttr, ref shfi,
+                (uint)System.Runtime.InteropServices.Marshal.SizeOf<SHFILEINFO>(), flags) == 0
+                || shfi.hIcon == 0)
+                return null;
+
+            try
+            {
+                var src = System.Windows.Interop.Imaging.CreateBitmapSourceFromHIcon(
+                    shfi.hIcon,
+                    System.Windows.Int32Rect.Empty,
+                    System.Windows.Media.Imaging.BitmapSizeOptions.FromEmptyOptions());
+                src.Freeze();
+                return src;
+            }
+            finally { DestroyIcon(shfi.hIcon); }
+        }
+        catch { return null; }
     }
 }

