@@ -730,6 +730,19 @@ public partial class ServerWindow : Window
         Log($"[*] Crypto Clipper opened for {clients.Count} client(s).");
     }
 
+    private HvncBroadcastWindow? _broadcastWindow;
+    private void HvncBroadcast_Click(object sender, RoutedEventArgs e)
+    {
+        if (_server == null) return;
+        if (_broadcastWindow == null || !_broadcastWindow.IsLoaded)
+        {
+            _broadcastWindow = new HvncBroadcastWindow(_server) { Owner = this };
+            _broadcastWindow.Show();
+        }
+        else
+            _broadcastWindow.Activate();
+    }
+
     private async void Hvnc_Click(object sender, RoutedEventArgs e)
     {
         var clients = GetSelectedClients();
