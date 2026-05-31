@@ -504,12 +504,6 @@ SeroC2/
 - [x] UAC Bypass chain — computerdefaults → fodhelper → sdclt → mmc *(closed-source)*
 - [x] Rootkit — reflective DLL, NtQuerySystemInformation / NtQueryDirectoryFile hooks
 
-### 🔲 Planned
-- [ ] Reverse SOCKS5 proxy
-- [ ] Clipboard logger (separate from clipper)
-- [ ] Screenshot on demand
-- [ ] Remote audio output (play audio on victim speakers)
-
 ---
 
 ## 👤 Contributors
