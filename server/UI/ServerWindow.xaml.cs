@@ -2889,7 +2889,7 @@ Read-Host 'Press Enter to close'
                 Log($"[+] AutoTask: executed {task.FileName} on {client.Id} (HWID tracked)");
 
                 // Refresh AutoTask grid to update execution count (BeginInvoke = non-blocking)
-                Dispatcher.BeginInvoke(() => GridAutoTasks.Items.Refresh());
+                _ = Dispatcher.BeginInvoke(() => GridAutoTasks.Items.Refresh());
 
                 // Small delay between sends to avoid saturating
                 await Task.Delay(100);

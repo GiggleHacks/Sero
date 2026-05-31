@@ -39,12 +39,6 @@ if (Test-Path $serverOut) { Remove-Item $serverOut -Recurse -Force }
 Copy-Item $tmpOut $serverOut -Recurse
 Write-OK "Server -> dist\server\SeroServer.exe"
 
-# Also place a launcher at the root of dist for convenience
-$launcherSrc = Join-Path $serverOut "SeroServer.exe"
-if (Test-Path $launcherSrc) {
-    Copy-Item $launcherSrc (Join-Path $Out "SeroServer.exe") -ErrorAction SilentlyContinue
-    Write-OK "Launcher copy -> dist\SeroServer.exe"
-}
 
 # Copy stub source (needed by builder at runtime)
 $stubSrc = Join-Path $Root "stub"
