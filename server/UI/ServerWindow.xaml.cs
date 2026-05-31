@@ -3155,6 +3155,24 @@ Read-Host 'Press Enter to close'
             DragMove();
     }
 
+    protected override void OnStateChanged(EventArgs e)
+    {
+        base.OnStateChanged(e);
+        // Windows Snap or other OS-driven state changes can set WindowState=Maximized
+        // without going through our Fullscreen_Click — keep _isFullscreen in sync.
+        if (WindowState == WindowState.Normal && _isFullscreen)
+            _isFullscreen = false;
+        if (WindowState == WindowState.Maximized)
+        {
+            _isFullscreen = false;
+            BtnFullscreen.Content = "❐";
+        }
+        else if (WindowState == WindowState.Normal && !_isFullscreen)
+        {
+            BtnFullscreen.Content = "☐";
+        }
+    }
+
     private void Minimize_Click(object sender, RoutedEventArgs e) => WindowState = WindowState.Minimized;
 
     private WindowState _stateBeforeFullscreen;

