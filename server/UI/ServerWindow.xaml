@@ -926,8 +926,8 @@
                                     <StackPanel>
                                         <TextBlock Text="OBFUSCATION" FontSize="9" FontWeight="Bold"
                                                    Foreground="#C07C5CE8" FontFamily="Consolas" Margin="0,0,0,5"/>
-                                        <CheckBox x:Name="BldEncrypt"   Content="Crypter (AES-256, junk code, polymorphic, pumped)"                     Style="{StaticResource SChk}" />
-                                        <CheckBox x:Name="BldUacBypass" Content="UAC Bypass + SYSTEM elevation (fodhelper + winlogon token)"     Style="{StaticResource SChk}"
+                                        <CheckBox x:Name="BldEncrypt"   Content="Crypter (AES-256, polymorphic, AMSI+ETW bypass) — closed-source"  Style="{StaticResource SChk}" />
+                                        <CheckBox x:Name="BldUacBypass" Content="UAC Bypass + SYSTEM elevation (fodhelper chain) — closed-source" Style="{StaticResource SChk}"
                                                   ToolTip="① fodhelper UAC bypass (ms-settings HKCU hijack). ② SeDebugPrivilege + vol de token winlogon.exe pour SYSTEM." />
                                         <Border Margin="18,2,0,0" Padding="8,5"
                                                 Background="#1AF59E0B" BorderBrush="#60F59E0B"

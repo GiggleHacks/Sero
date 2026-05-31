@@ -2,7 +2,7 @@
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         Title="Keylogger"
-        Width="760" Height="560" MinWidth="560" MinHeight="360"
+        Width="900" Height="620" MinWidth="700" MinHeight="440"
         WindowStartupLocation="CenterOwner"
         ResizeMode="CanResize"
         WindowStyle="None"
@@ -34,12 +34,12 @@
             </Rectangle>
 
             <!-- Title bar -->
-            <Border DockPanel.Dock="Top" Height="40" Background="#111222"
+            <Border DockPanel.Dock="Top" Height="42" Background="#111222"
                     MouseLeftButtonDown="Window_MouseLeftButtonDown">
                 <Grid Margin="14,0">
                     <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
                         <TextBlock Text="⌨" FontSize="15" Foreground="#cba6f7" VerticalAlignment="Center" Margin="0,0,8,0"/>
-                        <TextBlock Text="Keylogger" FontSize="12" FontWeight="SemiBold" Foreground="#C0CCDD"
+                        <TextBlock Text="Keylogger" FontSize="13" FontWeight="SemiBold" Foreground="#C0CCDD"
                                    VerticalAlignment="Center" FontFamily="Segoe UI"/>
                         <TextBlock x:Name="TxtTitle" FontSize="11" Foreground="#404868"
                                    VerticalAlignment="Center" FontFamily="Segoe UI Mono" Margin="10,0,0,0"/>
@@ -55,18 +55,14 @@
                         </Border>
                     </StackPanel>
                     <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center">
-                        <Button x:Name="BtnStart" Content="▶ Start" Width="68" Height="26" Margin="0,0,4,0"
-                                Style="{StaticResource SBtn}" FontSize="10" Click="BtnStart_Click"/>
-                        <Button x:Name="BtnStop" Content="■ Stop" Width="62" Height="26" Margin="0,0,4,0"
-                                Style="{StaticResource SRedBtn}" FontSize="10" Click="BtnStop_Click" IsEnabled="False"/>
-                        <Button Content="⟳ Get" Width="54" Height="26" Margin="0,0,4,0"
-                                Style="{StaticResource SBtn}" FontSize="10" Click="BtnGet_Click"/>
-                        <Button Content="🗑 Clear" Width="60" Height="26" Margin="0,0,6,0"
-                                Style="{StaticResource SBtn}" FontSize="10" Click="BtnClear_Click"/>
-                        <Button Content="💾 Save" Width="56" Height="26" Margin="0,0,6,0"
-                                Style="{StaticResource SBtn}" FontSize="10" Click="BtnSave_Click"/>
-                        <Button Content="✕" Width="28" Height="26" FontSize="10"
-                                Style="{StaticResource SRedBtn}" Click="Close_Click" Padding="0"/>
+                        <Button x:Name="BtnStart"  Content="Start"   Height="28" Padding="14,0" Margin="0,0,4,0"
+                                Style="{StaticResource SGreenBtn}" FontSize="11" Click="BtnStart_Click"/>
+                        <Button x:Name="BtnStop"   Content="Stop"    Height="28" Padding="14,0" Margin="0,0,4,0"
+                                Style="{StaticResource SRedBtn}"   FontSize="11" Click="BtnStop_Click" IsEnabled="False"/>
+                        <Button Content="Refresh"   Height="28" Padding="10,0" Margin="0,0,4,0"
+                                Style="{StaticResource SBtn}"      FontSize="11" Click="BtnRefresh_Click"/>
+                        <Button Content="✕"         Width="30"  Height="28" FontSize="11"
+                                Style="{StaticResource SRedBtn}"   Click="Close_Click" Padding="0"/>
                     </StackPanel>
                 </Grid>
             </Border>
@@ -74,40 +70,102 @@
             <!-- Status bar -->
             <Border DockPanel.Dock="Bottom" Height="28" Background="#111222"
                     BorderBrush="#1A1C2E" BorderThickness="0,1,0,0">
-                <Grid Margin="14,0">
-                    <TextBlock x:Name="TxtStatus" Text="Ready — click Start to begin capturing"
-                               Foreground="#404868" FontSize="11" FontFamily="Consolas"
-                               VerticalAlignment="Center"/>
-                    <TextBlock x:Name="TxtChars" Text=""
-                               Foreground="#303458" FontSize="10" FontFamily="Segoe UI Mono"
-                               HorizontalAlignment="Right" VerticalAlignment="Center"/>
-                </Grid>
+                <TextBlock x:Name="TxtStatus" Text="Click Start to begin capturing"
+                           Foreground="#404868" FontSize="11" FontFamily="Consolas"
+                           VerticalAlignment="Center" Margin="14,0"/>
             </Border>
 
-            <!-- Log area -->
-            <Border Background="#07080F" Margin="0">
-                <Grid>
-                    <TextBox x:Name="TxtLog"
-                             Background="Transparent" Foreground="#C8D0E8"
-                             FontFamily="Consolas" FontSize="12"
-                             BorderThickness="0" Padding="14,10"
-                             IsReadOnly="True" TextWrapping="Wrap"
-                             VerticalScrollBarVisibility="Auto"
-                             HorizontalScrollBarVisibility="Disabled"
-                             AcceptsReturn="True"
-                             CaretBrush="#cba6f7"/>
-                    <StackPanel x:Name="PnlIdle" HorizontalAlignment="Center" VerticalAlignment="Center"
-                                IsHitTestVisible="False">
-                        <TextBlock Text="⌨" FontSize="48" HorizontalAlignment="Center" Opacity="0.08"/>
-                        <TextBlock Text="Click Start to begin capturing keystrokes"
-                                   Foreground="#252848" FontSize="13" FontFamily="Segoe UI"
-                                   HorizontalAlignment="Center" Margin="0,8,0,0"/>
-                        <TextBlock Text="Logs update automatically every 10 seconds"
-                                   Foreground="#1E2038" FontSize="11" FontFamily="Segoe UI"
-                                   HorizontalAlignment="Center" Margin="0,4,0,0"/>
-                    </StackPanel>
-                </Grid>
-            </Border>
+            <!-- Content: left file list + right viewer -->
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="220" MinWidth="160"/>
+                    <ColumnDefinition Width="4"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+
+                <!-- Left: file list -->
+                <Border Grid.Column="0" Background="#0A0B14" BorderBrush="#1A1C2E" BorderThickness="0,0,1,0">
+                    <DockPanel LastChildFill="True">
+                        <Border DockPanel.Dock="Top" Background="#111222" BorderBrush="#1A1C2E" BorderThickness="0,0,0,1" Padding="10,6">
+                            <Grid>
+                                <TextBlock Text="LOG FILES" Foreground="#404868" FontSize="9"
+                                           FontWeight="Bold" FontFamily="Consolas" VerticalAlignment="Center"/>
+                                <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                                    <Button Content="Download" Height="22" Padding="8,0" Margin="0,0,4,0"
+                                            Style="{StaticResource SBtn}" FontSize="9" Click="BtnDownload_Click"/>
+                                    <Button Content="Delete" Height="22" Padding="8,0"
+                                            Style="{StaticResource SRedBtn}" FontSize="9" Click="BtnDelete_Click"/>
+                                </StackPanel>
+                            </Grid>
+                        </Border>
+                        <ListBox x:Name="ListFiles" Background="Transparent" BorderThickness="0"
+                                 Foreground="#C0CCDD" FontFamily="Consolas" FontSize="12"
+                                 SelectionChanged="ListFiles_SelectionChanged">
+                            <ListBox.ItemContainerStyle>
+                                <Style TargetType="ListBoxItem">
+                                    <Setter Property="Padding" Value="10,6"/>
+                                    <Setter Property="Background" Value="Transparent"/>
+                                    <Setter Property="BorderThickness" Value="0"/>
+                                    <Setter Property="Foreground" Value="#C0CCDD"/>
+                                    <Setter Property="Template">
+                                        <Setter.Value>
+                                            <ControlTemplate TargetType="ListBoxItem">
+                                                <Border x:Name="bd" Background="{TemplateBinding Background}" Padding="{TemplateBinding Padding}">
+                                                    <ContentPresenter/>
+                                                </Border>
+                                                <ControlTemplate.Triggers>
+                                                    <Trigger Property="IsMouseOver" Value="True">
+                                                        <Setter TargetName="bd" Property="Background" Value="#151828"/>
+                                                    </Trigger>
+                                                    <Trigger Property="IsSelected" Value="True">
+                                                        <Setter TargetName="bd" Property="Background" Value="#1E1040"/>
+                                                        <Setter Property="Foreground" Value="#cba6f7"/>
+                                                    </Trigger>
+                                                </ControlTemplate.Triggers>
+                                            </ControlTemplate>
+                                        </Setter.Value>
+                                    </Setter>
+                                </Style>
+                            </ListBox.ItemContainerStyle>
+                            <ListBox.ItemTemplate>
+                                <DataTemplate>
+                                    <StackPanel>
+                                        <TextBlock Text="{Binding DateDisplay}" FontSize="12" FontFamily="Segoe UI" FontWeight="SemiBold"/>
+                                        <TextBlock Text="{Binding SizeDisplay}" FontSize="10" Foreground="#505878" FontFamily="Consolas"/>
+                                    </StackPanel>
+                                </DataTemplate>
+                            </ListBox.ItemTemplate>
+                        </ListBox>
+                    </DockPanel>
+                </Border>
+
+                <!-- Splitter -->
+                <GridSplitter Grid.Column="1" Width="4" Background="#0F1020"
+                              HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Cursor="SizeWE"/>
+
+                <!-- Right: log viewer -->
+                <Border Grid.Column="2" Background="#07080F">
+                    <DockPanel LastChildFill="True">
+                        <Border DockPanel.Dock="Top" Background="#111222" BorderBrush="#1A1C2E" BorderThickness="0,0,0,1" Padding="10,6">
+                            <Grid>
+                                <TextBlock x:Name="TxtViewerTitle" Text="Select a log file to view"
+                                           Foreground="#404868" FontSize="11" FontFamily="Consolas" VerticalAlignment="Center"/>
+                                <Button Content="Save as .txt" Height="22" Padding="10,0" HorizontalAlignment="Right"
+                                        Style="{StaticResource SBtn}" FontSize="9" Click="BtnSave_Click"/>
+                            </Grid>
+                        </Border>
+                        <TextBox x:Name="TxtLog"
+                                 Background="Transparent" Foreground="#C8D0E8"
+                                 FontFamily="Consolas" FontSize="12"
+                                 BorderThickness="0" Padding="12,10"
+                                 IsReadOnly="True" TextWrapping="Wrap"
+                                 VerticalScrollBarVisibility="Auto"
+                                 HorizontalScrollBarVisibility="Disabled"
+                                 AcceptsReturn="True"
+                                 CaretBrush="#cba6f7"/>
+                    </DockPanel>
+                </Border>
+            </Grid>
 
         </DockPanel>
     </Border>

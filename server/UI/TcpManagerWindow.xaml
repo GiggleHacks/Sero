@@ -82,7 +82,7 @@
                       BorderThickness="0" RowBackground="Transparent"
                       AlternatingRowBackground="Transparent"
                       GridLinesVisibility="None" HeadersVisibility="Column"
-                      FontFamily="Consolas" FontSize="12" SelectionMode="Single"
+                      FontFamily="Consolas" FontSize="13" SelectionMode="Single"
                       CanUserAddRows="False" CanUserResizeRows="False"
                       ColumnHeaderHeight="32"
                       ColumnHeaderStyle="{StaticResource SColHeader}">

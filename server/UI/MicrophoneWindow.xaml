@@ -68,71 +68,19 @@
                         <ColumnDefinition Width="Auto"/>
                         <ColumnDefinition Width="Auto"/>
                         <ColumnDefinition Width="Auto"/>
-                        <ColumnDefinition Width="Auto"/>
                     </Grid.ColumnDefinitions>
                     <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
-                        <TextBlock Text="Device:" Foreground="#606880" FontSize="11" VerticalAlignment="Center"/>
-                        <ComboBox x:Name="CmbDevice" Width="200" Height="26"
-                                  Background="#0A0B14" Foreground="#DDE0F0"
-                                  BorderBrush="#2A3058" FontSize="11"/>
+                        <TextBlock Text="Device:" Foreground="#606880" FontSize="11" VerticalAlignment="Center" Margin="0,0,8,0"/>
+                        <ComboBox x:Name="CmbDevice" Height="28" MinWidth="180"
+                                  Style="{StaticResource SCombo}" FontSize="11"/>
                     </StackPanel>
-                    <Button Grid.Column="1" x:Name="BtnListen" Content="🔊 Listen" Height="28"
-                            Margin="0,0,6,0" Padding="8,0" Click="Listen_Click">
-                        <Button.Style><Style TargetType="Button">
-                            <Setter Property="Background" Value="#1A2A18"/><Setter Property="Foreground" Value="#a6e3a1"/>
-                            <Setter Property="BorderBrush" Value="#2A4A28"/><Setter Property="BorderThickness" Value="1"/>
-                            <Setter Property="Cursor" Value="Hand"/><Setter Property="FontSize" Value="11"/>
-                            <Setter Property="Template"><Setter.Value><ControlTemplate TargetType="Button">
-                                <Border Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="4" Padding="{TemplateBinding Padding}">
-                                    <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                                </Border>
-                                <ControlTemplate.Triggers>
-                                    <Trigger Property="IsMouseOver" Value="True">
-                                        <Setter Property="Background" Value="#223A20"/>
-                                    </Trigger>
-                                </ControlTemplate.Triggers>
-                            </ControlTemplate></Setter.Value></Setter>
-                        </Style></Button.Style>
-                    </Button>
-                    <Button Grid.Column="2" x:Name="BtnRecord" Content="● REC" Width="68" Height="28"
-                            Margin="0,0,6,0" Click="Record_Click">
-                        <Button.Style><Style TargetType="Button">
-                            <Setter Property="Background" Value="#3A1018"/><Setter Property="Foreground" Value="#f38ba8"/>
-                            <Setter Property="BorderBrush" Value="#6A2028"/><Setter Property="BorderThickness" Value="1"/>
-                            <Setter Property="Cursor" Value="Hand"/><Setter Property="FontSize" Value="11"/>
-                            <Setter Property="Template"><Setter.Value><ControlTemplate TargetType="Button">
-                                <Border Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="4" Padding="8,4">
-                                    <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                                </Border>
-                            </ControlTemplate></Setter.Value></Setter>
-                        </Style></Button.Style>
-                    </Button>
-                    <Button Grid.Column="3" x:Name="BtnStop" Content="■ Stop" Width="60" Height="28"
-                            Margin="0,0,6,0" Click="Stop_Click" IsEnabled="False">
-                        <Button.Style><Style TargetType="Button">
-                            <Setter Property="Background" Value="#1A2038"/><Setter Property="Foreground" Value="#C0CCDD"/>
-                            <Setter Property="BorderBrush" Value="#2A3058"/><Setter Property="BorderThickness" Value="1"/>
-                            <Setter Property="Cursor" Value="Hand"/><Setter Property="FontSize" Value="11"/>
-                            <Setter Property="Template"><Setter.Value><ControlTemplate TargetType="Button">
-                                <Border Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="4" Padding="8,4">
-                                    <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                                </Border>
-                            </ControlTemplate></Setter.Value></Setter>
-                        </Style></Button.Style>
-                    </Button>
-                    <Button Grid.Column="4" Content="💾 Save WAV" Height="28" Padding="8,0"
-                            Click="SaveWav_Click">
-                        <Button.Style><Style TargetType="Button">
-                            <Setter Property="Background" Value="#1A2A18"/><Setter Property="Foreground" Value="#a6e3a1"/>
-                            <Setter Property="BorderBrush" Value="#2A4A28"/><Setter Property="BorderThickness" Value="1"/>
-                            <Setter Property="Cursor" Value="Hand"/><Setter Property="FontSize" Value="11"/>
-                            <Setter Property="Template"><Setter.Value><ControlTemplate TargetType="Button">
-                                <Border Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="4" Padding="{TemplateBinding Padding}">
-                                    <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                                </Border>
-                            </ControlTemplate></Setter.Value></Setter>
-                        </Style></Button.Style>
-                    </Button>
+                    <Button Grid.Column="1" x:Name="BtnRecord" Content="Start" Height="28" Padding="14,0"
+                            Margin="0,0,6,0" Style="{StaticResource SGreenBtn}" FontSize="11" Click="Record_Click"/>
+                    <Button Grid.Column="2" x:Name="BtnStop" Content="Stop" Height="28" Padding="14,0"
+                            Margin="0,0,6,0" Style="{StaticResource SRedBtn}" FontSize="11"
+                            Click="Stop_Click" IsEnabled="False"/>
+                    <Button Grid.Column="3" Content="Save WAV" Height="28" Padding="12,0"
+                            Style="{StaticResource SBtn}" FontSize="11" Click="SaveWav_Click"/>
                 </Grid>
             </Border>
 

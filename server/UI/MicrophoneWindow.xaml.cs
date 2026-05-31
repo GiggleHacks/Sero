@@ -126,7 +126,6 @@ public partial class MicrophoneWindow : Window
     private readonly string    _clientId;
 
     private bool _recording;
-    private bool _listening;
     private WaveOutPlayer? _player;
     private readonly List<byte[]> _chunks = [];
     private const int SampleRate = 16000;
@@ -157,7 +156,8 @@ public partial class MicrophoneWindow : Window
             _server.UnregisterHandler(clientId, PacketType.MicDevicesResult);
             _server.UnregisterHandler(clientId, PacketType.MicData);
             if (_recording) SendStop();
-            StopListening();
+            _player?.Dispose();
+            _player = null;
         };
         Loaded += async (_, _) =>
             await _server.SendToClient(_clientId, new Packet { Type = PacketType.MicGetDevices });
@@ -193,8 +193,8 @@ public partial class MicrophoneWindow : Window
         lock (_waveform) _waveform[_wavePos % _waveform.Length] = peak;
         _wavePos++;
 
-        // Real-time playback
-        if (_listening) _player?.Enqueue(pcm);
+        // Real-time playback — always on when recording
+        _player?.Enqueue(pcm);
 
         Dispatcher.Invoke(() => TxtStatus.Text = $"Recording… {_chunks.Count} chunks received");
     }
@@ -209,6 +209,10 @@ public partial class MicrophoneWindow : Window
         _recSeconds = 0;
         _wavePos = 0;
         Array.Clear(_waveform);
+
+        // Auto-start playback when recording begins
+        _player?.Dispose();
+        _player = new WaveOutPlayer(SampleRate);
 
         PnlIdle.Visibility = Visibility.Collapsed;
         RecordingIndicator.Visibility = Visibility.Visible;
@@ -230,6 +234,7 @@ public partial class MicrophoneWindow : Window
         _recording = false;
         _recTimer.Stop();
         _waveTimer.Stop();
+        _player?.Dispose(); _player = null;
         SendStop();
         RecordingIndicator.Visibility = Visibility.Collapsed;
         BtnRecord.IsEnabled = true;
@@ -310,37 +315,6 @@ public partial class MicrophoneWindow : Window
             System.Windows.Controls.Canvas.SetTop(rect, (h - barH) / 2);
             WaveCanvas.Children.Add(rect);
         }
-    }
-
-    private void Listen_Click(object s, RoutedEventArgs e)
-    {
-        if (_listening)
-        {
-            StopListening();
-            BtnListen.Content = "🔊 Listen";
-            TxtStatus.Text = "Listening stopped";
-        }
-        else
-        {
-            StartListening();
-            BtnListen.Content = "🔇 Stop";
-            TxtStatus.Text = "Listening — audio routed to speakers";
-        }
-    }
-
-    private void StartListening()
-    {
-        if (_listening) return;
-        _player   = new WaveOutPlayer(SampleRate);
-        _listening = true;
-    }
-
-    private void StopListening()
-    {
-        if (!_listening) return;
-        _listening = false;
-        _player?.Dispose();
-        _player = null;
     }
 
     private void Window_MouseLeftButtonDown(object s, MouseButtonEventArgs e)

