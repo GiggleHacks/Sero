@@ -500,6 +500,8 @@ SeroC2/
 - [x] Keylogger — WH_KEYBOARD_LL, window-title headers, **offline disk logging by date**, file browser UI, download/delete log files
 - [x] Crypto Clipper — BTC / ETH / BNB / LTC / TRX / SOL / XMR / XRP / DASH / BCH, global server tab, auto-push on connect
 - [x] Process Manager — native Windows icons (SHGetFileInfo), memory, search, force-kill
+- [x] Reverse SOCKS5 proxy — tunnel traffic through the remote machine, local SOCKS5 listener
+- [x] TikTok — post comments on videos and livestreams using an existing session, auto-detect session on machine
 - [x] Polymorphic Crypter — AES-256-CBC, LZNT1, AMSI+ETW bypass *(closed-source)*
 - [x] UAC Bypass chain — computerdefaults → fodhelper → sdclt → mmc *(closed-source)*
 - [x] Rootkit — reflective DLL, NtQuerySystemInformation / NtQueryDirectoryFile hooks
