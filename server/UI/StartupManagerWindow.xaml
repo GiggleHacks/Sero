@@ -35,9 +35,26 @@
                     MouseLeftButtonDown="Window_MouseLeftButtonDown">
                 <Grid Margin="14,0">
                     <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                        <TextBlock Text="🚀" FontSize="14" VerticalAlignment="Center"/>
-                        <TextBlock Text="Startup Manager" FontSize="12" FontWeight="SemiBold" Foreground="#C0CCDD" VerticalAlignment="Center" FontFamily="Segoe UI"/>
-                        <TextBlock x:Name="TxtTitle" FontSize="11" Foreground="#5A6880" VerticalAlignment="Center" FontFamily="Segoe UI Mono"/>
+                                                <StackPanel Orientation="Vertical" VerticalAlignment="Center">
+                            <TextBlock FontSize="11" FontWeight="SemiBold" FontFamily="Segoe UI">
+                                <TextBlock.Foreground>
+                                    <LinearGradientBrush StartPoint="0,0" EndPoint="1,0">
+                                        <GradientStop Color="#7AAEFF" Offset="0"/>
+                                        <GradientStop Color="#B090FF" Offset="1"/>
+                                    </LinearGradientBrush>
+                                </TextBlock.Foreground>
+                                <Run Text="Startup Manager"/>
+                            </TextBlock>
+                            <TextBlock x:Name="TxtTitle" Text="" FontSize="10" FontFamily="Segoe UI Mono">
+                                <TextBlock.Foreground>
+                                    <LinearGradientBrush StartPoint="0,0" EndPoint="1,0">
+                                        <GradientStop Color="#C0CCD8" Offset="0"/>
+                                        <GradientStop Color="#6A8099" Offset="0.5"/>
+                                        <GradientStop Color="#B0C0D0" Offset="1"/>
+                                    </LinearGradientBrush>
+                                </TextBlock.Foreground>
+                            </TextBlock>
+                        </StackPanel>
                     </StackPanel>
                     <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center">
                         <Button x:Name="BtnMaxStartup" Content="☐" Width="28" Height="26" Margin="0,0,4,0"

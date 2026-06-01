@@ -105,17 +105,26 @@
                     MouseLeftButtonDown="Window_MouseLeftButtonDown">
                 <Grid Margin="14,0">
                     <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                        <TextBlock Text="🎮" FontSize="15" VerticalAlignment="Center"/>
-                        <TextBlock Text="Fun" FontSize="13" FontWeight="SemiBold" VerticalAlignment="Center" FontFamily="Segoe UI">
-                            <TextBlock.Foreground>
-                                <LinearGradientBrush StartPoint="0,0" EndPoint="1,0">
-                                    <GradientStop Color="#FF6B6B" Offset="0"/>
-                                    <GradientStop Color="#FFE66D" Offset="0.5"/>
-                                    <GradientStop Color="#4ECDC4" Offset="1"/>
-                                </LinearGradientBrush>
-                            </TextBlock.Foreground>
-                        </TextBlock>
-                        <TextBlock x:Name="TxtTitle" FontSize="11" Foreground="#5A6880" VerticalAlignment="Center" FontFamily="Segoe UI Mono"/>
+                        <StackPanel Orientation="Vertical" VerticalAlignment="Center">
+                            <TextBlock FontSize="11" FontWeight="SemiBold" FontFamily="Segoe UI">
+                                <TextBlock.Foreground>
+                                    <LinearGradientBrush StartPoint="0,0" EndPoint="1,0">
+                                        <GradientStop Color="#7AAEFF" Offset="0"/>
+                                        <GradientStop Color="#B090FF" Offset="1"/>
+                                    </LinearGradientBrush>
+                                </TextBlock.Foreground>
+                                <Run Text="Fun"/>
+                            </TextBlock>
+                            <TextBlock x:Name="TxtTitle" Text="" FontSize="10" FontFamily="Segoe UI Mono">
+                                <TextBlock.Foreground>
+                                    <LinearGradientBrush StartPoint="0,0" EndPoint="1,0">
+                                        <GradientStop Color="#C0CCD8" Offset="0"/>
+                                        <GradientStop Color="#6A8099" Offset="0.5"/>
+                                        <GradientStop Color="#B0C0D0" Offset="1"/>
+                                    </LinearGradientBrush>
+                                </TextBlock.Foreground>
+                            </TextBlock>
+                        </StackPanel>
                     </StackPanel>
                     <Button x:Name="BtnMaxFun" Content="☐" Width="28" Height="26" FontSize="13" Click="BtnMax_Click" HorizontalAlignment="Right" Margin="0,0,4,0">
                             <Button.Style><Style TargetType="Button"><Setter Property="Background" Value="Transparent"/><Setter Property="Foreground" Value="#606880"/><Setter Property="BorderThickness" Value="0"/><Setter Property="Cursor" Value="Hand"/><Setter Property="Template"><Setter.Value><ControlTemplate TargetType="Button"><Border Background="{TemplateBinding Background}" CornerRadius="4" Padding="4,2"><ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/></Border></ControlTemplate></Setter.Value></Setter></Style></Button.Style>

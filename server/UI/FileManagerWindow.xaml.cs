@@ -131,13 +131,18 @@ public partial class FileManagerWindow : Window
 
     private async void Delete_Click(object s, RoutedEventArgs e)
     {
-        if (GridFiles.SelectedItem is not FileEntryVM row) return;
-        if (MessageBox.Show($"Delete '{row.Name}'?", "Confirm", MessageBoxButton.YesNo, MessageBoxImage.Warning) != MessageBoxResult.Yes) return;
-        var path = Path.Combine(_currentPath, row.Name);
-        _pendingAck = new TaskCompletionSource<string>();
-        await _server.SendToClient(_clientId, new Packet { Type = PacketType.FmDelete, Data = JsonConvert.SerializeObject(new FmDeleteData { Path = path }) });
-        try { await _pendingAck.Task.WaitAsync(TimeSpan.FromSeconds(15)); } catch { }
-        finally { _pendingAck = null; }
+        var selected = GridFiles.SelectedItems.Cast<FileEntryVM>().ToList();
+        if (selected.Count == 0) return;
+        var msg = selected.Count == 1 ? $"Delete '{selected[0].Name}'?" : $"Delete {selected.Count} items?";
+        if (MessageBox.Show(msg, "Confirm", MessageBoxButton.YesNo, MessageBoxImage.Warning) != MessageBoxResult.Yes) return;
+        foreach (var row in selected)
+        {
+            var path = Path.Combine(_currentPath, row.Name);
+            _pendingAck = new TaskCompletionSource<string>();
+            await _server.SendToClient(_clientId, new Packet { Type = PacketType.FmDelete, Data = JsonConvert.SerializeObject(new FmDeleteData { Path = path }) });
+            try { await _pendingAck.Task.WaitAsync(TimeSpan.FromSeconds(10)); } catch { }
+            finally { _pendingAck = null; }
+        }
         await Navigate(_currentPath);
     }
 
@@ -370,6 +375,119 @@ public partial class FileManagerWindow : Window
         return dlg.ShowDialog() == true ? tb.Text : null;
     }
 
+    // ── Preview pane ─────────────────────────────────────────────────────────
+
+    private string? _previewTempFile;
+
+    private void GridFiles_SelectionChanged(object s, System.Windows.Controls.SelectionChangedEventArgs e)
+    {
+        if (GridFiles.SelectedItem is not FileEntryVM vm || vm.IsDir)
+        {
+            TxtPreviewName.Text = GridFiles.SelectedItems.Count > 1
+                ? $"{GridFiles.SelectedItems.Count} items selected"
+                : "No file selected";
+            BtnPreview.IsEnabled = false;
+            return;
+        }
+        TxtPreviewName.Text = vm.Name;
+        BtnPreview.IsEnabled = true;
+        // Auto-preview for images / text if reasonably small
+        var ext = Path.GetExtension(vm.Name).ToLowerInvariant();
+        bool isImage = ext is ".jpg" or ".jpeg" or ".png" or ".gif" or ".bmp" or ".webp" or ".ico";
+        bool isText  = ext is ".txt" or ".log" or ".ini" or ".cfg" or ".json" or ".xml" or ".csv" or ".bat" or ".ps1" or ".py" or ".cs";
+        if (isImage || isText)
+            BtnPreview.RaiseEvent(new RoutedEventArgs(System.Windows.Controls.Button.ClickEvent));
+    }
+
+    private async void BtnPreview_Click(object s, RoutedEventArgs e)
+    {
+        if (GridFiles.SelectedItem is not FileEntryVM vm || vm.IsDir) return;
+        var path = _currentPath.TrimEnd('\\', '/') + "\\" + vm.Name;
+        var ext  = Path.GetExtension(vm.Name).ToLowerInvariant();
+
+        TxtPreviewInfo.Text = "Loading…";
+        ShowPreviewPanel("empty");
+        BtnPreview.IsEnabled = false;
+
+        try
+        {
+            _pendingData = new TaskCompletionSource<string>();
+            await _server.SendToClient(_clientId, new Packet
+            {
+                Type = PacketType.FmDownload,
+                Data = JsonConvert.SerializeObject(new FmDownloadData { Path = path })
+            });
+            var json   = await _pendingData.Task.WaitAsync(TimeSpan.FromSeconds(30));
+            var result = JsonConvert.DeserializeObject<FmFileDataResult>(json);
+            if (result == null || !string.IsNullOrEmpty(result.Error))
+            { TxtPreviewInfo.Text = result?.Error ?? "Error"; ShowPreviewPanel("empty"); return; }
+
+            var bytes = Convert.FromBase64String(result.Data);
+
+            bool isImage = ext is ".jpg" or ".jpeg" or ".png" or ".gif" or ".bmp" or ".webp" or ".ico";
+            bool isVideo = ext is ".mp4" or ".avi" or ".mkv" or ".mov" or ".wmv" or ".webm" or ".m4v";
+            bool isText  = ext is ".txt" or ".log" or ".ini" or ".cfg" or ".json" or ".xml"
+                                or ".csv" or ".bat" or ".ps1" or ".py" or ".cs" or ".md" or ".html" or ".css";
+
+            if (isImage)
+            {
+                using var ms = new System.IO.MemoryStream(bytes);
+                var bmp = new System.Windows.Media.Imaging.BitmapImage();
+                bmp.BeginInit();
+                bmp.CacheOption = System.Windows.Media.Imaging.BitmapCacheOption.OnLoad;
+                bmp.StreamSource = ms;
+                bmp.EndInit();
+                bmp.Freeze();
+                PreviewImage.Source = bmp;
+                ShowPreviewPanel("image");
+                TxtPreviewName.Text = $"{vm.Name}  ({bmp.PixelWidth}×{bmp.PixelHeight})";
+            }
+            else if (isVideo)
+            {
+                // Write to temp file for MediaElement
+                if (_previewTempFile != null) try { System.IO.File.Delete(_previewTempFile); } catch { }
+                _previewTempFile = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "sero_prev_" + Path.GetFileName(vm.Name));
+                await System.IO.File.WriteAllBytesAsync(_previewTempFile, bytes);
+                PreviewVideo.Source = new Uri(_previewTempFile);
+                PreviewVideo.Play();
+                ShowPreviewPanel("video");
+            }
+            else if (isText)
+            {
+                var text = System.Text.Encoding.UTF8.GetString(bytes);
+                if (text.Length > 200_000) text = text[..200_000] + "\n[truncated]";
+                PreviewText.Text = text;
+                ShowPreviewPanel("text");
+            }
+            else
+            {
+                TxtPreviewInfo.Text = $"{vm.Name}\n{vm.SizeDisplay}\n{vm.Modified}";
+                ShowPreviewPanel("empty");
+            }
+        }
+        catch (Exception ex) { TxtPreviewInfo.Text = ex.Message; ShowPreviewPanel("empty"); }
+        finally { _pendingData = null; BtnPreview.IsEnabled = true; }
+    }
+
+    private void ShowPreviewPanel(string which)
+    {
+        ImgScroll.Visibility    = which == "image" ? Visibility.Visible : Visibility.Collapsed;
+        PreviewVideo.Visibility = which == "video" ? Visibility.Visible : Visibility.Collapsed;
+        TextScroll.Visibility   = which == "text"  ? Visibility.Visible : Visibility.Collapsed;
+        PreviewEmpty.Visibility = which == "empty" ? Visibility.Visible : Visibility.Collapsed;
+        if (which != "video") { try { PreviewVideo.Stop(); PreviewVideo.Source = null; } catch { } }
+    }
+
+    private void PreviewVideo_Click(object s, System.Windows.Input.MouseButtonEventArgs e)
+    {
+        try
+        {
+            if (PreviewVideo.CanPause) PreviewVideo.Pause();
+            else PreviewVideo.Play();
+        }
+        catch { }
+    }
+
     private bool _maximized;
     private void BtnMax_Click(object s, RoutedEventArgs e)
     {
@@ -392,18 +510,24 @@ public partial class FileManagerWindow : Window
         Height = Math.Max(MinHeight, Height + e.VerticalChange);
     }
 
-    private void Close_Click(object s, RoutedEventArgs e) => Close();
+    private void Close_Click(object s, RoutedEventArgs e)
+    {
+        if (_previewTempFile != null)
+            try { System.IO.File.Delete(_previewTempFile); } catch { }
+        Close();
+    }
 }
 
 public class FileEntryVM
 {
-    public System.Windows.Media.ImageSource? IconImage { get; }
-    public string Name       { get; }
-    public bool   IsDir      { get; }
-    public bool   IsHidden   { get; }
-    public string SizeDisplay{ get; }
-    public string Modified   { get; }
-    public string Attr       { get; }
+    public System.Windows.Media.ImageSource? IconImage   { get; }
+    public string Name        { get; }
+    public bool   IsDir       { get; }
+    public bool   IsHidden    { get; }
+    public long   SizeRaw     { get; }
+    public string SizeDisplay { get; }
+    public string Modified    { get; }
+    public string TypeDisplay { get; }
 
     public FileEntryVM(FmEntry e)
     {
@@ -411,16 +535,23 @@ public class FileEntryVM
         IsDir    = e.IsDir;
         IsHidden = e.IsHidden;
         Modified = e.Modified;
-        Attr     = e.IsHidden ? "H" : "";
+        SizeRaw  = e.IsDir ? -1 : e.Size;
         IconImage = ShellIcon.Get(e.IsDir ? "" : Path.GetExtension(e.Name), e.IsDir);
 
-        if (e.IsDir) SizeDisplay = "<DIR>";
+        if (e.IsDir)
+        {
+            SizeDisplay = "";
+            TypeDisplay = "Folder";
+        }
         else
         {
+            var ext = Path.GetExtension(e.Name);
+            TypeDisplay = string.IsNullOrEmpty(ext) ? "File" : ext.TrimStart('.').ToUpperInvariant();
             var bytes = e.Size;
-            SizeDisplay = bytes < 1024 ? $"{bytes} B"
-                        : bytes < 1024 * 1024 ? $"{bytes / 1024.0:F1} KB"
-                        : $"{bytes / (1024.0 * 1024):F1} MB";
+            SizeDisplay = bytes < 1024           ? $"{bytes} B"
+                        : bytes < 1024 * 1024    ? $"{bytes / 1024.0:F1} KB"
+                        : bytes < 1024L*1024*1024 ? $"{bytes / (1024.0*1024):F1} MB"
+                        : $"{bytes / (1024.0*1024*1024):F1} GB";
         }
     }
 }

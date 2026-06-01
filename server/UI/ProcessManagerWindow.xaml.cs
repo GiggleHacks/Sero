@@ -21,7 +21,7 @@ public partial class ProcessManagerWindow : Window
         InitializeComponent();
         _server   = server;
         _clientId = clientId;
-        TxtTitle.Text = $"  —  {label}";
+        TxtTitle.Text = label;
 
         var view = CollectionViewSource.GetDefaultView(_procs);
         view.Filter = o => o is ProcEntryVM vm &&
@@ -47,15 +47,16 @@ public partial class ProcessManagerWindow : Window
         var data = JsonConvert.DeserializeObject<ProcListResultData>(pkt.Data);
         if (data == null) return;
         // Build VMs on background thread (SHGetFileInfo with SHGFI_USEFILEATTRIBUTES is MTA-safe)
-        _ = Task.Run(() => {
-        var vms = data.Processes.Select(p => new ProcEntryVM(p)).ToList();
-        _ = Dispatcher.BeginInvoke(() =>
+        _ = Task.Run(() =>
         {
-            _procs.Clear();
-            foreach (var p in data.Processes)
-                _procs.Add(new ProcEntryVM(p));
-            TxtCount.Text = $"  {data.Processes.Count} processes";    TxtStatus.Text = $"{data.Processes.Count} processes loaded";
-        });
+            var vms = data.Processes.Select(p => new ProcEntryVM(p)).ToList();
+            _ = Dispatcher.BeginInvoke(() =>
+            {
+                _procs.Clear();
+                foreach (var vm in vms) _procs.Add(vm);
+                TxtCount.Text = $"  {vms.Count} processes";
+                TxtStatus.Text = $"{vms.Count} processes loaded";
+            });
         });
     }
 

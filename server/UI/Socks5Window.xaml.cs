@@ -27,7 +27,7 @@ public partial class Socks5Window : Window
         InitializeComponent();
         _server   = server;
         _clientId = clientId;
-        TxtTitle.Text = $"  —  {label}";
+        TxtTitle.Text = label;
 
         _server.RegisterHandler(clientId, PacketType.SocksConnOk,  OnConnOk);
         _server.RegisterHandler(clientId, PacketType.SocksConnErr, OnConnErr);

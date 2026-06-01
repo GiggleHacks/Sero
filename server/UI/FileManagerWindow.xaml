@@ -69,9 +69,26 @@
                     MouseLeftButtonDown="Window_MouseLeftButtonDown">
                 <Grid Margin="14,0">
                     <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                        <TextBlock Text="📁" FontSize="14" VerticalAlignment="Center"/>
-                        <TextBlock Text="File Manager" FontSize="12" FontWeight="SemiBold" Foreground="#C0CCDD" VerticalAlignment="Center" FontFamily="Segoe UI"/>
-                        <TextBlock x:Name="TxtTitle" FontSize="11" Foreground="#5A6880" VerticalAlignment="Center" FontFamily="Segoe UI Mono"/>
+                                                <StackPanel Orientation="Vertical" VerticalAlignment="Center">
+                            <TextBlock FontSize="11" FontWeight="SemiBold" FontFamily="Segoe UI">
+                                <TextBlock.Foreground>
+                                    <LinearGradientBrush StartPoint="0,0" EndPoint="1,0">
+                                        <GradientStop Color="#7AAEFF" Offset="0"/>
+                                        <GradientStop Color="#B090FF" Offset="1"/>
+                                    </LinearGradientBrush>
+                                </TextBlock.Foreground>
+                                <Run Text="File Manager"/>
+                            </TextBlock>
+                            <TextBlock x:Name="TxtTitle" Text="" FontSize="10" FontFamily="Segoe UI Mono">
+                                <TextBlock.Foreground>
+                                    <LinearGradientBrush StartPoint="0,0" EndPoint="1,0">
+                                        <GradientStop Color="#C0CCD8" Offset="0"/>
+                                        <GradientStop Color="#6A8099" Offset="0.5"/>
+                                        <GradientStop Color="#B0C0D0" Offset="1"/>
+                                    </LinearGradientBrush>
+                                </TextBlock.Foreground>
+                            </TextBlock>
+                        </StackPanel>
                     </StackPanel>
                     <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center">
                         <Button x:Name="BtnMax" Content="☐" Width="30" Height="26" Margin="0,0,4,0"
@@ -157,17 +174,26 @@
                 </Grid>
             </Border>
 
-            <!-- File list -->
-            <DataGrid x:Name="GridFiles"
+            <!-- File list + Preview pane -->
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" MinWidth="320"/>
+                    <ColumnDefinition Width="4"/>
+                    <ColumnDefinition Width="260" MinWidth="160"/>
+                </Grid.ColumnDefinitions>
+
+            <DataGrid x:Name="GridFiles" Grid.Column="0"
                       AutoGenerateColumns="False" IsReadOnly="True"
                       Background="#0C0D18" Foreground="#DDE0F0"
                       BorderThickness="0" RowBackground="Transparent"
                       AlternatingRowBackground="#07101428"
                       GridLinesVisibility="None" HeadersVisibility="Column"
-                      FontFamily="Consolas" FontSize="13" SelectionMode="Single"
+                      FontFamily="Consolas" FontSize="13"
+                      SelectionMode="Extended" SelectionUnit="FullRow"
                       CanUserAddRows="False" CanUserResizeRows="False"
                       ColumnHeaderHeight="28"
-                      MouseDoubleClick="GridFiles_DoubleClick">
+                      MouseDoubleClick="GridFiles_DoubleClick"
+                      SelectionChanged="GridFiles_SelectionChanged">
                 <DataGrid.ColumnHeaderStyle>
                     <Style TargetType="DataGridColumnHeader">
                         <Setter Property="Background" Value="#111222"/>
@@ -202,7 +228,7 @@
                     </ContextMenu>
                 </DataGrid.ContextMenu>
                 <DataGrid.Columns>
-                    <DataGridTemplateColumn Header="NAME" Width="*" SortMemberPath="Name">
+                    <DataGridTemplateColumn Header="Name" Width="*" SortMemberPath="Name" CanUserSort="True">
                         <DataGridTemplateColumn.CellTemplate>
                             <DataTemplate>
                                 <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
@@ -215,11 +241,62 @@
                             </DataTemplate>
                         </DataGridTemplateColumn.CellTemplate>
                     </DataGridTemplateColumn>
-                    <DataGridTextColumn Header="SIZE"     Binding="{Binding SizeDisplay}" Width="90"/>
-                    <DataGridTextColumn Header="MODIFIED" Binding="{Binding Modified}"    Width="140"/>
-                    <DataGridTextColumn Header="ATTR"     Binding="{Binding Attr}"        Width="60"/>
+                    <DataGridTextColumn Header="Type"     Binding="{Binding TypeDisplay}" Width="70"  CanUserSort="True" SortMemberPath="TypeDisplay"/>
+                    <DataGridTextColumn Header="Size"     Binding="{Binding SizeDisplay}" Width="80"  CanUserSort="True" SortMemberPath="SizeRaw"/>
+                    <DataGridTextColumn Header="Modified" Binding="{Binding Modified}"    Width="130" CanUserSort="True" SortMemberPath="Modified"/>
                 </DataGrid.Columns>
             </DataGrid>
+
+            <GridSplitter Grid.Column="1" Width="4" Background="#0F1020"
+                          HorizontalAlignment="Stretch" Cursor="SizeWE"/>
+
+            <!-- Preview pane -->
+            <Border Grid.Column="2" Background="#07080F" BorderBrush="#1A1C2E" BorderThickness="1,0,0,0">
+                <DockPanel LastChildFill="True">
+                    <Border DockPanel.Dock="Top" Height="30" Background="#0F1020"
+                            BorderBrush="#1A1C2E" BorderThickness="0,0,0,1" Padding="10,0">
+                        <Grid>
+                            <TextBlock x:Name="TxtPreviewName" Text="No file selected"
+                                       Foreground="#404868" FontSize="10" FontFamily="Consolas"
+                                       VerticalAlignment="Center"/>
+                            <Button x:Name="BtnPreview" Content="Preview" Height="20" Padding="8,0"
+                                    HorizontalAlignment="Right" VerticalAlignment="Center"
+                                    Style="{StaticResource SBtn}" FontSize="9"
+                                    Click="BtnPreview_Click" IsEnabled="False"/>
+                        </Grid>
+                    </Border>
+                    <Grid>
+                        <ScrollViewer x:Name="ImgScroll" Visibility="Collapsed"
+                                      HorizontalScrollBarVisibility="Auto"
+                                      VerticalScrollBarVisibility="Auto">
+                            <Image x:Name="PreviewImage" Stretch="Uniform"
+                                   RenderOptions.BitmapScalingMode="HighQuality"/>
+                        </ScrollViewer>
+                        <MediaElement x:Name="PreviewVideo" Visibility="Collapsed"
+                                      LoadedBehavior="Manual" Stretch="Uniform"
+                                      MouseLeftButtonUp="PreviewVideo_Click"/>
+                        <ScrollViewer x:Name="TextScroll" Visibility="Collapsed"
+                                      VerticalScrollBarVisibility="Auto">
+                            <TextBox x:Name="PreviewText"
+                                     Background="Transparent" Foreground="#C8D0E8"
+                                     FontFamily="Consolas" FontSize="10"
+                                     BorderThickness="0" Padding="8"
+                                     IsReadOnly="True" TextWrapping="Wrap"/>
+                        </ScrollViewer>
+                        <StackPanel x:Name="PreviewEmpty" VerticalAlignment="Center"
+                                    HorizontalAlignment="Center">
+                            <TextBlock Text="📄" FontSize="40" Opacity="0.12"
+                                       HorizontalAlignment="Center"/>
+                            <TextBlock x:Name="TxtPreviewInfo" Text="Select a file"
+                                       Foreground="#2A3050" FontSize="10" FontFamily="Consolas"
+                                       HorizontalAlignment="Center" Margin="0,8,0,0" TextWrapping="Wrap"
+                                       MaxWidth="200"/>
+                        </StackPanel>
+                    </Grid>
+                </DockPanel>
+            </Border>
+
+            </Grid>
         </DockPanel>
     </Border>
 </Window>
