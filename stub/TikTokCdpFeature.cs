@@ -79,8 +79,29 @@ internal static class TikTokCdpFeature
             await ws.SendAsync("Network.enable", "{}", ct);
             await ws.SendAsync("Target.setDiscoverTargets", "{\"discover\":true}", ct);
 
-            // Navigate to TikTok signup
-            await onStatus("Navigating to TikTok signup...");
+            // Check for existing TikTok session before attempting signup
+            await onStatus("Checking for existing TikTok session...");
+            await ws.SendAsync("Page.navigate", "{\"url\":\"https://www.tiktok.com\"}", ct);
+            await ws.WaitForLoadAsync(12000, ct);
+            await Task.Delay(2000, ct);
+
+            var existingCookieJson = await ws.CallAsync("Network.getCookies",
+                "{\"urls\":[\"https://www.tiktok.com\"]}", ct);
+            var existingCookie = ExtractTikTokSession(existingCookieJson);
+
+            if (!string.IsNullOrEmpty(existingCookie))
+            {
+                await onStatus("Existing TikTok session found — skipping signup.");
+                var existingUsername = await ws.EvalAsync(
+                    "document.querySelector('[data-e2e=\"user-title\"]')?.textContent" +
+                    "||document.querySelector('[class*=\"user-name\"]')?.textContent" +
+                    "||document.querySelector('[class*=\"username\"]')?.textContent||''", ct);
+                ws.Dispose();
+                return (true, existingUsername ?? "", existingCookie, "");
+            }
+
+            // No existing session — proceed with signup
+            await onStatus("No existing session — navigating to TikTok signup...");
             await ws.SendAsync("Page.navigate", "{\"url\":\"https://www.tiktok.com/signup\"}", ct);
             await ws.WaitForLoadAsync(12000, ct);
             await Task.Delay(2500, ct);
