@@ -56,8 +56,8 @@ Open `Sero.sln` in **Visual Studio 2026**, build (`F6`), and launch `SeroServer.
 | SOCKS5 Proxy | ✅ | Reverse SOCKS5 — tunnel traffic through the remote machine |
 | File Execute | ✅ | Remote execution of arbitrary files |
 | RunPE / HollowExec | ✅ | In-memory PE injection with PPID spoofing |
-| UAC Bypass | ✅ | computerdefaults → fodhelper → sdclt → mmc fallback chain |
-| UAC Loop/Once prompt Elevation |
+| UAC Bypass | ✅ | computerdefaults → fodhelper → sdclt → mmc fallback chain *(closed-source)* |
+| UAC Elevation | ✅ | UAC loop/once prompt |
 | Update Client | ✅ | Seamless in-memory stub replacement |
 | AutoTask Plugins | ✅ | C++ DLL plugins compiled and executed on-demand |
 | Rootkit (hook DLL) | ✅ | Reflective DLL: `NtQuerySystemInformation` / `NtQueryDirectoryFile` hooks |
