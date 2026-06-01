@@ -3221,19 +3221,15 @@ Read-Host 'Press Enter to close'
     protected override void OnStateChanged(EventArgs e)
     {
         base.OnStateChanged(e);
-        // Windows Snap or other OS-driven state changes can set WindowState=Maximized
-        // without going through our Fullscreen_Click — keep _isFullscreen in sync.
         if (WindowState == WindowState.Normal && _isFullscreen)
             _isFullscreen = false;
-        if (WindowState == WindowState.Maximized)
-        {
-            _isFullscreen = false;
-            BtnFullscreen.Content = "❐";
-        }
-        else if (WindowState == WindowState.Normal && !_isFullscreen)
-        {
-            BtnFullscreen.Content = "☐";
-        }
+        bool big = WindowState == WindowState.Maximized || _isFullscreen;
+        BtnFullscreen.Content = big ? "❐" : "☐";
+        // Remove corner radius when filling the screen to avoid rounded black corners
+        if (RootBorder != null)
+            RootBorder.CornerRadius = WindowState == WindowState.Maximized
+                ? new CornerRadius(0)
+                : new CornerRadius(10);
     }
 
     private void Minimize_Click(object sender, RoutedEventArgs e) => WindowState = WindowState.Minimized;
@@ -3244,35 +3240,47 @@ Read-Host 'Press Enter to close'
 
     private void Fullscreen_Click(object sender, RoutedEventArgs e)
     {
-        if (_isFullscreen || WindowState == WindowState.Maximized)
+        if (WindowState == WindowState.Maximized)
         {
-            // Restore
+            // OS-maximized (e.g. Win+↑ or Win+Ctrl+S) — just restore to Normal
+            WindowState = WindowState.Normal;
+            RootBorder.CornerRadius = new CornerRadius(10);
+        }
+        else if (_isFullscreen)
+        {
+            // Restore from our custom WorkArea fill
             _isFullscreen = false;
             WindowState = _stateBeforeFullscreen;
-            Width = _widthBefore;
+            Width  = _widthBefore;
             Height = _heightBefore;
-            Left = _leftBefore;
-            Top = _topBefore;
-            BtnFullscreen.Content = "☐";
+            Left   = _leftBefore;
+            Top    = _topBefore;
+            RootBorder.CornerRadius = new CornerRadius(10);
         }
         else
         {
-            // Save current state
+            // Save and fill WorkArea (keeps taskbar, no corner issues)
             _stateBeforeFullscreen = WindowState;
-            _widthBefore = Width;
+            _widthBefore  = Width;
             _heightBefore = Height;
-            _leftBefore = Left;
-            _topBefore = Top;
-
-            // Maximize to work area (not true fullscreen, keeps taskbar)
+            _leftBefore   = Left;
+            _topBefore    = Top;
             WindowState = WindowState.Normal;
-            Left = 0;
-            Top = 0;
-            Width = SystemParameters.WorkArea.Width;
-            Height = SystemParameters.WorkArea.Height;
+            var area = SystemParameters.WorkArea;
+            Left   = area.Left;
+            Top    = area.Top;
+            Width  = area.Width;
+            Height = area.Height;
             _isFullscreen = true;
-            BtnFullscreen.Content = "❐";
+            RootBorder.CornerRadius = new CornerRadius(0);
         }
+    }
+
+    private void ResizeGrip_DragDelta(object s, System.Windows.Controls.Primitives.DragDeltaEventArgs e)
+    {
+        if (_isFullscreen || WindowState == WindowState.Maximized) return;
+        Width  = Math.Max(900, Width  + e.HorizontalChange);
+        Height = Math.Max(540, Height + e.VerticalChange);
     }
 
     private void Close_Click(object sender, RoutedEventArgs e)

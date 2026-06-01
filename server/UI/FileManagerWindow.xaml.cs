@@ -396,7 +396,7 @@ public partial class FileManagerWindow : Window
         bool isImage = ext is ".jpg" or ".jpeg" or ".png" or ".gif" or ".bmp" or ".webp" or ".ico";
         bool isText  = ext is ".txt" or ".log" or ".ini" or ".cfg" or ".json" or ".xml" or ".csv" or ".bat" or ".ps1" or ".py" or ".cs";
         if (isImage || isText)
-            BtnPreview.RaiseEvent(new RoutedEventArgs(System.Windows.Controls.Button.ClickEvent));
+            BtnPreview_Click(null!, new RoutedEventArgs());
     }
 
     private async void BtnPreview_Click(object s, RoutedEventArgs e)

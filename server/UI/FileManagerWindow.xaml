@@ -112,8 +112,8 @@
                     </Grid.ColumnDefinitions>
                     <Button Grid.Column="0" Content="◀ Back" Height="26" Margin="0,0,4,0"
                             Style="{StaticResource FmBtn}" Click="Back_Click"/>
-                    <Button Grid.Column="1" Content="⟳" Height="26" Width="28" Margin="0,0,4,0"
-                            Style="{StaticResource FmBtn}" Click="Refresh_Click"/>
+                    <Button Grid.Column="1" Content="⟳ Refresh" Height="26" Padding="8,0" Margin="0,0,4,0"
+                            Style="{StaticResource FmBtn}" FontSize="11" Click="Refresh_Click"/>
                     <!-- GoTo dropdown -->
                     <StackPanel Grid.Column="2" Orientation="Horizontal" Margin="0,0,8,0">
                         <Button Height="26" Margin="0,0,2,0" Style="{StaticResource FmBtn}" Click="GoToDesktop_Click">
@@ -208,6 +208,8 @@
                 <DataGrid.ContextMenu>
                     <ContextMenu Background="#0F1020" BorderBrush="#1E2038" BorderThickness="1"
                                  Foreground="#DDE0F0">
+                        <MenuItem Header="⟳  Refresh"            Click="Refresh_Click">     <MenuItem.Icon><TextBlock Text="⟳" Foreground="#a6e3a1" FontSize="11"/></MenuItem.Icon></MenuItem>
+                        <Separator Background="#1E2038"/>
                         <MenuItem Header="▶  Execute Normal"     Click="Exec_Normal_Click">  <MenuItem.Icon><TextBlock Text="▶" Foreground="#a6e3a1" FontSize="11"/></MenuItem.Icon></MenuItem>
                         <MenuItem Header="⬛ Execute Hidden"     Click="Exec_Hidden_Click">  <MenuItem.Icon><TextBlock Text="⬛" Foreground="#89b4fa" FontSize="11"/></MenuItem.Icon></MenuItem>
                         <MenuItem Header="🛡 Execute As Admin"   Click="Exec_Admin_Click">   <MenuItem.Icon><TextBlock Text="🛡" FontSize="11"/></MenuItem.Icon></MenuItem>

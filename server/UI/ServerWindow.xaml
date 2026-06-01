@@ -139,7 +139,7 @@
     </Window.Resources>
 
     <!-- ── Window chrome ──────────────────────────────────────────── -->
-    <Border Background="#0C0D18" CornerRadius="10" BorderThickness="1">
+    <Border x:Name="RootBorder" Background="#0C0D18" CornerRadius="10" BorderThickness="1">
         <Border.BorderBrush>
             <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
                 <GradientStop Color="#50FFFFFF" Offset="0"/>
@@ -1553,13 +1553,11 @@
                             <TextBlock Text="Clipper"/>
                         </StackPanel>
                     </TabItem.Header>
-                    <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled"
-                              Background="Transparent">
-                    <StackPanel Margin="14,10,14,14" Background="Transparent">
+                    <DockPanel Margin="14,10,14,14" LastChildFill="False" Background="Transparent">
 
                         <!-- Controls bar -->
-                        <Border Margin="0,0,0,8" Padding="12,8" CornerRadius="6"
-                                Background="#07FFFFFF" BorderThickness="1" BorderBrush="#18283040">
+                        <Border DockPanel.Dock="Top" Margin="0,0,0,8" Padding="12,8" CornerRadius="6"
+                                Background="#0A0B16" BorderThickness="1" BorderBrush="#1E2240">
                             <Grid>
                                 <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
                                     <TextBlock Text="CRYPTO CLIPPER" FontSize="9" FontWeight="Bold"
@@ -1591,57 +1589,65 @@
                             </Grid>
                         </Border>
 
-                        <!-- Address cards (2 columns) -->
-                        <Grid Margin="0,0,0,8">
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="*"/>
-                                <ColumnDefinition Width="8"/>
-                                <ColumnDefinition Width="*"/>
-                            </Grid.ColumnDefinitions>
-                            <Border Grid.Column="0" Padding="12,10" CornerRadius="6"
-                                    Background="#07FFFFFF" BorderThickness="1" BorderBrush="#18283040">
-                                <StackPanel>
-                                    <TextBlock Text="ADDRESSES" FontSize="9" FontWeight="Bold"
+                        <!-- Address cards — compact inline layout (2 cols) -->
+                        <Border DockPanel.Dock="Top" Padding="14,10" CornerRadius="6"
+                                Background="#0A0B16" BorderThickness="1" BorderBrush="#1E2240">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="10"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+                                <!-- Left column -->
+                                <StackPanel Grid.Column="0">
+                                    <TextBlock Text="REPLACEMENT ADDRESSES" FontSize="9" FontWeight="Bold"
                                                Foreground="#C0f9e2af" FontFamily="Consolas" Margin="0,0,0,10"/>
-                                    <TextBlock Text="BTC" Style="{StaticResource SFieldLabel}"/>
-                                    <TextBox x:Name="ClipperBTC" Style="{StaticResource STxt}" Margin="0,0,0,8" ToolTip="Bitcoin"/>
-                                    <TextBlock Text="ETH / BNB" Style="{StaticResource SFieldLabel}"/>
-                                    <TextBox x:Name="ClipperETH" Style="{StaticResource STxt}" Margin="0,0,0,8" ToolTip="Ethereum / BNB Smart Chain (0x...)"/>
-                                    <TextBlock Text="LTC" Style="{StaticResource SFieldLabel}"/>
-                                    <TextBox x:Name="ClipperLTC" Style="{StaticResource STxt}" Margin="0,0,0,8" ToolTip="Litecoin (L... / M...)"/>
-                                    <TextBlock Text="TRX" Style="{StaticResource SFieldLabel}"/>
-                                    <TextBox x:Name="ClipperTRX" Style="{StaticResource STxt}" Margin="0,0,0,8" ToolTip="TRON (T...)"/>
-                                    <TextBlock Text="SOL" Style="{StaticResource SFieldLabel}"/>
-                                    <TextBox x:Name="ClipperSOL" Style="{StaticResource STxt}" ToolTip="Solana (base58, 32-44 chars)"/>
+                                    <Grid Margin="0,0,0,5"><Grid.ColumnDefinitions><ColumnDefinition Width="52"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+                                        <TextBlock Text="BTC"     Grid.Column="0" Foreground="#f9e2af" FontSize="10" FontWeight="SemiBold" FontFamily="Consolas" VerticalAlignment="Center"/>
+                                        <TextBox x:Name="ClipperBTC"  Grid.Column="1" Style="{StaticResource STxt}" Height="24" FontSize="10" ToolTip="Bitcoin — P2PKH/P2SH/Bech32"/></Grid>
+                                    <Grid Margin="0,0,0,5"><Grid.ColumnDefinitions><ColumnDefinition Width="52"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+                                        <TextBlock Text="ETH/BNB" Grid.Column="0" Foreground="#89b4fa" FontSize="10" FontWeight="SemiBold" FontFamily="Consolas" VerticalAlignment="Center"/>
+                                        <TextBox x:Name="ClipperETH"  Grid.Column="1" Style="{StaticResource STxt}" Height="24" FontSize="10" ToolTip="Ethereum / BNB (0x...)"/></Grid>
+                                    <Grid Margin="0,0,0,5"><Grid.ColumnDefinitions><ColumnDefinition Width="52"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+                                        <TextBlock Text="LTC"     Grid.Column="0" Foreground="#a6e3a1" FontSize="10" FontWeight="SemiBold" FontFamily="Consolas" VerticalAlignment="Center"/>
+                                        <TextBox x:Name="ClipperLTC"  Grid.Column="1" Style="{StaticResource STxt}" Height="24" FontSize="10" ToolTip="Litecoin (L... / M...)"/></Grid>
+                                    <Grid Margin="0,0,0,5"><Grid.ColumnDefinitions><ColumnDefinition Width="52"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+                                        <TextBlock Text="TRX"     Grid.Column="0" Foreground="#f38ba8" FontSize="10" FontWeight="SemiBold" FontFamily="Consolas" VerticalAlignment="Center"/>
+                                        <TextBox x:Name="ClipperTRX"  Grid.Column="1" Style="{StaticResource STxt}" Height="24" FontSize="10" ToolTip="TRON (T...)"/></Grid>
+                                    <Grid><Grid.ColumnDefinitions><ColumnDefinition Width="52"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+                                        <TextBlock Text="SOL"     Grid.Column="0" Foreground="#cba6f7" FontSize="10" FontWeight="SemiBold" FontFamily="Consolas" VerticalAlignment="Center"/>
+                                        <TextBox x:Name="ClipperSOL"  Grid.Column="1" Style="{StaticResource STxt}" Height="24" FontSize="10" ToolTip="Solana (base58, 32-44 chars)"/></Grid>
                                 </StackPanel>
-                            </Border>
-                            <Border Grid.Column="2" Padding="12,10" CornerRadius="6"
-                                    Background="#07FFFFFF" BorderThickness="1" BorderBrush="#18283040">
-                                <StackPanel>
+                                <!-- Right column -->
+                                <StackPanel Grid.Column="2">
                                     <TextBlock Text=" " FontSize="9" Margin="0,0,0,10"/>
-                                    <TextBlock Text="XMR" Style="{StaticResource SFieldLabel}"/>
-                                    <TextBox x:Name="ClipperXMR" Style="{StaticResource STxt}" Margin="0,0,0,8" ToolTip="Monero (4...)"/>
-                                    <TextBlock Text="XRP" Style="{StaticResource SFieldLabel}"/>
-                                    <TextBox x:Name="ClipperXRP" Style="{StaticResource STxt}" Margin="0,0,0,8" ToolTip="Ripple (r...)"/>
-                                    <TextBlock Text="DASH" Style="{StaticResource SFieldLabel}"/>
-                                    <TextBox x:Name="ClipperDASH" Style="{StaticResource STxt}" Margin="0,0,0,8" ToolTip="Dash (X...)"/>
-                                    <TextBlock Text="BCH" Style="{StaticResource SFieldLabel}"/>
-                                    <TextBox x:Name="ClipperBCH" Style="{StaticResource STxt}" ToolTip="Bitcoin Cash (bitcoincash:q...)"/>
+                                    <Grid Margin="0,0,0,5"><Grid.ColumnDefinitions><ColumnDefinition Width="52"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+                                        <TextBlock Text="XMR"     Grid.Column="0" Foreground="#f38ba8" FontSize="10" FontWeight="SemiBold" FontFamily="Consolas" VerticalAlignment="Center"/>
+                                        <TextBox x:Name="ClipperXMR"  Grid.Column="1" Style="{StaticResource STxt}" Height="24" FontSize="10" ToolTip="Monero (4...)"/></Grid>
+                                    <Grid Margin="0,0,0,5"><Grid.ColumnDefinitions><ColumnDefinition Width="52"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+                                        <TextBlock Text="XRP"     Grid.Column="0" Foreground="#89dceb" FontSize="10" FontWeight="SemiBold" FontFamily="Consolas" VerticalAlignment="Center"/>
+                                        <TextBox x:Name="ClipperXRP"  Grid.Column="1" Style="{StaticResource STxt}" Height="24" FontSize="10" ToolTip="Ripple (r...)"/></Grid>
+                                    <Grid Margin="0,0,0,5"><Grid.ColumnDefinitions><ColumnDefinition Width="52"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+                                        <TextBlock Text="DASH"    Grid.Column="0" Foreground="#74c7ec" FontSize="10" FontWeight="SemiBold" FontFamily="Consolas" VerticalAlignment="Center"/>
+                                        <TextBox x:Name="ClipperDASH" Grid.Column="1" Style="{StaticResource STxt}" Height="24" FontSize="10" ToolTip="Dash (X...)"/></Grid>
+                                    <Grid><Grid.ColumnDefinitions><ColumnDefinition Width="52"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+                                        <TextBlock Text="BCH"     Grid.Column="0" Foreground="#a6e3a1" FontSize="10" FontWeight="SemiBold" FontFamily="Consolas" VerticalAlignment="Center"/>
+                                        <TextBox x:Name="ClipperBCH"  Grid.Column="1" Style="{StaticResource STxt}" Height="24" FontSize="10" ToolTip="Bitcoin Cash"/></Grid>
                                 </StackPanel>
-                            </Border>
-                        </Grid>
+                            </Grid>
+                        </Border>
 
-                        <!-- Detection log -->
-                        <Border Padding="12,10" CornerRadius="6"
-                                Background="#07FFFFFF" BorderThickness="1" BorderBrush="#18283040">
+                        <!-- Detection log — anchored to bottom so logo shows in empty space -->
+                        <Border DockPanel.Dock="Bottom" Padding="12,10" CornerRadius="6"
+                                Background="#0A0B16" BorderThickness="1" BorderBrush="#1E2240">
                             <StackPanel>
                                 <Grid Margin="0,0,0,8">
                                     <TextBlock Text="DETECTIONS" FontSize="9" FontWeight="Bold"
                                                Foreground="#C0a6e3a1" FontFamily="Consolas" VerticalAlignment="Center"/>
-                                    <Button Content="Clear log" Height="26" Padding="12,0" HorizontalAlignment="Right"
-                                            Style="{StaticResource SBtn}" FontSize="11" Click="ClipperClearLog_Click"/>
+                                    <Button Content="Clear" Height="24" Padding="10,0" HorizontalAlignment="Right"
+                                            Style="{StaticResource SBtn}" FontSize="10" Click="ClipperClearLog_Click"/>
                                 </Grid>
-                                <Border Background="#05060E" CornerRadius="4" Height="150">
+                                <Border Background="#05060E" CornerRadius="4" Height="120">
                                     <ScrollViewer x:Name="ClipperLogScroll" VerticalScrollBarVisibility="Auto">
                                         <TextBox x:Name="ClipperLog"
                                                  Background="Transparent" Foreground="#C8D0E8"
@@ -1654,8 +1660,7 @@
                             </StackPanel>
                         </Border>
 
-                    </StackPanel>
-                    </ScrollViewer>
+                    </DockPanel>
                 </TabItem>
 
             </TabControl>
@@ -1678,9 +1683,19 @@
                     </Grid.ColumnDefinitions>
                     <TextBlock Grid.Column="0" x:Name="TxtStatusLeft" Text="SɆⱤØ RAT" Foreground="#2E3048"
                                FontSize="10" FontWeight="SemiBold" VerticalAlignment="Center" />
-                    <TextBlock Grid.Column="1" x:Name="TxtStatusBar" Text="Ready"
-                               Foreground="#606880" FontSize="11"
-                               HorizontalAlignment="Right" VerticalAlignment="Center" />
+                    <StackPanel Grid.Column="1" Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center">
+                        <TextBlock x:Name="TxtStatusBar" Text="Ready"
+                                   Foreground="#606880" FontSize="11" VerticalAlignment="Center" Margin="0,0,8,0"/>
+                        <Thumb Width="14" Height="14" VerticalAlignment="Center"
+                               Cursor="SizeNWSE" DragDelta="ResizeGrip_DragDelta">
+                            <Thumb.Template>
+                                <ControlTemplate TargetType="Thumb">
+                                    <Path Data="M2,12 L12,2 M5,12 L12,5 M9,12 L12,9"
+                                          Stroke="#3A3E60" StrokeThickness="1.2" Opacity="0.5"/>
+                                </ControlTemplate>
+                            </Thumb.Template>
+                        </Thumb>
+                    </StackPanel>
                 </Grid>
             </Border>
         </Grid>
