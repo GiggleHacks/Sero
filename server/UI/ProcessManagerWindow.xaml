@@ -223,6 +223,9 @@
                             </DataTemplate>
                         </DataGridTemplateColumn.CellTemplate>
                     </DataGridTemplateColumn>
+                    <!-- Network connections -->
+                    <DataGridTextColumn Header="NET" Binding="{Binding NetDisplay}" Width="70"
+                                        FontFamily="Consolas" FontSize="11"/>
                     <!-- Title -->
                     <DataGridTextColumn Header="TITLE" Binding="{Binding Title}" Width="200" FontSize="11"/>
                 </DataGrid.Columns>

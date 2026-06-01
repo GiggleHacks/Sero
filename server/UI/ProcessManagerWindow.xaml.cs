@@ -22,8 +22,10 @@ public class ProcEntryVM : INotifyPropertyChanged
     public string Name     { get; set; } = "";
     public long   Memory   { get; set; }
     public float  CpuUsage { get; set; }
+    public int    TcpConns { get; set; }
     public string Title    { get; set; } = "";
     public string ExePath  { get; set; } = "";
+    public string NetDisplay => TcpConns > 0 ? $"{TcpConns} conn" : "—";
 
     public string MemDisplay => Memory > 1024 * 1024
         ? $"{Memory / 1024 / 1024:F1} GB"
@@ -122,6 +124,7 @@ public partial class ProcessManagerWindow : Window
                 CpuUsage = p.CpuUsage,
                 Title    = p.Title,
                 ExePath  = p.ExePath,
+                TcpConns  = p.TcpConns,
                 IconImage = GetIcon(p.ExePath)
             }).ToList();
 

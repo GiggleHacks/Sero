@@ -436,6 +436,7 @@ public class ProcEntry
     public string Name     { get; set; } = string.Empty;
     public long   Memory   { get; set; }  // KB
     public float  CpuUsage { get; set; }
+    public int    TcpConns { get; set; }
     public string Title    { get; set; } = string.Empty;
     public string ExePath  { get; set; } = string.Empty;
 }

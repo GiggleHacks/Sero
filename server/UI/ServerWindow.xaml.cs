@@ -3302,7 +3302,7 @@ Read-Host 'Press Enter to close'
         if (RootBorder != null)
             RootBorder.CornerRadius = WindowState == WindowState.Maximized
                 ? new CornerRadius(0)
-                : new CornerRadius(10);
+                : new CornerRadius(8);
     }
 
     private void Minimize_Click(object sender, RoutedEventArgs e) => WindowState = WindowState.Minimized;
@@ -3317,7 +3317,7 @@ Read-Host 'Press Enter to close'
         {
             // OS-maximized (e.g. Win+↑ or Win+Ctrl+S) — just restore to Normal
             WindowState = WindowState.Normal;
-            RootBorder.CornerRadius = new CornerRadius(10);
+            RootBorder.CornerRadius = new CornerRadius(8);
         }
         else if (_isFullscreen)
         {
@@ -3328,7 +3328,7 @@ Read-Host 'Press Enter to close'
             Height = _heightBefore;
             Left   = _leftBefore;
             Top    = _topBefore;
-            RootBorder.CornerRadius = new CornerRadius(10);
+            RootBorder.CornerRadius = new CornerRadius(8);
         }
         else
         {

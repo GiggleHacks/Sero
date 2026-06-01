@@ -141,13 +141,9 @@
     </Window.Resources>
 
     <!-- ── Window chrome ──────────────────────────────────────────── -->
-    <Border x:Name="RootBorder" Background="#0C0D18" CornerRadius="10" BorderThickness="1">
-        <Border.BorderBrush>
-            <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
-                <GradientStop Color="#50FFFFFF" Offset="0"/>
-                <GradientStop Color="#0A1E2038" Offset="1"/>
-            </LinearGradientBrush>
-        </Border.BorderBrush>
+    <!-- Margin="5" leaves transparent edges so the OS resize handles are reachable -->
+    <Border x:Name="RootBorder" Background="#0C0D18" CornerRadius="8" BorderThickness="1"
+            BorderBrush="#1C1E30" Margin="5">
 
         <Grid>
             <Grid.RowDefinitions>
@@ -204,24 +200,9 @@
                                 <RectangleGeometry RadiusX="5" RadiusY="5" Rect="0,0,26,26" />
                             </Image.Clip>
                         </Image>
-                        <TextBlock VerticalAlignment="Center" FontSize="14" FontWeight="Bold">
-                            <Run Text="SɆⱤØ">
-                                <Run.Foreground>
-                                    <LinearGradientBrush StartPoint="0,0" EndPoint="1,0">
-                                        <GradientStop Color="#4A85F5" Offset="0"/>
-                                        <GradientStop Color="#7C5CE8" Offset="1"/>
-                                    </LinearGradientBrush>
-                                </Run.Foreground>
-                            </Run>
-                            <Run Text="RAT">
-                                <Run.Foreground>
-                                    <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
-                                        <GradientStop Color="#D8DCF0" Offset="0"/>
-                                        <GradientStop Color="#8890B8" Offset="0.5"/>
-                                        <GradientStop Color="#C4C8E0" Offset="1"/>
-                                    </LinearGradientBrush>
-                                </Run.Foreground>
-                            </Run>
+                        <TextBlock VerticalAlignment="Center" FontSize="13" FontWeight="Bold">
+                            <Run Text="SERO" Foreground="#4A85F5"/>
+                            <Run Text=" RAT" Foreground="#8890B8"/>
                         </TextBlock>
                     </StackPanel>
 
@@ -236,51 +217,19 @@
                 </Grid>
             </Border>
 
-            <!-- ── Accent line: full-width repeating aurora ─────────── -->
-            <!--  Single stretch rectangle, gradient SpreadMethod=Repeat,
-                  brush transform scrolls → always covers full width, zero gap -->
-            <Rectangle x:Name="AuroraBar" Grid.Row="1" Height="3">
+            <!-- ── Accent line ────────────────────────────────────────── -->
+            <Rectangle Grid.Row="1" Height="2" IsHitTestVisible="False">
                 <Rectangle.Fill>
-                    <LinearGradientBrush MappingMode="Absolute"
-                                         StartPoint="0,0" EndPoint="600,0"
-                                         SpreadMethod="Repeat">
-                        <LinearGradientBrush.Transform>
-                            <TranslateTransform X="0"/>
-                        </LinearGradientBrush.Transform>
-                        <GradientStop Color="#4A85F5" Offset="0.00"/>
-                        <GradientStop Color="#0DCCFF" Offset="0.20"/>
-                        <GradientStop Color="#7C5CE8" Offset="0.42"/>
-                        <GradientStop Color="#D040FF" Offset="0.58"/>
-                        <GradientStop Color="#7C5CE8" Offset="0.76"/>
-                        <GradientStop Color="#0DCCFF" Offset="0.90"/>
-                        <GradientStop Color="#4A85F5" Offset="1.00"/>
+                    <LinearGradientBrush StartPoint="0,0" EndPoint="1,0">
+                        <GradientStop Color="#4A85F5" Offset="0"/>
+                        <GradientStop Color="#7C5CE8" Offset="1"/>
                     </LinearGradientBrush>
                 </Rectangle.Fill>
-                <Rectangle.Triggers>
-                    <EventTrigger RoutedEvent="Rectangle.Loaded">
-                        <BeginStoryboard>
-                            <Storyboard>
-                                <DoubleAnimation
-                                    Storyboard.TargetName="AuroraBar"
-                                    Storyboard.TargetProperty="(Rectangle.Fill).(LinearGradientBrush.Transform).(TranslateTransform.X)"
-                                    From="0" To="-600" Duration="0:0:5"
-                                    RepeatBehavior="Forever"/>
-                            </Storyboard>
-                        </BeginStoryboard>
-                    </EventTrigger>
-                </Rectangle.Triggers>
             </Rectangle>
 
             <!-- ── Control bar ────────────────────────────────────── -->
             <Border Grid.Row="2" Background="#C0111222" Padding="16,8"
-                    BorderThickness="0,0,0,1">
-                <Border.BorderBrush>
-                    <LinearGradientBrush StartPoint="0,0" EndPoint="1,0">
-                        <GradientStop Color="#281E2038" Offset="0"/>
-                        <GradientStop Color="#1E2038"   Offset="0.5"/>
-                        <GradientStop Color="#281E2038" Offset="1"/>
-                    </LinearGradientBrush>
-                </Border.BorderBrush>
+                    BorderThickness="0,0,0,1" BorderBrush="#181A2C">
                 <Grid>
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="*" />
@@ -298,14 +247,9 @@
                     </StackPanel>
 
                     <!-- Status pill with pulsing dot -->
-                    <Border Grid.Column="1" Background="#0D0E1A" CornerRadius="20" Padding="18,6"
-                            BorderThickness="1" VerticalAlignment="Center" HorizontalAlignment="Center">
-                        <Border.BorderBrush>
-                            <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
-                                <GradientStop Color="#301E2038" Offset="0"/>
-                                <GradientStop Color="#101E2038" Offset="1"/>
-                            </LinearGradientBrush>
-                        </Border.BorderBrush>
+                    <Border Grid.Column="1" Background="#0D0E1A" CornerRadius="6" Padding="16,6"
+                            BorderThickness="1" BorderBrush="#1C1E30"
+                            VerticalAlignment="Center" HorizontalAlignment="Center">
                         <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
                             <Grid Width="16" Height="16" VerticalAlignment="Center" Margin="0,0,6,0">
                                 <Ellipse x:Name="ServerPulse" Stroke="#EF4444" StrokeThickness="1.2"

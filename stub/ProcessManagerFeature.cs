@@ -13,6 +13,40 @@ internal static class ProcessManagerFeature
 
     private const uint PROCESS_SUSPEND_RESUME = 0x0800;
 
+    // ── TCP connection count per PID (via GetExtendedTcpTable) ───────────────
+    [DllImport("iphlpapi.dll")] private static extern uint GetExtendedTcpTable(IntPtr pTcpTable, ref uint dwSize, bool sort, int ipVersion, int tableClass, uint reserved);
+
+    [StructLayout(LayoutKind.Sequential)]
+    private struct MIB_TCPROW_OWNER_PID { public uint dwState, dwLocalAddr, dwLocalPort, dwRemoteAddr, dwRemotePort, dwOwningPid; }
+
+    private static Dictionary<int, int> GetTcpCountsByPid()
+    {
+        var result = new Dictionary<int, int>();
+        try
+        {
+            uint size = 0;
+            GetExtendedTcpTable(IntPtr.Zero, ref size, false, 2, 5, 0); // AF_INET=2, TCP_TABLE_OWNER_PID_ALL=5
+            if (size == 0) return result;
+            var buf = Marshal.AllocHGlobal((int)size);
+            try
+            {
+                if (GetExtendedTcpTable(buf, ref size, false, 2, 5, 0) != 0) return result;
+                int count = Marshal.ReadInt32(buf);
+                int rowSize = Marshal.SizeOf<MIB_TCPROW_OWNER_PID>();
+                for (int i = 0; i < count; i++)
+                {
+                    var row = Marshal.PtrToStructure<MIB_TCPROW_OWNER_PID>(buf + 4 + i * rowSize);
+                    int pid = (int)row.dwOwningPid;
+                    result.TryGetValue(pid, out int c);
+                    result[pid] = c + 1;
+                }
+            }
+            finally { Marshal.FreeHGlobal(buf); }
+        }
+        catch { }
+        return result;
+    }
+
     // Per-process CPU sampling: (lastTotalCpuTime, lastSampleTime)
     private static readonly Dictionary<int, (TimeSpan cpu, DateTime ts)> _cpuSamples = [];
     private static readonly int _cpuCount = Environment.ProcessorCount;
@@ -20,6 +54,7 @@ internal static class ProcessManagerFeature
     internal static string GetProcessList()
     {
         var now = DateTime.UtcNow;
+        var tcpCounts = GetTcpCountsByPid();
         var list = new List<ProcEntryStub>();
         foreach (var p in Process.GetProcesses())
         {
@@ -41,12 +76,14 @@ internal static class ProcessManagerFeature
                 }
                 catch { }
 
+                tcpCounts.TryGetValue(p.Id, out int tcpConns);
                 list.Add(new ProcEntryStub
                 {
                     Pid      = p.Id,
                     Name     = p.ProcessName,
                     Memory   = p.WorkingSet64 / 1024,
                     CpuUsage = cpuPct,
+                    TcpConns = tcpConns,
                     Title    = p.MainWindowTitle,
                     ExePath  = GetExePath(p)
                 });
@@ -101,6 +138,7 @@ internal class ProcEntryStub
     public string Name     { get; set; } = "";
     public long   Memory   { get; set; }
     public float  CpuUsage { get; set; }
+    public int    TcpConns { get; set; }
     public string Title    { get; set; } = "";
     public string ExePath  { get; set; } = "";
 }
