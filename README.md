@@ -52,7 +52,6 @@ Open `Sero.sln` in **Visual Studio 2026**, build (`F6`), and launch `SeroServer.
 | Keylogger | ✅ | Low-level WH_KEYBOARD_LL hook, offline disk logging (by date), file browser UI, save .txt |
 | Crypto Clipper | ✅ | Monitors clipboard for BTC/ETH/LTC/TRX/SOL/XMR/XRP/DASH/BCH/BNB, silent address swap |
 | Process Manager | ✅ | List all processes with native Windows icons, memory, search, force-kill |
-| HVNC Broadcast | ✅ | Send commands to all HVNC sessions at once — launch apps, open URLs, type text, keyboard shortcuts |
 | TikTok Bot | ✅ | Multi-client panel: CDP auto-signup via Google OAuth (Chrome hidden), account inventory, comment broadcast with rotation across accounts |
 | SOCKS5 Proxy | ✅ | Reverse SOCKS5 — tunnel traffic through the remote machine |
 | File Execute | ✅ | Remote execution of arbitrary files |
