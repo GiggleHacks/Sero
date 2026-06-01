@@ -363,6 +363,14 @@ public partial class ServerWindow : Window
                     if (existing != null) _onlineClients.Remove(existing);
                     _clientsDirty = true;
                     UpdateClientCount();
+
+                    // Close all feature windows open for this client
+                    var prefix = c.Id + ":";
+                    var toClose = _featureWindows
+                        .Where(kv => kv.Key.StartsWith(prefix, StringComparison.Ordinal))
+                        .ToList();
+                    foreach (var kv in toClose)
+                        try { kv.Value.Close(); } catch { }
                 });
                 _server.ElevationResultReceived += (clientId, data) => Dispatcher.Invoke(() =>
                 {
@@ -3287,9 +3295,32 @@ Read-Host 'Press Enter to close'
         src?.AddHook(NcHitTest);
     }
 
+    private System.Windows.Media.Effects.DropShadowEffect? _savedShadow;
+    private bool _resizing;
+
     private nint NcHitTest(nint hwnd, int msg, nint wParam, nint lParam, ref bool handled)
     {
-        const int WM_NCHITTEST = 0x0084;
+        const int WM_NCHITTEST    = 0x0084;
+        const int WM_ENTERSIZEMOVE = 0x0231;
+        const int WM_EXITSIZEMOVE  = 0x0232;
+
+        // Disable expensive effects while user drags — huge perf win with AllowsTransparency
+        if (msg == WM_ENTERSIZEMOVE && !_resizing)
+        {
+            _resizing = true;
+            _savedShadow = RootBorder.Effect as System.Windows.Media.Effects.DropShadowEffect;
+            RootBorder.Effect = null;
+            if (BgLogoBlur != null) BgLogoBlur.Radius = 0;
+            handled = false; return nint.Zero;
+        }
+        if (msg == WM_EXITSIZEMOVE && _resizing)
+        {
+            _resizing = false;
+            RootBorder.Effect = _savedShadow;
+            if (BgLogoBlur != null) BgLogoBlur.Radius = 2;
+            handled = false; return nint.Zero;
+        }
+
         if (msg != WM_NCHITTEST || _isFullscreen || WindowState == WindowState.Maximized)
             return nint.Zero;
 

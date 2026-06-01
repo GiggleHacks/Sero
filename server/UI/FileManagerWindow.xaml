@@ -148,7 +148,7 @@
                     <ColumnDefinition Width="4"/>
                     <ColumnDefinition Width="*" MinWidth="280"/>
                     <ColumnDefinition Width="4"/>
-                    <ColumnDefinition Width="240" MinWidth="160"/>
+                    <ColumnDefinition Width="220" MinWidth="180" MaxWidth="400"/>
                 </Grid.ColumnDefinitions>
 
                 <!-- ── Left sidebar ─────────────────────────────── -->
@@ -300,6 +300,7 @@
                       FontFamily="Consolas" FontSize="13"
                       SelectionMode="Extended" SelectionUnit="FullRow"
                       CanUserAddRows="False" CanUserResizeRows="False"
+                      CanUserResizeColumns="False" CanUserReorderColumns="False"
                       ColumnHeaderHeight="28"
                       MouseDoubleClick="GridFiles_DoubleClick"
                       SelectionChanged="GridFiles_SelectionChanged">

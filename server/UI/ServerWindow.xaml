@@ -8,6 +8,8 @@
         WindowStartupLocation="CenterScreen"
         ResizeMode="CanResize"
         WindowStyle="None"
+        UseLayoutRounding="True"
+        RenderOptions.ClearTypeHint="Enabled"
         AllowsTransparency="True"
         Background="Transparent"
         MouseLeftButtonDown="Window_MouseLeftButtonDown">
@@ -169,7 +171,8 @@
                        Margin="0,55,0,0"
                        Opacity="0.52"
                        Stretch="Uniform"
-                       RenderOptions.BitmapScalingMode="HighQuality">
+                       RenderOptions.BitmapScalingMode="LowQuality"
+                       RenderOptions.CachingHint="Cache">
                     <Image.Effect>
                         <BlurEffect x:Name="BgLogoBlur" Radius="2"/>
                     </Image.Effect>
