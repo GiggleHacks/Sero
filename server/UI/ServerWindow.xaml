@@ -217,14 +217,37 @@
                 </Grid>
             </Border>
 
-            <!-- ── Accent line ────────────────────────────────────────── -->
-            <Rectangle Grid.Row="1" Height="2" IsHitTestVisible="False">
+            <!-- ── Accent line: full-width repeating aurora ─────────── -->
+            <Rectangle x:Name="AuroraBar" Grid.Row="1" Height="3">
                 <Rectangle.Fill>
-                    <LinearGradientBrush StartPoint="0,0" EndPoint="1,0">
-                        <GradientStop Color="#4A85F5" Offset="0"/>
-                        <GradientStop Color="#7C5CE8" Offset="1"/>
+                    <LinearGradientBrush MappingMode="Absolute"
+                                         StartPoint="0,0" EndPoint="600,0"
+                                         SpreadMethod="Repeat">
+                        <LinearGradientBrush.Transform>
+                            <TranslateTransform X="0"/>
+                        </LinearGradientBrush.Transform>
+                        <GradientStop Color="#4A85F5" Offset="0.00"/>
+                        <GradientStop Color="#0DCCFF" Offset="0.20"/>
+                        <GradientStop Color="#7C5CE8" Offset="0.42"/>
+                        <GradientStop Color="#D040FF" Offset="0.58"/>
+                        <GradientStop Color="#7C5CE8" Offset="0.76"/>
+                        <GradientStop Color="#0DCCFF" Offset="0.90"/>
+                        <GradientStop Color="#4A85F5" Offset="1.00"/>
                     </LinearGradientBrush>
                 </Rectangle.Fill>
+                <Rectangle.Triggers>
+                    <EventTrigger RoutedEvent="Rectangle.Loaded">
+                        <BeginStoryboard>
+                            <Storyboard>
+                                <DoubleAnimation
+                                    Storyboard.TargetName="AuroraBar"
+                                    Storyboard.TargetProperty="(Rectangle.Fill).(LinearGradientBrush.Transform).(TranslateTransform.X)"
+                                    From="0" To="-600" Duration="0:0:5"
+                                    RepeatBehavior="Forever"/>
+                            </Storyboard>
+                        </BeginStoryboard>
+                    </EventTrigger>
+                </Rectangle.Triggers>
             </Rectangle>
 
             <!-- ── Control bar ────────────────────────────────────── -->

