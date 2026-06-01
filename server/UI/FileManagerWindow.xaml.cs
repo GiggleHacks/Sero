@@ -1,4 +1,4 @@
-using System.Collections.ObjectModel;
+﻿using System.Collections.ObjectModel;
 using System.IO;
 using System.Windows;
 using System.Windows.Input;
@@ -383,6 +383,13 @@ public partial class FileManagerWindow : Window
     {
         if (e.LeftButton == MouseButtonState.Pressed && WindowState != WindowState.Maximized)
             DragMove();
+    }
+
+
+    private void ResizeGrip_DragDelta(object s, System.Windows.Controls.Primitives.DragDeltaEventArgs e)
+    {
+        Width  = Math.Max(MinWidth,  Width  + e.HorizontalChange);
+        Height = Math.Max(MinHeight, Height + e.VerticalChange);
     }
 
     private void Close_Click(object s, RoutedEventArgs e) => Close();

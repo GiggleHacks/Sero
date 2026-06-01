@@ -1,4 +1,4 @@
-using System.Collections.ObjectModel;
+﻿using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
 using System.Windows;
@@ -401,6 +401,13 @@ public partial class TikTokWindow : Window
     {
         if (e.LeftButton == MouseButtonState.Pressed && WindowState != WindowState.Maximized)
             DragMove();
+    }
+
+
+    private void ResizeGrip_DragDelta(object s, System.Windows.Controls.Primitives.DragDeltaEventArgs e)
+    {
+        Width  = Math.Max(MinWidth,  Width  + e.HorizontalChange);
+        Height = Math.Max(MinHeight, Height + e.VerticalChange);
     }
 
     private void Close_Click(object s, RoutedEventArgs e) => Close();

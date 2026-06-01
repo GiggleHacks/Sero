@@ -70,7 +70,16 @@
                                FontSize="11" FontFamily="Consolas" VerticalAlignment="Center"/>
                     <TextBlock x:Name="TxtProgress" Text="" Foreground="#a6e3a1"
                                FontSize="11" FontFamily="Consolas" VerticalAlignment="Center"
-                               HorizontalAlignment="Right"/>
+                               HorizontalAlignment="Right" Margin="0,0,20,0"/>
+                    <Thumb Width="14" Height="14" HorizontalAlignment="Right" VerticalAlignment="Center"
+                           Margin="0,0,4,0" Cursor="SizeNWSE" DragDelta="ResizeGrip_DragDelta">
+                        <Thumb.Template>
+                            <ControlTemplate TargetType="Thumb">
+                                <Path Data="M2,12 L12,2 M5,12 L12,5 M9,12 L12,9"
+                                      Stroke="#f38ba8" StrokeThickness="1.2" Opacity="0.6"/>
+                            </ControlTemplate>
+                        </Thumb.Template>
+                    </Thumb>
                 </Grid>
             </Border>
 

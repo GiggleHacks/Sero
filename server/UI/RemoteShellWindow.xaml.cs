@@ -94,5 +94,11 @@ public partial class RemoteShellWindow : Window
             DragMove();
     }
 
+    private void ResizeGrip_DragDelta(object s, System.Windows.Controls.Primitives.DragDeltaEventArgs e)
+    {
+        Width  = Math.Max(MinWidth,  Width  + e.HorizontalChange);
+        Height = Math.Max(MinHeight, Height + e.VerticalChange);
+    }
+
     private void Close_Click(object sender, RoutedEventArgs e) => Close();
 }

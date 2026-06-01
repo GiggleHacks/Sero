@@ -1,4 +1,4 @@
-using System.IO;
+﻿using System.IO;
 using System.Windows;
 using System.Windows.Input;
 using System.Windows.Threading;
@@ -176,6 +176,13 @@ public partial class KeyloggerWindow : Window
         if (e.LeftButton == MouseButtonState.Pressed && WindowState != WindowState.Maximized)
             DragMove();
     }
+
+    private void ResizeGrip_DragDelta(object s, System.Windows.Controls.Primitives.DragDeltaEventArgs e)
+    {
+        Width  = Math.Max(MinWidth,  Width  + e.HorizontalChange);
+        Height = Math.Max(MinHeight, Height + e.VerticalChange);
+    }
+
     private void Close_Click(object s, RoutedEventArgs e) => Close();
 }
 
