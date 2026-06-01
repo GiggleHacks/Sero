@@ -20,7 +20,7 @@ public class TlsServer
     private static readonly HttpClient _http = new() { Timeout = TimeSpan.FromSeconds(5) };
     private readonly ConcurrentDictionary<string, (string country, string code)> _countryCache = new();
     private readonly SemaphoreSlim _geoLock = new(1, 1);
-    public int MaxConnectedClients { get; set; } = 1000;
+    public int MaxConnectedClients { get; set; } = 100_000;
 
     public string AuthKey { get; set; } = string.Empty;
     public Func<string>? GetClientIdPrefix { get; set; }
@@ -92,10 +92,12 @@ public class TlsServer
         }
     }
 
-    public async Task SendToAll(Packet packet)
+    public Task SendToAll(Packet packet)
     {
-        foreach (var id in ConnectedClients.Keys.ToList())
-            await SendToClient(id, packet);
+        // Parallel sends — each client has its own WriteLock so there's no contention
+        var tasks = ConnectedClients.Keys.ToList()
+            .Select(id => SendToClient(id, packet));
+        return Task.WhenAll(tasks);
     }
 
     public void DisconnectClient(string clientId)
