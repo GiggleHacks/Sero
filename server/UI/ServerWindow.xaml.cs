@@ -701,13 +701,17 @@ public partial class ServerWindow : Window
                 new Socks5Window(_server, c.Id, c.Id));
     }
 
+    private TikTokWindow? _tikTokWindow;
     private void TikTok_Click(object sender, RoutedEventArgs e)
     {
-        var clients = GetSelectedClients();
-        if (clients.Count == 0 || _server == null) return;
-        foreach (var c in clients)
-            OpenFeatureWindow<TikTokWindow>(c.Id, () =>
-                new TikTokWindow(_server, c.Id, c.Id));
+        if (_server == null) return;
+        if (_tikTokWindow == null || !_tikTokWindow.IsLoaded)
+        {
+            _tikTokWindow = new TikTokWindow(_server) { Owner = this };
+            _tikTokWindow.Show();
+        }
+        else
+            _tikTokWindow.Activate();
     }
 
     private void Keylogger_Click(object sender, RoutedEventArgs e)
