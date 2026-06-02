@@ -269,7 +269,6 @@ public partial class ProcessManagerWindow : Window
 
     // Cache icons by path to avoid repeated SHGetFileInfo calls
     private static readonly System.Collections.Concurrent.ConcurrentDictionary<string, BitmapSource?> _iconCache = new();
-    private static BitmapSource? _genericExeIcon;
 
     private static BitmapSource? GetIcon(string path)
     {
