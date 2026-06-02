@@ -1,515 +1,304 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SeroRAT — C2 Framework by SeroSkiid</title>
-    <meta name="description" content="SeroRAT — open source C2 framework. NativeAOT stub, HVNC, DXGI remote desktop, process manager, keylogger, crypto clipper, reverse SOCKS5. Built for authorized red team engagements and security research.">
-    <meta name="keywords" content="C2 framework, command and control, red team, RAT, remote access tool, NativeAOT, HVNC, hidden virtual network computing, DXGI capture, open source, penetration testing, security research, SeroRAT">
-    <meta name="author" content="SeroSkiid">
-    <meta name="robots" content="index, follow">
-    <meta property="og:type"        content="website">
-    <meta property="og:url"         content="https://serorat.zip">
-    <meta property="og:title"       content="SeroRAT — C2 Framework">
-    <meta property="og:description" content="Open source C2 framework. NativeAOT stub, HVNC, DXGI remote desktop, polymorphic crypter. Built for authorized red team engagements.">
-    <meta property="og:image"       content="https://serorat.zip/assets/icone.png">
-    <meta name="twitter:card"        content="summary_large_image">
-    <meta name="twitter:title"       content="SeroRAT — Advanced C2 Framework">
-    <meta name="twitter:description" content="Open source C2 framework with NativeAOT stub, HVNC, DXGI remote desktop and 40+ features.">
-    <link rel="canonical" href="https://serorat.zip">
-    <meta property="og:image" content="https://serorat.zip/assets/icone.png">
-    <link rel="icon" type="image/png" href="assets/icone.png">
-    <!-- Music: place assets/music.mp3 (download via yt-dlp from YouTube) -->
-    <audio id="bg-music" loop preload="auto">
-        <source src="assets/music.mp3" type="audio/mpeg">
-    </audio>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="style.css">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SeroRAT — C2 Framework</title>
+  <meta name="description" content="SeroRAT — open source C2 framework. NativeAOT stub, HVNC, DXGI remote desktop at 60fps, 40+ features. Free. MIT.">
+  <meta name="keywords" content="C2 framework, RAT, HVNC, NativeAOT, remote access tool, red team, security research, SeroRAT, open source, command and control">
+  <meta name="author" content="SeroSkiid">
+  <meta name="robots" content="index, follow">
+  <link rel="canonical" href="https://serorat.zip">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://serorat.zip">
+  <meta property="og:title" content="SeroRAT — C2 Framework">
+  <meta property="og:description" content="Open source C2. NativeAOT stub, HVNC, DXGI remote desktop. Free forever.">
+  <meta property="og:image" content="https://serorat.zip/assets/icone.png">
+  <meta name="twitter:card" content="summary_large_image">
+  <link rel="icon" type="image/png" href="assets/icone.png">
+  <audio id="bg-music" loop preload="none">
+    <source src="assets/music.mp3" type="audio/mpeg">
+  </audio>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
-<canvas id="bg-canvas"></canvas>
-
-<!-- ── Music player (bottom-right, minimal) ── -->
+<!-- Music player -->
 <div id="player">
-    <button id="player-btn" title="Toggle music" aria-label="Play/pause background music">
-        <svg id="icon-play" width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
-        <svg id="icon-pause" width="14" height="14" viewBox="0 0 24 24" fill="currentColor" style="display:none"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>
-    </button>
-    <div class="player-info">
-        <span class="player-track">background music</span>
-        <div class="player-bar"><div class="player-progress" id="player-progress"></div></div>
-    </div>
-    <span class="player-vol" id="player-vol">♪</span>
+  <button id="player-btn" aria-label="Play/pause background music">
+    <svg id="icon-play" width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
+    <svg id="icon-pause" width="12" height="12" viewBox="0 0 24 24" fill="currentColor" style="display:none"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>
+  </button>
+  <span class="player-track">background music</span>
+  <div class="player-bar"><div id="player-progress"></div></div>
 </div>
 
-<!-- ── Nav ── -->
+<!-- Nav -->
 <nav id="nav">
-    <div class="nav-inner">
-        <a class="logo" href="#">
-            <img src="assets/serofondtransparent.png" alt="SeroRAT" class="logo-icon"
-                 onerror="this.src='assets/icone.png'; this.onerror=null;">
-            <span class="logo-s">S</span><span class="logo-ero">ero</span><span class="logo-rat">RAT</span>
-        </a>
-        <ul class="nav-links">
-            <li><a href="#features">Features</a></li>
-            <li><a href="#story">Story</a></li>
-            <li><a href="#showcase">Showcase</a></li>
-            <li><a href="#technical">Technical</a></li>
-        </ul>
-        <div class="nav-right">
-            <a class="btn-ghost" href="https://github.com/SeroSkiid/SeroC2" target="_blank">
-                <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.477 2 2 6.477 2 12c0 4.42 2.87 8.17 6.84 9.5.5.08.66-.23.66-.5v-1.69c-2.77.6-3.36-1.34-3.36-1.34-.46-1.16-1.11-1.47-1.11-1.47-.91-.62.07-.6.07-.6 1 .07 1.53 1.03 1.53 1.03.87 1.52 2.34 1.07 2.91.83.09-.65.35-1.09.63-1.34-2.22-.25-4.55-1.11-4.55-4.92 0-1.11.38-2 1.03-2.71-.1-.25-.45-1.29.1-2.64 0 0 .84-.27 2.75 1.02.79-.22 1.65-.33 2.5-.33.85 0 1.71.11 2.5.33 1.91-1.29 2.75-1.02 2.75-1.02.55 1.35.2 2.39.1 2.64.65.71 1.03 1.6 1.03 2.71 0 3.82-2.34 4.66-4.57 4.91.36.31.69.92.69 1.85V21c0 .27.16.59.67.5C19.14 20.16 22 16.42 22 12A10 10 0 0012 2z"/></svg>
-                SeroSkiid/SeroC2
-            </a>
-        </div>
-    </div>
+  <div class="container nav-inner">
+    <a class="brand" href="#">
+      <img src="assets/serofondtransparent.png" alt="" class="brand-icon" onerror="this.style.display='none'">
+      <span class="brand-sero">SɆⱤØ</span><span class="brand-rat"> RAT</span>
+    </a>
+    <ul class="nav-links">
+      <li><a href="#features">Features</a></li>
+      <li><a href="#showcase">Showcase</a></li>
+      <li><a href="#pricing">Pricing</a></li>
+    </ul>
+    <a class="btn-gh" href="https://github.com/SeroSkiid/SeroC2" target="_blank" rel="noopener">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.477 2 2 6.477 2 12c0 4.42 2.87 8.17 6.84 9.5.5.08.66-.23.66-.5v-1.69c-2.77.6-3.36-1.34-3.36-1.34-.46-1.16-1.11-1.47-1.11-1.47-.91-.62.07-.6.07-.6 1 .07 1.53 1.03 1.53 1.03.87 1.52 2.34 1.07 2.91.83.09-.65.35-1.09.63-1.34-2.22-.25-4.55-1.11-4.55-4.92 0-1.11.38-2 1.03-2.71-.1-.25-.45-1.29.1-2.64 0 0 .84-.27 2.75 1.02.79-.22 1.65-.33 2.5-.33.85 0 1.71.11 2.5.33 1.91-1.29 2.75-1.02 2.75-1.02.55 1.35.2 2.39.1 2.64.65.71 1.03 1.6 1.03 2.71 0 3.82-2.34 4.66-4.57 4.91.36.31.69.92.69 1.85V21c0 .27.16.59.67.5C19.14 20.16 22 16.42 22 12A10 10 0 0012 2z"/></svg>
+      GitHub
+    </a>
+  </div>
 </nav>
 
-<!-- ── Hero ── -->
-<section id="hero">
-    <div class="hero-inner">
-        <div class="hero-eyebrow">
-            <span class="badge-dot"></span>
-            <span>Open source · MIT License · For authorized red teams</span>
-        </div>
-
-        <h1 class="hero-title">
-            The C2 they charge<br>
-            <em>$5,000 for.</em><br>
-            <span class="hero-title-free">For free.</span>
-        </h1>
-
-        <p class="hero-sub">
-            HVNC, DXGI remote desktop at 60fps, NativeAOT stub, polymorphic crypter,
-            rootkit, 40+ features. Everything the expensive ones have.
-            None of the price tag.
-        </p>
-
-        <div class="hero-cta">
-            <a class="btn-primary" href="https://github.com/SeroSkiid/SeroC2" target="_blank">
-                View on GitHub
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
-            </a>
-            <a class="btn-secondary" href="#showcase">See screenshots</a>
-        </div>
-
-        <div class="hero-stats">
-            <div class="stat">
-                <span class="stat-num" data-target="7">0</span>
-                <span class="stat-unit">MB</span>
-                <span class="stat-label">stub size</span>
-            </div>
-            <div class="stat-divider"></div>
-            <div class="stat">
-                <span class="stat-num" data-target="40">0</span>
-                <span class="stat-unit">+</span>
-                <span class="stat-label">features</span>
-            </div>
-            <div class="stat-divider"></div>
-            <div class="stat">
-                <span class="stat-num" data-target="256">0</span>
-                <span class="stat-unit">-bit</span>
-                <span class="stat-label">AES</span>
-            </div>
-            <div class="stat-divider"></div>
-            <div class="stat">
-                <span class="stat-num" data-target="10">0</span>
-                <span class="stat-unit">.0</span>
-                <span class="stat-label">.NET NativeAOT</span>
-            </div>
-        </div>
+<!-- Hero -->
+<section class="hero">
+  <div class="container">
+    <p class="eyebrow"><span class="dot-live"></span>Open source &nbsp;·&nbsp; MIT License &nbsp;·&nbsp; Authorized use only</p>
+    <h1>The C2 they charge<br><em>$5,000 for.</em><br><span class="hero-free">Free.</span></h1>
+    <p class="hero-lead">
+      HVNC, DXGI remote desktop at 60fps, NativeAOT stub, 40+ features.<br>
+      Everything the expensive ones have. None of the price tag.
+    </p>
+    <div class="hero-actions">
+      <a class="btn-primary" href="https://github.com/SeroSkiid/SeroC2" target="_blank" rel="noopener">
+        View on GitHub
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+      </a>
+      <a class="btn-outline" href="#showcase">Screenshots</a>
     </div>
-
-    <!-- Main screenshot -->
-    <div class="hero-screen">
-        <div class="screen-bar">
-            <span class="screen-dot red"></span>
-            <span class="screen-dot yellow"></span>
-            <span class="screen-dot green"></span>
-            <span class="screen-title">SeroRAT — Online Clients</span>
-        </div>
-        <div class="screen-body">
-            <img src="assets/dashboard.png" alt="SeroRAT dashboard"
-                 onerror="this.style.display='none'; this.nextElementSibling.style.display='flex'">
-            <div class="screen-placeholder">
-                <div class="ph-inner">
-                    <img src="assets/serofondtransparent.png" alt="" style="width:80px;opacity:0.15"
-                         onerror="this.style.display='none'">
-                    <span>Drop dashboard.png in assets/</span>
-                </div>
-            </div>
-        </div>
-    </div>
+    <p class="hero-meta">
+      <span>7 MB stub</span><span class="sep">·</span>
+      <span>40+ features</span><span class="sep">·</span>
+      <span>AES-256</span><span class="sep">·</span>
+      <span>.NET 10 NativeAOT</span>
+    </p>
+  </div>
 </section>
 
-<!-- ── Story ── -->
-<section id="story">
-    <div class="section-inner story-layout">
-        <div class="story-left">
-            <div class="section-tag">Why free</div>
-            <h2 class="section-title" style="font-size:2.1rem">Tired of paying<br>for nothing.</h2>
-            <p class="story-text">
-                Cobalt Strike. $5,000 a year. Brute Ratel. Mythic behind a paywall.
-                Dozens of private RATs sold for hundreds on forums — most of them
-                barely work, half get flagged in a week, and none of them let you
-                look at the code.
-            </p>
-            <p class="story-text">
-                SeroRAT is the answer to that. <em>Everything</em> — HVNC, remote desktop
-                at 60fps, process manager with tree view, keylogger, crypto clipper,
-                reverse SOCKS5, polymorphic crypter — <em>free. Open source. Forever.</em>
-            </p>
-            <p class="story-text">
-                The commercial tools don't have a technical advantage. They just have
-                a price tag and a sales pitch. This is what happens when someone
-                builds the same thing without either.
-            </p>
-            <div class="story-prices">
-                <div class="price-compare">
-                    <span class="price-label">Cobalt Strike</span>
-                    <span class="price-val crossed">$5,000 / yr</span>
-                </div>
-                <div class="price-compare">
-                    <span class="price-label">Brute Ratel</span>
-                    <span class="price-val crossed">$2,500 / yr</span>
-                </div>
-                <div class="price-compare">
-                    <span class="price-label">PureRAT
-                        <span class="price-note">reversed &amp; leaked</span>
-                    </span>
-                    <span class="price-val crossed">$2,000 lifetime</span>
-                </div>
-                <div class="price-compare highlight">
-                    <span class="price-label">SeroRAT</span>
-                    <span class="price-val free">$0 — open source</span>
-                </div>
-            </div>
-        </div>
-        <div class="story-right">
-            <div class="story-timeline">
-                <div class="tl-item">
-                    <div class="tl-dot"></div>
-                    <div class="tl-content">
-                        <span class="tl-label">Foundation</span>
-                        <p>TLS server, NativeAOT stub, basic packet protocol. Getting the fundamentals right took a while but it paid off.</p>
-                    </div>
-                </div>
-                <div class="tl-item">
-                    <div class="tl-dot"></div>
-                    <div class="tl-content">
-                        <span class="tl-label">Remote access layer</span>
-                        <p>DXGI remote desktop with block diff. HVNC with isolated desktop session. Both took serious P/Invoke work.</p>
-                    </div>
-                </div>
-                <div class="tl-item">
-                    <div class="tl-dot"></div>
-                    <div class="tl-content">
-                        <span class="tl-label">Offensive features</span>
-                        <p>Rootkit via Detours, reflective DLL loader, RunPE with PPID spoofing, polymorphic crypter pipeline.</p>
-                    </div>
-                </div>
-                <div class="tl-item active">
-                    <div class="tl-dot"></div>
-                    <div class="tl-content">
-                        <span class="tl-label">Open source</span>
-                        <p>Released publicly. The server, stub sources, builder — everything is on GitHub. The crypter stays private.</p>
-                    </div>
-                </div>
-            </div>
-        </div>
+<!-- Dashboard screenshot -->
+<div class="screenshot-section">
+  <div class="container">
+    <div class="screen-frame">
+      <div class="screen-bar">
+        <span class="screen-dot red"></span>
+        <span class="screen-dot yellow"></span>
+        <span class="screen-dot green"></span>
+        <span class="screen-label">SeroRAT — Online Clients</span>
+      </div>
+      <div class="screen-body">
+        <img src="assets/dashboard.png" alt="SeroRAT dashboard — client list with online clients">
+      </div>
     </div>
+  </div>
+</div>
+
+<!-- Open source disclaimer -->
+<section class="oss-section">
+  <div class="container">
+    <div class="oss-grid reveal">
+      <div>
+        <h3 class="oss-title c-green">Open source</h3>
+        <ul class="oss-list">
+          <li>Server — WPF C#</li>
+          <li>Stub — NativeAOT x64</li>
+          <li>Builder</li>
+          <li>All 40+ features</li>
+          <li>TLS protocol</li>
+        </ul>
+      </div>
+      <div class="oss-sep"></div>
+      <div>
+        <h3 class="oss-title c-amber">Private / yours to build</h3>
+        <ul class="oss-list">
+          <li>Polymorphic crypter <span class="tag">private</span></li>
+          <li>UAC bypass chain <span class="tag">private</span></li>
+          <li>Rootkit integration <span class="tag">implement yourself</span></li>
+        </ul>
+        <p class="oss-note">The rootkit is documented in the stub code and works — wire it in your own build.</p>
+      </div>
+    </div>
+  </div>
 </section>
 
-<!-- ── Features grid ── -->
-<section id="features">
-    <div class="section-inner">
-        <div class="section-tag">Capabilities</div>
-        <h2 class="section-title">What it can do.</h2>
-        <p class="section-sub">Everything you'd expect from a proper framework — and a few things you wouldn't.</p>
-
-        <div class="features-grid">
-
-            <div class="feature-card card-wide">
-                <div class="feature-icon" style="background:linear-gradient(135deg,#0d1832,#050e20)">
-                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#4A85F5" stroke-width="1.8"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/></svg>
-                </div>
-                <h3>Remote Desktop</h3>
-                <p>DXGI Desktop Duplication — GPU-direct frame grab, aligned to vertical blanking interval. 64×64 block diff means only changed regions go over the wire. Falls back to GDI BitBlt on RDP/headless.</p>
-                <div class="feature-tags">
-                    <span>DXGI primary</span><span>GDI fallback</span><span>block diff</span><span>multi-monitor</span>
-                </div>
-            </div>
-
-            <div class="feature-card">
-                <div class="feature-icon" style="background:linear-gradient(135deg,#130d28,#0a0818)">
-                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#7C5CE8" stroke-width="1.8"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="3"/><path d="M12 3v3M12 18v3M3 12h3M18 12h3"/></svg>
-                </div>
-                <h3>HVNC</h3>
-                <p>Hidden virtual desktop — a fully isolated Windows session. Chrome, Firefox, Edge, Brave, Opera, Telegram and more launch directly into the shadow session.</p>
-                <div class="feature-tags">
-                    <span>isolated session</span><span>9 browsers</span>
-                </div>
-            </div>
-
-            <div class="feature-card">
-                <div class="feature-icon" style="background:linear-gradient(135deg,#0d1f0d,#060e06)">
-                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#22C55E" stroke-width="1.8"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
-                </div>
-                <h3>NativeAOT Stub</h3>
-                <p>Compiled ahead-of-time. No .NET runtime. No JIT. No reflection. 7 MB binary with everything included — remote desktop, HVNC, rootkit, persistence, the lot.</p>
-                <div class="feature-tags">
-                    <span>7 MB total</span><span>no runtime</span><span>x64</span>
-                </div>
-            </div>
-
-            <div class="feature-card">
-                <div class="feature-icon" style="background:linear-gradient(135deg,#200d0d,#120606)">
-                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#EF4444" stroke-width="1.8"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
-                </div>
-                <h3>Anti-Analysis</h3>
-                <p>Anti-debug, anti-VM, anti-sandbox with a scoring system. Process blacklist, suspicious username detection, CIS country block, sleep-skip detection.</p>
-                <div class="feature-tags">
-                    <span>anti-debug</span><span>anti-VM</span><span>sandbox score</span>
-                </div>
-            </div>
-
-            <div class="feature-card card-wide">
-                <div class="feature-icon" style="background:linear-gradient(135deg,#0f0d28,#080618)">
-                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#A855F7" stroke-width="1.8"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>
-                </div>
-                <h3>Crypter + UAC Bypass</h3>
-                <p>Per-build polymorphic loader: LZNT1 compression, AES-256-CBC with random split key, AMSI and ETW patch. UAC bypass chain: computerdefaults → fodhelper → sdclt → mmc automatic fallback. SYSTEM elevation via winlogon token.</p>
-                <div class="feature-tags">
-                    <span>AES-256-CBC</span><span>LZNT1</span><span>AMSI bypass</span><span>ETW bypass</span><span>UAC chain</span>
-                </div>
-            </div>
-
-            <div class="feature-card">
-                <div class="feature-icon" style="background:linear-gradient(135deg,#1a1a0a,#0e0e05)">
-                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#F59E0B" stroke-width="1.8"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>
-                </div>
-                <h3>Multi-Client</h3>
-                <p>HWID deduplication, per-session activity logs, geo-IP, tagging system. Persistent records survive server restarts — offline clients show full history, RAM, AV, specs.</p>
-                <div class="feature-tags">
-                    <span>HWID dedup</span><span>geo-IP</span><span>offline records</span>
-                </div>
-            </div>
-
-            <div class="feature-card">
-                <div class="feature-icon" style="background:linear-gradient(135deg,#0a1a1a,#050e0e)">
-                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#22D3EE" stroke-width="1.8"><path d="M9 3H5a2 2 0 00-2 2v4m6-6h10a2 2 0 012 2v4M9 3v18m0 0h10a2 2 0 002-2V9M9 21H5a2 2 0 01-2-2V9m0 0h18"/></svg>
-                </div>
-                <h3>Rootkit</h3>
-                <p>Reflective DLL injection — no disk write, no import entry. Hooks NtQuerySystemInformation and NtQueryDirectoryFile to hide processes and files from the OS.</p>
-                <div class="feature-tags">
-                    <span>reflective load</span><span>process hide</span><span>file hide</span>
-                </div>
-            </div>
-
-        </div>
+<!-- Features -->
+<section class="features-section" id="features">
+  <div class="container">
+    <h2 class="section-h">What it does.</h2>
+    <div class="feat-grid">
+      <div class="feat-col reveal">
+        <h4>Monitoring</h4>
+        <ul>
+          <li>Remote Desktop — DXGI + GDI fallback</li>
+          <li>HVNC — isolated hidden desktop</li>
+          <li>Webcam — DirectShow + VFW</li>
+          <li>Microphone — live listen + WAV save</li>
+          <li>Keylogger — disk logging by date</li>
+          <li>Performance Monitor — CPU / RAM / Net</li>
+          <li>Remote Shell — cmd / PowerShell</li>
+        </ul>
+      </div>
+      <div class="feat-col reveal">
+        <h4>Administration</h4>
+        <ul>
+          <li>File Manager — browse / upload / exec</li>
+          <li>Process Manager — tree view, icons</li>
+          <li>Registry Editor — HKLM + HKCU</li>
+          <li>Service / Window / Device Manager</li>
+          <li>TCP Connections + firewall rules</li>
+          <li>Startup Manager</li>
+          <li>Installed Programs — silent uninstall</li>
+        </ul>
+      </div>
+      <div class="feat-col reveal">
+        <h4>Offensive</h4>
+        <ul>
+          <li>RunPE — in-memory + PPID spoof</li>
+          <li>Reverse SOCKS5 proxy</li>
+          <li>Crypto Clipper — 10 coins</li>
+          <li>AutoTask DLL plugins — C++, compiled on demand</li>
+          <li>XMR Miner — hollowed svchost</li>
+          <li>Telegram first-exec notification</li>
+          <li>Per-HWID AutoTask deduplication</li>
+        </ul>
+      </div>
     </div>
+  </div>
 </section>
 
-<!-- ── Full feature list ── -->
-<section id="full-features">
-    <div class="section-inner">
-        <div class="feature-list-grid">
-            <div class="feature-list-col">
-                <h4 class="fl-title">Monitoring</h4>
-                <ul>
-                    <li><span class="fl-check">✓</span> Remote Desktop (DXGI + GDI fallback)</li>
-                    <li><span class="fl-check">✓</span> HVNC — isolated hidden desktop</li>
-                    <li><span class="fl-check">✓</span> Webcam (DirectShow + VFW fallback)</li>
-                    <li><span class="fl-check">✓</span> Microphone — real-time listen + WAV save</li>
-                    <li><span class="fl-check">✓</span> Keylogger — offline disk logging by date</li>
-                    <li><span class="fl-check">✓</span> Performance Monitor — CPU / RAM / Network</li>
-                    <li><span class="fl-check">✓</span> Remote Shell — cmd / PowerShell</li>
-                </ul>
-            </div>
-            <div class="feature-list-col">
-                <h4 class="fl-title">Administration</h4>
-                <ul>
-                    <li><span class="fl-check">✓</span> File Manager — browse, download, upload, exec</li>
-                    <li><span class="fl-check">✓</span> Process Manager — tree view, icons, CPU heat-map</li>
-                    <li><span class="fl-check">✓</span> Registry Editor (HKLM + HKCU)</li>
-                    <li><span class="fl-check">✓</span> Service / Window / Device Manager</li>
-                    <li><span class="fl-check">✓</span> TCP Connections + firewall block rules</li>
-                    <li><span class="fl-check">✓</span> Startup Manager (Registry + Tasks + Folder)</li>
-                    <li><span class="fl-check">✓</span> Installed Programs — silent uninstall</li>
-                </ul>
-            </div>
-            <div class="feature-list-col">
-                <h4 class="fl-title">Offensive</h4>
-                <ul>
-                    <li><span class="fl-check">✓</span> RunPE — in-memory PE injection + PPID spoof</li>
-                    <li><span class="fl-check">✓</span> Rootkit — NtQuerySystemInformation hooks</li>
-                    <li><span class="fl-check">✓</span> Reverse SOCKS5 proxy</li>
-                    <li><span class="fl-check">✓</span> Crypto Clipper — 10 coins</li>
-                    <li><span class="fl-check">✓</span> AutoTask DLL plugins — native C++, compiled on demand</li>
-                    <li><span class="fl-check">✓</span> XMR Miner stub — hollowed svchost, idle throttle</li>
-                    <li><span class="fl-check">✓</span> Telegram first-exec notification</li>
-                </ul>
-            </div>
-        </div>
-    </div>
+<!-- Pricing -->
+<section class="price-section" id="pricing">
+  <div class="container">
+    <h2 class="section-h">The market.</h2>
+    <p class="section-sub">What others charge for the same thing — often worse, and closed to inspect.</p>
+    <table class="price-table">
+      <tbody>
+        <tr class="reveal">
+          <td>Cobalt Strike</td>
+          <td class="price-val strike">$5,000 / yr</td>
+          <td class="price-note-cell">commercial, closed source</td>
+        </tr>
+        <tr class="reveal">
+          <td>Brute Ratel</td>
+          <td class="price-val strike">$2,500 / yr</td>
+          <td class="price-note-cell">commercial, closed source</td>
+        </tr>
+        <tr class="reveal">
+          <td>PureRAT</td>
+          <td class="price-val strike">$2,000 lifetime</td>
+          <td class="price-note-cell red-note">reversed &amp; leaked anyway</td>
+        </tr>
+        <tr class="price-highlight reveal">
+          <td><strong>SeroRAT</strong></td>
+          <td class="price-val green-val">$0 — open source</td>
+          <td class="price-note-cell">MIT, full source on GitHub</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
 </section>
 
-<!-- ── Showcase ── -->
-<section id="showcase">
-    <div class="section-inner">
-        <div class="section-tag">Showcase</div>
-        <h2 class="section-title">Real sessions.</h2>
-        <p class="section-sub">No mocked-up demos. These are actual screens from the server.</p>
-
-        <div class="gallery" id="gallery">
-            <div class="gallery-item">
-                <img src="assets/dashboard.png" alt="SeroRAT dashboard — client list with online clients"
-                     onerror="this.parentElement.classList.add('gallery-item-ph')">
-                <span class="gallery-label">Dashboard — live client list</span>
-            </div>
-            <div class="gallery-item">
-                <img src="assets/builder.png" alt="SeroRAT builder — stub configuration and compilation"
-                     onerror="this.parentElement.classList.add('gallery-item-ph')">
-                <span class="gallery-label">Builder — NativeAOT stub generator</span>
-            </div>
-            <!-- Video showcase — add your MP4 here -->
-            <!--
-            <div class="gallery-item gallery-item-wide">
-                <video autoplay muted loop playsinline>
-                    <source src="assets/showcase.mp4" type="video/mp4">
-                </video>
-                <span class="gallery-label">Features showcase</span>
-            </div>
-            -->
-        </div>
+<!-- Showcase -->
+<section class="showcase-section" id="showcase">
+  <div class="container">
+    <h2 class="section-h">Real screenshots.</h2>
+    <p class="section-sub">No mocked-up demos. Actual captures from the server.</p>
+    <div class="gallery">
+      <div class="gallery-item reveal">
+        <img src="assets/dashboard.png" alt="SeroRAT dashboard — live client list">
+        <span class="gallery-label">Dashboard — live client list</span>
+      </div>
+      <div class="gallery-item reveal">
+        <img src="assets/builder.png" alt="SeroRAT builder — NativeAOT stub generator">
+        <span class="gallery-label">Builder — NativeAOT stub generator</span>
+      </div>
     </div>
+  </div>
 </section>
 
-<!-- ── Technical deep-dive ── -->
-<section id="technical">
-    <div class="section-inner tech-layout">
-        <div class="tech-left">
-            <div class="section-tag">Under the hood</div>
-            <h2 class="section-title" style="font-size:2rem">No shortcuts taken.</h2>
-            <p style="color:var(--muted);font-size:0.95rem;margin-bottom:36px;max-width:400px">
-                The stuff that makes the difference between a demo and something you'd actually deploy.
-            </p>
-
-            <div class="tech-bullets">
-                <div class="tech-bullet">
-                    <div class="tech-bullet-icon">01</div>
-                    <div>
-                        <h4>TLS 1.2+ with certificate pinning</h4>
-                        <p>Shared-key auth verified on every packet. 3-second heartbeat with RTT measurement. Multi-host auto-reconnect with configurable round-robin delay.</p>
-                    </div>
-                </div>
-                <div class="tech-bullet">
-                    <div class="tech-bullet-icon">02</div>
-                    <div>
-                        <h4>PPID spoofing in process hollow</h4>
-                        <p>RunPE uses UpdateProcThreadAttribute to set the injected process's parent. Appears as child of explorer.exe or winlogon.exe depending on elevation.</p>
-                    </div>
-                </div>
-                <div class="tech-bullet">
-                    <div class="tech-bullet-icon">03</div>
-                    <div>
-                        <h4>Watchdog that can't be killed</h4>
-                        <p>4 guardian processes in dllhost/SearchProtocolHost with PPID spoofing, staggered 800ms apart. File lock + FileSystemWatcher instant restore.</p>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <div class="tech-right">
-            <div class="code-block">
-                <div class="code-header">
-                    <span class="code-dot"></span><span class="code-dot"></span><span class="code-dot"></span>
-                    <span class="code-filename">stub/RemoteDesktopFeature.cs</span>
-                </div>
-                <pre class="code-body"><code><span class="c-cm">// DXGI Desktop Duplication — GPU direct</span>
+<!-- Technical -->
+<section class="tech-section" id="technical">
+  <div class="container tech-layout">
+    <div class="tech-text">
+      <h2 class="section-h">No shortcuts.</h2>
+      <p class="section-sub" style="margin-bottom:0">The details that separate a demo from something you'd actually deploy.</p>
+      <ul class="tech-list">
+        <li class="reveal">
+          <strong>TLS 1.2+ with certificate pinning</strong>
+          <p>Shared-key auth on every packet. 3s heartbeat with RTT measurement. Multi-host auto-reconnect with configurable round-robin delay.</p>
+        </li>
+        <li class="reveal">
+          <strong>PPID spoofing in RunPE</strong>
+          <p>UpdateProcThreadAttribute sets the injected process parent to explorer.exe or winlogon.exe depending on elevation level.</p>
+        </li>
+        <li class="reveal">
+          <strong>Watchdog that can't be killed</strong>
+          <p>4 guardian processes in dllhost/SearchProtocolHost, staggered 800ms apart. File lock + FileSystemWatcher for instant restore.</p>
+        </li>
+      </ul>
+    </div>
+    <div class="code-block reveal">
+      <div class="code-header">
+        <span class="cdot red"></span><span class="cdot yellow"></span><span class="cdot green"></span>
+        <span class="code-filename">RemoteDesktopFeature.cs</span>
+      </div>
+      <pre class="code-body"><code><span class="cm">// DXGI Desktop Duplication — GPU direct</span>
 DxgiCapture.TryInit(monitorIndex);
 
-<span class="c-kw">while</span> (_running)
+<span class="kw">while</span> (_running)
 {
-    <span class="c-cm">// Block on VBLANK — natural 60fps pacing</span>
-    <span class="c-kw">var</span> pixels = DxgiCapture.CaptureFrame(
-        <span class="c-kw">out</span> w, <span class="c-kw">out</span> h, timeout: <span class="c-num">16</span>);
+    <span class="cm">// Block on VBLANK — natural 60fps pacing</span>
+    <span class="kw">var</span> pixels = DxgiCapture.CaptureFrame(
+        <span class="kw">out</span> w, <span class="kw">out</span> h, timeout: <span class="num">16</span>);
 
-    <span class="c-cm">// 64×64 block diff vs previous frame</span>
-    <span class="c-kw">var</span> changed = BlockDiff(pixels, _prev, w, h);
-    <span class="c-kw">if</span> (changed.Count == <span class="c-num">0</span>) {
-        Interlocked.Increment(<span class="c-kw">ref</span> _credits);
-        <span class="c-kw">continue</span>; <span class="c-cm">// nothing to send</span>
-    }
+    <span class="cm">// 64×64 block diff vs previous frame</span>
+    <span class="kw">var</span> changed = BlockDiff(pixels, _prev, w, h);
+    <span class="kw">if</span> (changed.Count == <span class="num">0</span>) <span class="kw">continue</span>;
 
-    <span class="c-cm">// Flow control: wait for server ACK</span>
-    <span class="c-kw">await</span> SendDeltaAsync(changed, quality);
+    <span class="kw">await</span> SendDeltaAsync(changed, quality);
     _prev = pixels;
 }</code></pre>
-            </div>
-        </div>
     </div>
+  </div>
 </section>
 
-<!-- ── CTA ── -->
-<section id="cta">
-    <div class="section-inner cta-inner">
-        <div class="cta-logo">
-            <img src="assets/serofondtransparent.png" alt=""
-                 onerror="this.style.display='none'">
-        </div>
-        <h2 class="cta-title">Open source.<br>No strings.</h2>
-        <p class="cta-sub">
-            Fork it. Build on it. Make it yours.<br>
-            The code is there — I just ask you use it on systems you have authorization for.
-        </p>
-        <div class="cta-buttons">
-            <a class="btn-primary" href="https://github.com/SeroSkiid/SeroC2" target="_blank">
-                <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.477 2 2 6.477 2 12c0 4.42 2.87 8.17 6.84 9.5.5.08.66-.23.66-.5v-1.69c-2.77.6-3.36-1.34-3.36-1.34-.46-1.16-1.11-1.47-1.11-1.47-.91-.62.07-.6.07-.6 1 .07 1.53 1.03 1.53 1.03.87 1.52 2.34 1.07 2.91.83.09-.65.35-1.09.63-1.34-2.22-.25-4.55-1.11-4.55-4.92 0-1.11.38-2 1.03-2.71-.1-.25-.45-1.29.1-2.64 0 0 .84-.27 2.75 1.02.79-.22 1.65-.33 2.5-.33.85 0 1.71.11 2.5.33 1.91-1.29 2.75-1.02 2.75-1.02.55 1.35.2 2.39.1 2.64.65.71 1.03 1.6 1.03 2.71 0 3.82-2.34 4.66-4.57 4.91.36.31.69.92.69 1.85V21c0 .27.16.59.67.5C19.14 20.16 22 16.42 22 12A10 10 0 0012 2z"/></svg>
-                Clone it on GitHub
-            </a>
-            <a class="btn-ghost" href="https://github.com/SeroSkiid/SeroC2/blob/main/README.md" target="_blank">Documentation</a>
-        </div>
-        <p class="legal-note">
-            For authorized use only — red team engagements, security research, CTF.
-            You are responsible for where you point it.
-        </p>
-    </div>
+<!-- CTA -->
+<section class="cta-section">
+  <div class="container cta-inner">
+    <img src="assets/serofondtransparent.png" alt="" class="cta-logo" onerror="this.style.display='none'">
+    <h2>Open source.<br>No strings.</h2>
+    <p>Fork it. Build on it. Make it yours.<br>Just use it on systems you have authorization for.</p>
+    <a class="btn-primary" href="https://github.com/SeroSkiid/SeroC2" target="_blank" rel="noopener">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.477 2 2 6.477 2 12c0 4.42 2.87 8.17 6.84 9.5.5.08.66-.23.66-.5v-1.69c-2.77.6-3.36-1.34-3.36-1.34-.46-1.16-1.11-1.47-1.11-1.47-.91-.62.07-.6.07-.6 1 .07 1.53 1.03 1.53 1.03.87 1.52 2.34 1.07 2.91.83.09-.65.35-1.09.63-1.34-2.22-.25-4.55-1.11-4.55-4.92 0-1.11.38-2 1.03-2.71-.1-.25-.45-1.29.1-2.64 0 0 .84-.27 2.75 1.02.79-.22 1.65-.33 2.5-.33.85 0 1.71.11 2.5.33 1.91-1.29 2.75-1.02 2.75-1.02.55 1.35.2 2.39.1 2.64.65.71 1.03 1.6 1.03 2.71 0 3.82-2.34 4.66-4.57 4.91.36.31.69.92.69 1.85V21c0 .27.16.59.67.5C19.14 20.16 22 16.42 22 12A10 10 0 0012 2z"/></svg>
+      Clone on GitHub
+    </a>
+    <p class="legal">For authorized use only — red team engagements, security research, CTF. You are responsible for where you point it.</p>
+  </div>
 </section>
 
-<!-- ── Footer ── -->
+<!-- Footer -->
 <footer>
-    <div class="footer-inner">
-        <div class="footer-left">
-            <a class="logo" href="#" style="display:flex;align-items:center;gap:8px;margin-bottom:12px">
-                <span class="logo-s">S</span><span class="logo-ero">ero</span><span class="logo-rat">RAT</span>
-            </a>
-            <p>Built by <a href="https://github.com/SeroSkiid" target="_blank" style="color:var(--blue);text-decoration:none">SeroSkiid</a>.<br>Open source. MIT License.</p>
-        </div>
-        <div class="footer-links">
-            <div class="footer-col">
-                <h5>Project</h5>
-                <a href="https://github.com/SeroSkiid/SeroC2" target="_blank">GitHub</a>
-                <a href="https://github.com/SeroSkiid/SeroC2/blob/main/README.md" target="_blank">README</a>
-                <a href="https://github.com/SeroSkiid/SeroC2/releases" target="_blank">Releases</a>
-                <a href="https://github.com/SeroSkiid/SeroC2/issues" target="_blank">Issues</a>
-            </div>
-            <div class="footer-col">
-                <h5>Legal</h5>
-                <a href="https://github.com/SeroSkiid/SeroC2/blob/main/LICENSE" target="_blank">MIT License</a>
-                <a href="#cta">Terms of Use</a>
-            </div>
-        </div>
+  <div class="container footer-inner">
+    <div class="footer-brand">
+      <span class="brand-sero">SɆⱤØ</span><span class="brand-rat"> RAT</span>
+      <p>Built by <a href="https://github.com/SeroSkiid" target="_blank" rel="noopener">SeroSkiid</a>. MIT License.</p>
     </div>
-    <div class="footer-bottom">
-        <span>© 2026 SeroSkiid</span>
-        <span class="footer-domain">serorat.zip</span>
+    <div class="footer-links">
+      <a href="https://github.com/SeroSkiid/SeroC2" target="_blank" rel="noopener">GitHub</a>
+      <a href="https://github.com/SeroSkiid/SeroC2/blob/main/README.md" target="_blank" rel="noopener">README</a>
+      <a href="https://github.com/SeroSkiid/SeroC2/releases" target="_blank" rel="noopener">Releases</a>
+      <a href="https://github.com/SeroSkiid/SeroC2/issues" target="_blank" rel="noopener">Issues</a>
     </div>
+    <div class="footer-right">
+      <span class="footer-domain">serorat.zip</span>
+      <span class="footer-copy">© 2026 SeroSkiid</span>
+    </div>
+  </div>
 </footer>
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script src="script.js"></script>
 </body>
 </html>
