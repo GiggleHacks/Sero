@@ -996,7 +996,8 @@ public partial class ServerWindow : Window
         if (_server == null) return;
         if (_tikTokWindow == null || !_tikTokWindow.IsLoaded)
         {
-            var selectedIds = GridClients.SelectedItems.Cast<ConnectedClient>().Select(c => c.Id);
+            // Materialize now — lazy LINQ over SelectedItems would evaluate after window opens
+            var selectedIds = GridClients.SelectedItems.Cast<ConnectedClient>().Select(c => c.Id).ToList();
             _tikTokWindow = new TikTokWindow(_server, selectedIds) { Owner = this };
             _tikTokWindow.Show();
         }
