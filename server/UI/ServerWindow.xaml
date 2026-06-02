@@ -279,33 +279,8 @@
                             BorderThickness="1" BorderBrush="#1C1E30"
                             VerticalAlignment="Center" HorizontalAlignment="Center">
                         <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                            <Grid Width="16" Height="16" VerticalAlignment="Center" Margin="0,0,6,0">
-                                <Ellipse x:Name="ServerPulse" Stroke="#EF4444" StrokeThickness="1.2"
-                                         Fill="Transparent" Opacity="0" RenderTransformOrigin="0.5,0.5">
-                                    <Ellipse.RenderTransform>
-                                        <ScaleTransform x:Name="PulseScale"/>
-                                    </Ellipse.RenderTransform>
-                                </Ellipse>
-                                <Ellipse x:Name="ServerDot" Width="7" Height="7" Fill="#EF4444"
-                                         HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                                <Grid.Triggers>
-                                    <EventTrigger RoutedEvent="Grid.Loaded">
-                                        <BeginStoryboard>
-                                            <Storyboard RepeatBehavior="Forever">
-                                                <DoubleAnimation Storyboard.TargetName="PulseScale"
-                                                                 Storyboard.TargetProperty="ScaleX"
-                                                                 From="0.4" To="2.2" Duration="0:0:1.4"/>
-                                                <DoubleAnimation Storyboard.TargetName="PulseScale"
-                                                                 Storyboard.TargetProperty="ScaleY"
-                                                                 From="0.4" To="2.2" Duration="0:0:1.4"/>
-                                                <DoubleAnimation Storyboard.TargetName="ServerPulse"
-                                                                 Storyboard.TargetProperty="Opacity"
-                                                                 From="0.65" To="0.0" Duration="0:0:1.4"/>
-                                            </Storyboard>
-                                        </BeginStoryboard>
-                                    </EventTrigger>
-                                </Grid.Triggers>
-                            </Grid>
+                            <Ellipse x:Name="ServerDot" Width="8" Height="8" Fill="#EF4444"
+                                     VerticalAlignment="Center" Margin="0,0,6,0"/>
                             <TextBlock x:Name="TxtServerStatus" Text="Stopped"
                                        Foreground="#606880" FontSize="12" />
                             <TextBlock x:Name="TxtClientCount" Text="  ·  0 clients"
@@ -1518,10 +1493,6 @@
                                                             <GradientStop Color="#704A85F5" Offset="1"/>
                                                         </LinearGradientBrush>
                                                     </Border.BorderBrush>
-                                                    <Border.Effect>
-                                                        <DropShadowEffect Color="#2CA5E0" BlurRadius="22"
-                                                                          ShadowDepth="0" Opacity="0.30"/>
-                                                    </Border.Effect>
                                                     <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
                                                         <Image Source="/telegram.png" Width="24" Height="24"
                                                                VerticalAlignment="Center" Margin="0,0,12,0"
@@ -1606,9 +1577,7 @@
                                                     Background="#0A1E10" BorderBrush="#1A5E28" BorderThickness="1"
                                                     Padding="8,3" Visibility="Collapsed" VerticalAlignment="Center">
                                                 <StackPanel Orientation="Horizontal">
-                                                    <Ellipse Width="5" Height="5" Fill="#22C55E" VerticalAlignment="Center" Margin="0,0,5,0">
-                                                        <Ellipse.Effect><DropShadowEffect Color="#22C55E" BlurRadius="6" ShadowDepth="0" Opacity="1"/></Ellipse.Effect>
-                                                    </Ellipse>
+                                                    <Ellipse Width="5" Height="5" Fill="#22C55E" VerticalAlignment="Center" Margin="0,0,5,0"/>
                                                     <TextBlock Text="INTERCEPTING" Foreground="#22C55E" FontSize="9" FontWeight="Bold" FontFamily="Consolas"/>
                                                 </StackPanel>
                                             </Border>

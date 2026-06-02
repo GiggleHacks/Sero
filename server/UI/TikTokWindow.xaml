@@ -44,7 +44,6 @@
                                 Padding="6,2" Visibility="Collapsed" VerticalAlignment="Center">
                             <StackPanel Orientation="Horizontal">
                                 <Ellipse Width="5" Height="5" Fill="#22C55E" VerticalAlignment="Center" Margin="0,0,5,0">
-                                    <Ellipse.Effect><DropShadowEffect Color="#22C55E" BlurRadius="4" ShadowDepth="0" Opacity="0.9"/></Ellipse.Effect>
                                 </Ellipse>
                                 <TextBlock x:Name="TxtBadge" Text="POSTING" Foreground="#22C55E" FontSize="9" FontWeight="Bold" FontFamily="Segoe UI"/>
                             </StackPanel>

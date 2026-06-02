@@ -74,9 +74,6 @@
                                         <Thumb.Template>
                                             <ControlTemplate TargetType="Thumb">
                                                 <Ellipse x:Name="tb" Width="12" Height="12" Fill="#4A85F5">
-                                                    <Ellipse.Effect>
-                                                        <DropShadowEffect Color="#4A85F5" BlurRadius="5" ShadowDepth="0" Opacity="0.5"/>
-                                                    </Ellipse.Effect>
                                                 </Ellipse>
                                                 <ControlTemplate.Triggers>
                                                     <Trigger Property="IsMouseOver" Value="True">
@@ -161,7 +158,6 @@
                                 Padding="6,2" Visibility="Collapsed" VerticalAlignment="Center">
                             <StackPanel Orientation="Horizontal">
                                 <Ellipse Width="5" Height="5" Fill="#22C55E" VerticalAlignment="Center" Margin="0,0,5,0">
-                                    <Ellipse.Effect><DropShadowEffect Color="#22C55E" BlurRadius="4" ShadowDepth="0" Opacity="0.9"/></Ellipse.Effect>
                                 </Ellipse>
                                 <TextBlock Text="LIVE" Foreground="#22C55E" FontSize="9" FontWeight="Bold" FontFamily="Segoe UI"/>
                             </StackPanel>
