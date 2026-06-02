@@ -977,7 +977,8 @@ public partial class ServerWindow : Window
         if (_server == null) return;
         if (_tikTokWindow == null || !_tikTokWindow.IsLoaded)
         {
-            _tikTokWindow = new TikTokWindow(_server) { Owner = this };
+            var selectedIds = GridClients.SelectedItems.Cast<ConnectedClient>().Select(c => c.Id);
+            _tikTokWindow = new TikTokWindow(_server, selectedIds) { Owner = this };
             _tikTokWindow.Show();
         }
         else

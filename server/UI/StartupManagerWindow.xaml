@@ -39,6 +39,7 @@
             <Style.Triggers>
                 <Trigger Property="IsSelected" Value="True">
                     <Setter Property="Background" Value="Transparent"/>
+                    <Setter Property="Foreground" Value="#4A85F5"/>
                 </Trigger>
             </Style.Triggers>
         </Style>
@@ -109,13 +110,6 @@
                 </Grid>
             </Border>
 
-            <!-- Toolbar -->
-            <Border DockPanel.Dock="Top" Background="#0A0B14" BorderBrush="#181A28" BorderThickness="0,0,0,1" Padding="12,6">
-                <StackPanel Orientation="Horizontal">
-                    <Button Content="Delete Entry" Height="27" Padding="14,0" Margin="0,0,0,0"
-                            Style="{StaticResource SRedBtn}" FontSize="11" Click="Delete_Click"/>
-                </StackPanel>
-            </Border>
 
             <!-- Status bar -->
             <Border DockPanel.Dock="Bottom" Height="26" Background="#0C0D18"

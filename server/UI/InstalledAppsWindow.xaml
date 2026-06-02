@@ -25,11 +25,7 @@
                 </Grid>
             </Border>
             <Border DockPanel.Dock="Top" Background="#0A0B14" BorderBrush="#181A28" BorderThickness="0,0,0,1" Padding="12,6">
-                <Grid>
-                    <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
-                    <TextBox x:Name="TxtSearch" Grid.Column="0" Height="28" Style="{StaticResource STxt}" FontSize="12" TextChanged="TxtSearch_Changed"/>
-                    <Button Grid.Column="1" Content="Uninstall" Height="28" Padding="16,0" Margin="6,0,0,0" Style="{StaticResource SRedBtn}" FontSize="11" Click="BtnUninstall_Click"/>
-                </Grid>
+                <TextBox x:Name="TxtSearch" Height="28" Style="{StaticResource STxt}" FontSize="12" TextChanged="TxtSearch_Changed"/>
             </Border>
             <Border DockPanel.Dock="Bottom" Height="26" Background="#0C0D18" BorderBrush="#181A28" BorderThickness="0,1,0,0">
                 <Grid>
@@ -47,6 +43,13 @@
                       SelectionMode="Single" CanUserAddRows="False"
                       VirtualizingStackPanel.IsVirtualizing="True"
                       ColumnHeaderStyle="{StaticResource SColHeader}">
+                <DataGrid.ContextMenu>
+                    <ContextMenu>
+                        <MenuItem Header="✖ Uninstall" Click="BtnUninstall_Click"/>
+                        <Separator/>
+                        <MenuItem Header="⟳ Refresh"   Click="BtnRefresh_Click"/>
+                    </ContextMenu>
+                </DataGrid.ContextMenu>
                 <DataGrid.Columns>
                     <DataGridTextColumn Header="NAME"         Binding="{Binding Name}"        Width="*"/>
                     <DataGridTextColumn Header="VERSION"      Binding="{Binding Version}"     Width="100"/>

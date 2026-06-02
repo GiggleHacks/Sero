@@ -48,7 +48,7 @@
                     </ControlTemplate>
                 </Setter.Value>
             </Setter>
-            <Style.Triggers><Trigger Property="IsSelected" Value="True"><Setter Property="Background" Value="Transparent"/></Trigger></Style.Triggers>
+            <Style.Triggers><Trigger Property="IsSelected" Value="True"><Setter Property="Background" Value="Transparent"/><Setter Property="Foreground" Value="#4A85F5"/></Trigger></Style.Triggers>
         </Style>
         <Style TargetType="ContextMenu">
             <Setter Property="Background" Value="#0F1020"/><Setter Property="BorderBrush" Value="#1E2038"/>
@@ -100,16 +100,6 @@
                 </Grid>
             </Border>
 
-            <!-- Action toolbar -->
-            <Border DockPanel.Dock="Top" Background="#090A12" BorderBrush="#181A28" BorderThickness="0,0,0,1" Padding="12,5">
-                <StackPanel Orientation="Horizontal">
-                    <Button Content="&#x2795; New Key"   Height="26" Padding="10,0" Margin="0,0,4,0" Style="{StaticResource SBtn}"    FontSize="11" Click="BtnNewKey_Click"/>
-                    <Button Content="&#x2795; New Value" Height="26" Padding="10,0" Margin="0,0,8,0" Style="{StaticResource SBtn}"    FontSize="11" Click="BtnNewValue_Click"/>
-                    <Rectangle Width="1" Height="16" Fill="#1E2038" VerticalAlignment="Center" Margin="0,0,8,0"/>
-                    <Button Content="&#x2796; Delete Key"   Height="26" Padding="10,0" Margin="0,0,4,0" Style="{StaticResource SRedBtn}" FontSize="11" Click="BtnDeleteKey_Click"/>
-                    <Button Content="&#x2796; Delete Value" Height="26" Padding="10,0" Margin="0,0,0,0" Style="{StaticResource SRedBtn}" FontSize="11" Click="BtnDeleteValue_Click"/>
-                </StackPanel>
-            </Border>
 
             <!-- Status bar -->
             <Border DockPanel.Dock="Bottom" Height="26" Background="#0C0D18" BorderBrush="#181A28" BorderThickness="0,1,0,0">

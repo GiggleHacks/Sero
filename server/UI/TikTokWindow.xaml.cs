@@ -17,7 +17,7 @@ public class TikTokClientVM : INotifyPropertyChanged
     public string Id    { get; set; } = "";
     public string Label { get; set; } = "";
 
-    private bool   _selected = true;
+    private bool   _selected = false;
     private string _status   = "—";
     private string _cookie   = "";
 
@@ -58,7 +58,7 @@ public partial class TikTokWindow : Window
     private int  _sentCount;
     private CancellationTokenSource? _cts;
 
-    public TikTokWindow(TlsServer server)
+    public TikTokWindow(TlsServer server, IEnumerable<string>? selectedIds = null)
     {
         InitializeComponent();
         _server = server;
@@ -66,9 +66,14 @@ public partial class TikTokWindow : Window
         ClientList.ItemsSource  = _clients;
         GridAccounts.ItemsSource = _clients;
 
-        // Populate from currently connected clients
+        // Populate from currently connected clients — pre-select only those chosen in ServerWindow
+        var preSelected = selectedIds?.ToHashSet(StringComparer.OrdinalIgnoreCase) ?? [];
         foreach (var c in _server.ConnectedClients.Values)
+        {
             AddClient(c);
+            if (preSelected.Count > 0 && _clients.Count > 0)
+                _clients[^1].Selected = preSelected.Contains(c.Id);
+        }
 
         // Track connects/disconnects
         _server.ClientConnected    += OnClientConnected;

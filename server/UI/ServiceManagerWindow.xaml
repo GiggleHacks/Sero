@@ -43,6 +43,18 @@
                       SelectionMode="Single" CanUserAddRows="False"
                       VirtualizingStackPanel.IsVirtualizing="True"
                       ColumnHeaderStyle="{StaticResource SColHeader}">
+                <DataGrid.ContextMenu>
+                    <ContextMenu>
+                        <MenuItem Header="▶ Start"    Click="BtnStart_Click"/>
+                        <MenuItem Header="⏹ Stop"     Click="BtnStop_Click"/>
+                        <MenuItem Header="↺ Restart"  Click="BtnRestart_Click"/>
+                        <Separator/>
+                        <MenuItem Header="⊘ Disable"  Click="BtnDisable_Click"/>
+                        <MenuItem Header="✖ Delete"   Click="BtnDelete_Click"/>
+                        <Separator/>
+                        <MenuItem Header="⟳ Refresh"  Click="BtnRefresh_Click"/>
+                    </ContextMenu>
+                </DataGrid.ContextMenu>
                 <DataGrid.Columns>
                     <DataGridTextColumn Header="NAME"         Binding="{Binding Name}"        Width="180"/>
                     <DataGridTextColumn Header="DISPLAY NAME" Binding="{Binding DisplayName}" Width="*"/>

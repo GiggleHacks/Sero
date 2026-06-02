@@ -169,7 +169,7 @@ internal static class RemoteDesktopFeature
         EnsureGdiplus();
         _monitors = EnumMonitors();
 
-        Interlocked.Exchange(ref _pendingRequests, 2); // 2 credits: pipeline one frame ahead on LAN
+        Interlocked.Exchange(ref _pendingRequests, 3); // 3 credits: pipeline frames ahead on LAN for smoother playback
         _running = true;
         _thread = new Thread(CaptureLoop)
         {

