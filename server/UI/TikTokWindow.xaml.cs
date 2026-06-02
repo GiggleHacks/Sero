@@ -232,8 +232,8 @@ public partial class TikTokWindow : Window
 
     private async void BtnCdpSignup_Click(object s, RoutedEventArgs e)
     {
-        var selected = _clients.ToList();
-        if (selected.Count == 0) { TxtStatus.Text = "No clients connected."; return; }
+        var selected = _clients.Where(c => c.Selected).ToList();
+        if (selected.Count == 0) { TxtStatus.Text = "No clients selected — check the boxes first."; return; }
 
         BtnCdpSignup.IsEnabled = false;
         BtnCdpSignup.Content   = $"⏳ Running ({selected.Count})…";
@@ -252,8 +252,8 @@ public partial class TikTokWindow : Window
 
     private async void BtnStart_Click(object s, RoutedEventArgs e)
     {
-        var accounts = _clients.Where(c => c.HasCookie).ToList();
-        if (accounts.Count == 0) { TxtStatus.Text = "No accounts with cookies yet — run Auto-Signup first."; return; }
+        var accounts = _clients.Where(c => c.HasCookie && c.Selected).ToList();
+        if (accounts.Count == 0) { TxtStatus.Text = "No selected accounts with cookies — check boxes or run Auto-Signup."; return; }
         var comments = GetComments();
         if (comments.Length == 0) { TxtStatus.Text = "Enter at least one comment."; return; }
         if (string.IsNullOrEmpty(TxtVideoId.Text.Trim())) { TxtStatus.Text = "Enter a video URL or ID."; return; }
@@ -323,8 +323,8 @@ public partial class TikTokWindow : Window
 
     private async void BtnPostOnce_Click(object s, RoutedEventArgs e)
     {
-        var accounts = _clients.Where(c => c.HasCookie).ToList();
-        if (accounts.Count == 0) { TxtStatus.Text = "No accounts yet."; return; }
+        var accounts = _clients.Where(c => c.HasCookie && c.Selected).ToList();
+        if (accounts.Count == 0) { TxtStatus.Text = "No selected accounts yet."; return; }
         var comments = GetComments();
         if (comments.Length == 0) { TxtStatus.Text = "Enter a comment."; return; }
         if (string.IsNullOrEmpty(TxtVideoId.Text.Trim())) { TxtStatus.Text = "Enter a video URL or ID."; return; }

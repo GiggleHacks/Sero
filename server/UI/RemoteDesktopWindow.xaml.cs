@@ -222,7 +222,11 @@ public partial class RemoteDesktopWindow : Window
                 var decodedList = decoded.ToList();
 
                 if (_closed) { _renderBusy = false; return; }
-                Dispatcher.BeginInvoke(() => BlitBlocks(w, h, decodedList));
+                // ACK early — stub can start capturing the next frame while we blit the current one.
+                // Reduces stub idle time from (decode+blit+RTT) to (decode+RTT), cutting effective
+                // latency nearly in half and allowing the pipeline to stay full at high framerates.
+                if (!_closed) SendAck();
+                Dispatcher.BeginInvoke(() => BlitBlocks(w, h, decodedList, ackAlreadySent: true));
             }
             catch { _renderBusy = false; if (!_closed) SendAck(); }
         });
@@ -259,11 +263,11 @@ public partial class RemoteDesktopWindow : Window
         catch { _renderBusy = false; }
     }
 
-    private void BlitBlocks(int w, int h, List<(int X, int Y, int W, int H, byte[] Pixels, int Stride)> blocks)
+    private void BlitBlocks(int w, int h, List<(int X, int Y, int W, int H, byte[] Pixels, int Stride)> blocks, bool ackAlreadySent = false)
     {
         try
         {
-            if (blocks.Count == 0) { _renderBusy = false; if (!_closed) SendAck(); return; }
+            if (blocks.Count == 0) { _renderBusy = false; if (!_closed && !ackAlreadySent) SendAck(); return; }
             if (_closed) { _renderBusy = false; return; }
             EnsureFrame(w, h);
             _frame!.Lock();
@@ -275,7 +279,7 @@ public partial class RemoteDesktopWindow : Window
             _frame.Unlock();
             UpdateFps();
             _renderBusy = false;
-            SendAck();
+            if (!_closed && !ackAlreadySent) SendAck();
         }
         catch { _renderBusy = false; }
     }

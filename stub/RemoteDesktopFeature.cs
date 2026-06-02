@@ -169,7 +169,7 @@ internal static class RemoteDesktopFeature
         EnsureGdiplus();
         _monitors = EnumMonitors();
 
-        Interlocked.Exchange(ref _pendingRequests, 3); // 3 credits: pipeline frames ahead on LAN for smoother playback
+        Interlocked.Exchange(ref _pendingRequests, 4); // 4 credits: pipeline frames ahead — ACK now fires before blit so credits cycle faster
         _running = true;
         _thread = new Thread(CaptureLoop)
         {
