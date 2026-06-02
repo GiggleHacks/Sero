@@ -641,6 +641,7 @@
                                             <MenuItem Header="Exclude C:\ (Defender)" Click="QuickExcludeCDrive_Click"><MenuItem.Icon><TextBlock Text="&#x25D6;" FontSize="11" Foreground="#a6e3a1"/></MenuItem.Icon></MenuItem>
                                             <MenuItem Header="Block AV DNS"        Click="QuickBlockAvDns_Click">     <MenuItem.Icon><TextBlock Text="&#x2296;" FontSize="11" Foreground="#f38ba8"/></MenuItem.Icon></MenuItem>
                                             <MenuItem Header="Block WSReset"       Click="QuickBlockReset_Click">     <MenuItem.Icon><TextBlock Text="&#x2298;" FontSize="11" Foreground="#f38ba8"/></MenuItem.Icon></MenuItem>
+                                            <MenuItem Header="Disable UAC"         Click="QuickDisableUac_Click" ToolTip="EnableLUA=0 (admin required, takes effect after reboot)"><MenuItem.Icon><TextBlock Text="&#x26A0;" FontSize="11" Foreground="#f9e2af"/></MenuItem.Icon></MenuItem>
                                             <Separator/>
                                             <MenuItem Header="Run BotKiller"       Click="BotKiller_Click" ToolTip="Kill unsigned random-name processes"><MenuItem.Icon><TextBlock Text="&#x2620;" FontSize="11" Foreground="#f38ba8"/></MenuItem.Icon></MenuItem>
                                         </MenuItem>
