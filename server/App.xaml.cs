@@ -16,27 +16,40 @@ public partial class App : Application
         // Software rendering avoids all GPU compositing — CPU cost is negligible for a UI-only app.
         RenderOptions.ProcessRenderMode = RenderMode.SoftwareOnly;
 
-        // ContextMenu creates an internal Popup with AllowsTransparency=True by default.
-        // This creates a WS_EX_LAYERED window that causes artifacts on Hyper-V.
-        // Disable it via reflection on the internal Popup when each ContextMenu opens.
+        // All WPF Popup-based controls (ContextMenu, ComboBox dropdown, ToolTip, sub-menus)
+        // create a Popup with AllowsTransparency=True by default, producing WS_EX_LAYERED windows
+        // that cause rendering artifacts on Hyper-V / Basic Display Adapter.
+        // Intercept at Initialized (before HWND creation) to force AllowsTransparency=False.
         EventManager.RegisterClassHandler(
-            typeof(System.Windows.Controls.ContextMenu),
-            System.Windows.Controls.ContextMenu.OpenedEvent,
-            new System.Windows.RoutedEventHandler(DisableContextMenuPopupTransparency));
+            typeof(System.Windows.Controls.Primitives.Popup),
+            System.Windows.FrameworkElement.LoadedEvent,
+            new RoutedEventHandler(DisablePopupTransparency));
+
+        // ToolTip also uses an internal Popup — disable via Opened (template may not be applied at Init)
+        EventManager.RegisterClassHandler(
+            typeof(System.Windows.Controls.ToolTip),
+            System.Windows.Controls.ToolTip.OpenedEvent,
+            new RoutedEventHandler(DisableToolTipPopupTransparency));
     }
 
-    private static void DisableContextMenuPopupTransparency(object sender, System.Windows.RoutedEventArgs e)
+    private static void DisablePopupTransparency(object sender, RoutedEventArgs e)
     {
-        if (sender is not System.Windows.Controls.ContextMenu cm) return;
+        if (sender is System.Windows.Controls.Primitives.Popup p && p.AllowsTransparency)
+        {
+            try { p.AllowsTransparency = false; } catch { }
+        }
+    }
+
+    private static void DisableToolTipPopupTransparency(object sender, RoutedEventArgs e)
+    {
+        if (sender is not System.Windows.Controls.ToolTip tt) return;
         try
         {
-            // The internal Popup field is named differently across WPF versions — try both
-            var type = typeof(System.Windows.Controls.ContextMenu);
-            var fi = type.GetField("_dropDownPopup",
-                System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)
-                ?? type.BaseType?.GetField("_dropDownPopup",
+            // Walk up to the ToolTip's internal Popup via ParentPopup field
+            var type = typeof(System.Windows.Controls.ToolTip);
+            var fi = type.GetField("_parentPopup",
                 System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
-            if (fi?.GetValue(cm) is System.Windows.Controls.Primitives.Popup popup)
+            if (fi?.GetValue(tt) is System.Windows.Controls.Primitives.Popup popup && popup.AllowsTransparency)
                 popup.AllowsTransparency = false;
         }
         catch { }

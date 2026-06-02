@@ -131,7 +131,8 @@
                             <!-- Sub-menu popup (only rendered when item has children) -->
                             <Popup x:Name="PART_Popup"
                                    IsOpen="{Binding IsSubmenuOpen, RelativeSource={RelativeSource TemplatedParent}}"
-                                   Placement="Right" HorizontalOffset="-2" VerticalOffset="-5" Focusable="False" PopupAnimation="Fade">
+                                   Placement="Right" HorizontalOffset="-2" VerticalOffset="-5" Focusable="False"
+                                   AllowsTransparency="False" PopupAnimation="None">
                                 <Border Background="#0F1020" BorderBrush="#1E2038" BorderThickness="1"
                                         CornerRadius="8" Padding="4" MinWidth="168">
                                     <ItemsPresenter KeyboardNavigation.TabNavigation="Cycle"
