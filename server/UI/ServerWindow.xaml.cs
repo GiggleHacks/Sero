@@ -3226,7 +3226,7 @@ Read-Host 'Press Enter to close'
                 Interlocked.Increment(ref task.ExecutionCountField);
                 // All Dispatcher calls are thread-safe — ExecuteAutoTasksForClient may run
                 // from Task.Run (ClientConnected) or UI thread (ExecuteAutoTasksForAllConnected).
-                Dispatcher.BeginInvoke(() =>
+                _ = Dispatcher.BeginInvoke(() =>
                 {
                     task.NotifyExecutionCount();
                     GridAutoTasks.Items.Refresh();
@@ -3238,7 +3238,7 @@ Read-Host 'Press Enter to close'
             catch (Exception ex)
             {
                 var msg = ex.Message;
-                Dispatcher.BeginInvoke(() =>
+                _ = Dispatcher.BeginInvoke(() =>
                     Log($"[!] AutoTask: failed {task.FileName} on {client.Id}: {msg}"));
             }
         }
