@@ -116,9 +116,7 @@
                 <GradientStop Color="#141628" Offset="1"/>
             </LinearGradientBrush>
         </Border.BorderBrush>
-        <Border.Effect>
-            <DropShadowEffect Color="#000" BlurRadius="36" ShadowDepth="0" Opacity="0.80"/>
-        </Border.Effect>
+        
 
         <DockPanel LastChildFill="True">
 

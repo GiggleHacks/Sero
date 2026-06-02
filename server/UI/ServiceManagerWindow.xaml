@@ -8,7 +8,7 @@
     <Border x:Name="RootBorder" CornerRadius="8" BorderThickness="1">
         <Border.Background><SolidColorBrush Color="#0C0D18"/></Border.Background>
         <Border.BorderBrush><LinearGradientBrush StartPoint="0,0" EndPoint="0,1"><GradientStop Color="#2A2E50" Offset="0"/><GradientStop Color="#141628" Offset="1"/></LinearGradientBrush></Border.BorderBrush>
-        <Border.Effect><DropShadowEffect Color="#000" BlurRadius="36" ShadowDepth="0" Opacity="0.80"/></Border.Effect>
+        
         <DockPanel>
             <Rectangle DockPanel.Dock="Top" Height="2"><Rectangle.Fill><LinearGradientBrush StartPoint="0,0" EndPoint="1,0"><GradientStop Color="#4A85F5" Offset="0"/><GradientStop Color="#7C5CE8" Offset="1"/></LinearGradientBrush></Rectangle.Fill></Rectangle>
             <Border DockPanel.Dock="Top" Height="42" Background="#111222" MouseLeftButtonDown="Window_MouseLeftButtonDown">

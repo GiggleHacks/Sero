@@ -52,7 +52,6 @@
                 <Setter.Value>
                     <ControlTemplate TargetType="ContextMenu">
                         <Border Background="#0F1020" BorderBrush="#1E2038" BorderThickness="1" CornerRadius="8" Padding="4">
-                            <Border.Effect><DropShadowEffect BlurRadius="24" ShadowDepth="6" Opacity="0.7" Color="#000"/></Border.Effect>
                             <ItemsPresenter/>
                         </Border>
                     </ControlTemplate>
@@ -75,9 +74,7 @@
                 <GradientStop Color="#141628" Offset="1"/>
             </LinearGradientBrush>
         </Border.BorderBrush>
-        <Border.Effect>
-            <DropShadowEffect Color="#000" BlurRadius="36" ShadowDepth="0" Opacity="0.80"/>
-        </Border.Effect>
+        
 
         <DockPanel LastChildFill="True">
 
