@@ -274,7 +274,8 @@ body::after {
   position: relative; z-index: 1;
   padding: 80px 0; border-top: 1px solid var(--border);
 }
-.price-table { width: 100%; border-collapse: collapse; margin-top: 44px; }
+.price-table-wrap { overflow-x: auto; margin-top: 44px; -webkit-overflow-scrolling: touch; }
+.price-table { width: 100%; border-collapse: collapse; min-width: 420px; }
 .price-table td {
   padding: 15px 20px; font-size: 0.9rem;
   color: var(--muted); border-bottom: 1px solid var(--border);
@@ -353,8 +354,6 @@ body::after {
 
 /* ── CTA ── */
 .cta-section {
-  position: relative; z-index: 1;
-  padding: 100px 0; border-top: 1px solid var(--border);
   text-align: center;
 }
 .cta-inner { display: flex; flex-direction: column; align-items: center; gap: 20px; }
@@ -387,9 +386,6 @@ footer {
 
 /* ── Deep-dive cards ── */
 .deepdive-section {
-  position: relative; z-index: 1;
-  padding: 80px 0; border-top: 1px solid var(--border);
-}
 .deepdive-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
 .deepdive-card {
   background: rgba(255,255,255,0.018);
@@ -429,6 +425,9 @@ footer {
 .reveal.visible { opacity: 1; transform: none; }
 
 /* ── Responsive ── */
+@media (max-width: 1080px) {
+  .container { padding: 0 28px; }
+}
 @media (max-width: 900px) {
   .container { padding: 0 24px; }
   .oss-grid { grid-template-columns: 1fr; gap: 40px; }
@@ -446,7 +445,7 @@ footer {
 @media (max-width: 640px) {
   .container { padding: 0 16px; }
   .hero { padding: 96px 0 48px; }
-  .hero-lead { font-size: 0.95rem; }
+  .hero-lead { font-size: 0.95rem; border-left: none; padding-left: 0; }
   .hero-meta { font-size: 0.72rem; gap: 7px; }
   .hero-actions { flex-direction: column; align-items: flex-start; }
   .hero-actions .btn-primary,
@@ -455,8 +454,23 @@ footer {
   .nav-links { display: none; }
   .price-table td { padding: 11px 10px; font-size: 0.82rem; }
   .price-note-cell { display: none; }
-  .deepdive-card { padding: 22px; }
+  .deepdive-card { padding: 20px; }
   .screen-bar { padding: 9px 12px; }
+  .screen-frame { box-shadow: 0 16px 40px rgba(0,0,0,0.6); }
   .cta-section h2 { font-size: 1.75rem; }
+  .cta-logo { width: 72px; }
   .footer-links { flex-wrap: wrap; gap: 16px; }
+  .tech-list li { padding-left: 12px; }
+}
+@media (max-width: 420px) {
+  .container { padding: 0 14px; }
+  .hero { padding: 82px 0 36px; }
+  .hero h1 { font-size: clamp(1.5rem, 9vw, 2.2rem); }
+  .hero-lead { font-size: 0.88rem; }
+  .eyebrow { font-size: 0.68rem; }
+  .btn-primary, .btn-outline { font-size: 0.85rem; padding: 10px 16px; }
+  .deepdive-card { padding: 16px; }
+  .oss-list li { font-size: 0.82rem; }
+  .feat-col li { font-size: 0.82rem; }
+  .feat-col h4 { font-size: 0.63rem; }
 }

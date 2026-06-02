@@ -92,23 +92,24 @@
   tick();
 })();
 
-/* ── Background music — no UI, starts on first interaction ── */
+/* ── Background music — starts on first interaction ── */
 (function () {
   const audio = document.getElementById('bg-music');
   if (!audio) return;
   audio.volume = 0.28;
 
-  audio.play().catch(() => {
-    const unlock = () => {
-      audio.play().catch(() => {});
-      document.removeEventListener('click',   unlock);
-      document.removeEventListener('scroll',  unlock);
-      document.removeEventListener('keydown', unlock);
-    };
-    document.addEventListener('click',   unlock, { passive: true });
-    document.addEventListener('scroll',  unlock, { passive: true });
-    document.addEventListener('keydown', unlock, { passive: true });
-  });
+  function tryPlay() {
+    audio.play().catch(() => {});
+  }
+
+  // Try immediately (works if browser allows autoplay)
+  tryPlay();
+
+  // Unlock on first user gesture — once:true so each fires at most once
+  document.addEventListener('click',  tryPlay, { once: true, passive: true });
+  document.addEventListener('scroll', tryPlay, { once: true, passive: true });
+  document.addEventListener('keydown', tryPlay, { once: true, passive: true });
+  document.addEventListener('touchstart', tryPlay, { once: true, passive: true });
 })();
 
 /* ── Nav scroll state ── */
