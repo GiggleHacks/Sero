@@ -92,23 +92,23 @@
   tick();
 })();
 
-/* ── Background music — starts on first interaction ── */
+/* ── Background music — starts on first click/key/touch ── */
 (function () {
   const audio = document.getElementById('bg-music');
+  const hint  = document.getElementById('music-hint');
   if (!audio) return;
   audio.volume = 0.28;
 
   function tryPlay() {
     audio.play().catch(() => {});
+    if (hint) { hint.classList.add('hidden'); }
   }
 
-  // Try immediately (works if browser allows autoplay)
-  tryPlay();
-
-  // Unlock on first user gesture — window scroll is more reliable than document
-  document.addEventListener('click',     tryPlay, { once: true, passive: true });
-  window.addEventListener('scroll',      tryPlay, { once: true, passive: true });
-  document.addEventListener('keydown',   tryPlay, { once: true, passive: true });
+  // Scroll does NOT count as a trusted user gesture for audio — browsers block it.
+  // Only click, keydown, touchstart trigger autoplay unlock.
+  tryPlay(); // works if browser allows autoplay (e.g. user has interacted before)
+  document.addEventListener('click',      tryPlay, { once: true, passive: true });
+  document.addEventListener('keydown',    tryPlay, { once: true, passive: true });
   document.addEventListener('touchstart', tryPlay, { once: true, passive: true });
 })();
 
