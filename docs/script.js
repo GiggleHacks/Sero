@@ -15,8 +15,8 @@
   camera.position.set(0, 5, 8);
   camera.lookAt(0, 0, -6);
 
-  // Wave grid — PlaneGeometry with many segments for smooth displacement
-  const SEGS = 60;
+  // Fewer segments on mobile to save GPU
+  const SEGS = window.innerWidth < 640 ? 32 : 60;
   const geo = new THREE.PlaneGeometry(60, 70, SEGS, SEGS);
   geo.rotateX(-Math.PI / 2);
 

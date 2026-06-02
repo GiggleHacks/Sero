@@ -114,7 +114,7 @@ body::after {
 @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.25; } }
 
 .hero h1 {
-  font-size: clamp(2.6rem, 5vw, 4.5rem);
+  font-size: clamp(1.75rem, 7.5vw, 4.5rem);
   font-weight: 700; line-height: 1.07;
   letter-spacing: -0.04em; margin-bottom: 24px;
   max-width: 700px;
@@ -223,7 +223,7 @@ body::after {
   padding: 80px 0; border-top: 1px solid var(--border);
 }
 .section-h {
-  font-size: clamp(1.6rem, 3vw, 2.2rem);
+  font-size: clamp(1.4rem, 4vw, 2.2rem);
   font-weight: 700; letter-spacing: -0.03em; margin-bottom: 48px;
 }
 .section-sub { color: var(--muted); font-size: 0.9rem; margin-top: -36px; margin-bottom: 44px; }
@@ -396,22 +396,33 @@ footer {
 
 /* ── Responsive ── */
 @media (max-width: 900px) {
+  .container { padding: 0 24px; }
   .oss-grid { grid-template-columns: 1fr; gap: 40px; }
   .oss-sep { display: none; }
   .feat-grid { grid-template-columns: 1fr 1fr; gap: 36px; }
   .tech-layout { grid-template-columns: 1fr; }
   .gallery { grid-template-columns: 1fr; }
   .deepdive-grid { grid-template-columns: 1fr; }
-  .footer-inner { flex-direction: column; align-items: flex-start; }
+  .footer-inner { flex-direction: column; align-items: flex-start; gap: 32px; }
   .footer-right { align-items: flex-start; }
+  .features-section, .price-section, .showcase-section,
+  .tech-section, .oss-section, .deepdive-section { padding: 60px 0; }
+  .cta-section { padding: 72px 0; }
 }
-@media (max-width: 600px) {
-  .container { padding: 0 18px; }
-  .hero { padding: 110px 0 60px; }
+@media (max-width: 640px) {
+  .container { padding: 0 16px; }
+  .hero { padding: 96px 0 48px; }
+  .hero-lead { font-size: 0.95rem; }
+  .hero-meta { font-size: 0.72rem; gap: 7px; }
   .hero-actions { flex-direction: column; align-items: flex-start; }
-  .feat-grid { grid-template-columns: 1fr; }
+  .hero-actions .btn-primary,
+  .hero-actions .btn-outline { width: 100%; justify-content: center; }
+  .feat-grid { grid-template-columns: 1fr; gap: 28px; }
   .nav-links { display: none; }
-  #player .player-track, #player .player-bar { display: none; }
-  .price-table td { padding: 12px 10px; font-size: 0.82rem; }
+  .price-table td { padding: 11px 10px; font-size: 0.82rem; }
   .price-note-cell { display: none; }
+  .deepdive-card { padding: 22px; }
+  .screen-bar { padding: 9px 12px; }
+  .cta-section h2 { font-size: 1.75rem; }
+  .footer-links { flex-wrap: wrap; gap: 16px; }
 }
