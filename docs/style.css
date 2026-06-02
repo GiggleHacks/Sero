@@ -432,6 +432,7 @@ footer {
 }
 @media (max-width: 900px) {
   .container { padding: 0 24px; }
+  .nav-links { display: none; }
   .oss-grid { grid-template-columns: 1fr; gap: 40px; }
   .oss-sep { display: none; }
   .feat-grid { grid-template-columns: 1fr 1fr; gap: 36px; }
@@ -453,7 +454,6 @@ footer {
   .hero-actions .btn-primary,
   .hero-actions .btn-outline { justify-content: center; }
   .feat-grid { grid-template-columns: 1fr; gap: 28px; }
-  .nav-links { display: none; }
   .btn-gh { font-size: 0.78rem; padding: 6px 10px; }
   .price-table td { padding: 11px 10px; font-size: 0.82rem; }
   .price-note-cell { display: none; }
