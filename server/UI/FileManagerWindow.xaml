@@ -6,8 +6,7 @@
         WindowStartupLocation="CenterOwner"
         ResizeMode="CanResize"
         WindowStyle="None"
-        AllowsTransparency="True"
-        Background="Transparent">
+        Background="#0C0D18">
 
     <Window.Resources>
         <Style x:Key="FmBtn" TargetType="Button">
@@ -223,7 +222,7 @@
                         </Border>
 
                         <!-- Drives list -->
-                        <ListBox x:Name="DrivesList" Background="Transparent" BorderThickness="0"
+                        <ListBox x:Name="DrivesList" Background="#0C0D18" BorderThickness="0"
                                  Foreground="#C0CCDD" FontFamily="Consolas" FontSize="12"
                                  Margin="0,4,0,0"
                                  SelectionChanged="DrivesList_SelectionChanged">
@@ -375,8 +374,7 @@
                                       MouseLeftButtonUp="PreviewVideo_Click"/>
                         <ScrollViewer x:Name="TextScroll" Visibility="Collapsed"
                                       VerticalScrollBarVisibility="Auto">
-                            <TextBox x:Name="PreviewText"
-                                     Background="Transparent" Foreground="#C8D0E8"
+                            <TextBox x:Name="PreviewText" Background="#0C0D18" Foreground="#C8D0E8"
                                      FontFamily="Consolas" FontSize="10"
                                      BorderThickness="0" Padding="8"
                                      IsReadOnly="True" TextWrapping="Wrap"/>

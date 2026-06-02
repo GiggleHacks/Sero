@@ -6,8 +6,7 @@
         WindowStartupLocation="CenterOwner"
         ResizeMode="CanResize"
         WindowStyle="None"
-        AllowsTransparency="True"
-        Background="Transparent">
+        Background="#0C0D18">
 
     <Window.Resources>
         <Style x:Key="AddrBox" TargetType="TextBox">
@@ -222,8 +221,7 @@
                             </Grid>
                             <Border Background="#07080F" CornerRadius="4" Height="120">
                                 <ScrollViewer x:Name="LogScroll" VerticalScrollBarVisibility="Auto">
-                                    <TextBox x:Name="TxtLog"
-                                             Background="Transparent" Foreground="#C8D0E8"
+                                    <TextBox x:Name="TxtLog" Background="#0C0D18" Foreground="#C8D0E8"
                                              FontFamily="Consolas" FontSize="10"
                                              BorderThickness="0" Padding="8,6"
                                              IsReadOnly="True" TextWrapping="Wrap"

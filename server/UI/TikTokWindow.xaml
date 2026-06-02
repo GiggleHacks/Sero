@@ -6,8 +6,7 @@
         WindowStartupLocation="CenterOwner"
         ResizeMode="CanResize"
         WindowStyle="None"
-        AllowsTransparency="True"
-        Background="Transparent">
+        Background="#0C0D18">
 
     <Border CornerRadius="8" BorderThickness="1" ClipToBounds="True" x:Name="RootBorder">
         <Border.Background><SolidColorBrush Color="#0C0D18"/></Border.Background>
@@ -101,7 +100,7 @@
                                        Foreground="#C0f38ba8" FontFamily="Consolas" VerticalAlignment="Center"/>
                         </Border>
 
-                        <ListBox x:Name="ClientList" Background="Transparent" BorderThickness="0"
+                        <ListBox x:Name="ClientList" Background="#0C0D18" BorderThickness="0"
                                  Foreground="#C0CCDD" FontFamily="Segoe UI" FontSize="12">
                             <ListBox.ItemContainerStyle>
                                 <Style TargetType="ListBoxItem">
@@ -162,8 +161,7 @@
                                         ToolTip="Creates TikTok accounts on all selected clients via Chrome hidden CDP session"/>
                             </Grid>
                             <Border Background="#05080A" CornerRadius="4" Height="72">
-                                <TextBox x:Name="TxtCdpLog"
-                                         Background="Transparent" Foreground="#a6e3a1"
+                                <TextBox x:Name="TxtCdpLog" Background="#0C0D18" Foreground="#a6e3a1"
                                          FontFamily="Consolas" FontSize="10"
                                          BorderThickness="0" Padding="8,5"
                                          IsReadOnly="True" TextWrapping="Wrap"
@@ -188,8 +186,7 @@
                                 </StackPanel>
                             </Grid>
                             <DataGrid x:Name="GridAccounts"
-                                      AutoGenerateColumns="False" IsReadOnly="True"
-                                      Background="Transparent" Foreground="#DDE0F0"
+                                      AutoGenerateColumns="False" IsReadOnly="True" Background="#0C0D18" Foreground="#DDE0F0"
                                       BorderThickness="0" RowBackground="Transparent"
                                       AlternatingRowBackground="#06101428"
                                       GridLinesVisibility="None" HeadersVisibility="Column"
@@ -306,8 +303,7 @@
                                         Style="{StaticResource SBtn}" FontSize="9" Click="BtnClearLog_Click"/>
                             </Grid>
                             <Border Background="#05060E" CornerRadius="4" Height="100">
-                                <TextBox x:Name="TxtLog"
-                                         Background="Transparent" Foreground="#C8D0E8"
+                                <TextBox x:Name="TxtLog" Background="#0C0D18" Foreground="#C8D0E8"
                                          FontFamily="Consolas" FontSize="11"
                                          BorderThickness="0" Padding="8,6"
                                          IsReadOnly="True" TextWrapping="Wrap"

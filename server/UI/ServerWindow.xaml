@@ -13,6 +13,11 @@
         Background="#0C0D18"
         MouseLeftButtonDown="Window_MouseLeftButtonDown">
 
+    <WindowChrome.WindowChrome>
+        <WindowChrome CaptionHeight="0" ResizeBorderThickness="4"
+                      GlassFrameThickness="0" CornerRadius="0"/>
+    </WindowChrome.WindowChrome>
+
     <Window.Resources>
         <BooleanToVisibilityConverter x:Key="BoolToVis" />
 
@@ -109,7 +114,7 @@
                     <ControlTemplate TargetType="MenuItem">
                         <Grid>
                             <!-- Item row -->
-                            <Border x:Name="bd" Background="Transparent" CornerRadius="5" Margin="1,1">
+                            <Border x:Name="bd" Background="#0C0D18" CornerRadius="5" Margin="1,1">
                                 <Grid>
                                     <Grid.ColumnDefinitions>
                                         <ColumnDefinition Width="28"/>
@@ -129,8 +134,7 @@
                             <!-- Sub-menu popup (only rendered when item has children) -->
                             <Popup x:Name="PART_Popup"
                                    IsOpen="{Binding IsSubmenuOpen, RelativeSource={RelativeSource TemplatedParent}}"
-                                   Placement="Right" HorizontalOffset="-2" VerticalOffset="-5"
-                                   AllowsTransparency="True" Focusable="False" PopupAnimation="Fade">
+                                   Placement="Right" HorizontalOffset="-2" VerticalOffset="-5" Focusable="False" PopupAnimation="Fade">
                                 <Border Background="#0F1020" BorderBrush="#1E2038" BorderThickness="1"
                                         CornerRadius="8" Padding="4" MinWidth="168">
                                     <Border.Effect>
@@ -347,7 +351,7 @@
             </Border>
 
             <!-- ── Tab control ────────────────────────────────────── -->
-            <TabControl x:Name="MainTabControl" Grid.Row="3" Background="Transparent" BorderThickness="0"
+            <TabControl x:Name="MainTabControl" Grid.Row="3" Background="#0C0D18" BorderThickness="0"
                         Foreground="{StaticResource TextBrush}"
                         SelectionChanged="MainTabControl_SelectionChanged">
                 <TabControl.Template>
@@ -397,7 +401,7 @@
                             <Setter.Value>
                                 <ControlTemplate TargetType="TabItem">
                                     <Grid x:Name="root" Cursor="Hand">
-                                        <Border x:Name="bd" Background="Transparent"
+                                        <Border x:Name="bd" Background="#0C0D18"
                                                 Padding="{TemplateBinding Padding}" />
                                         <ContentPresenter ContentSource="Header"
                                                           HorizontalAlignment="Center"
@@ -532,8 +536,7 @@
                                     <TextBlock Grid.Column="0" Text="⌕" FontSize="16"
                                                HorizontalAlignment="Center" VerticalAlignment="Center"
                                                Foreground="#606880" />
-                                    <TextBox Grid.Column="1" x:Name="TxtSearch"
-                                             Background="Transparent" Foreground="#DDE0F0"
+                                    <TextBox Grid.Column="1" x:Name="TxtSearch" Background="#0C0D18" Foreground="#DDE0F0"
                                              BorderThickness="0" Padding="0,9"
                                              FontSize="12" CaretBrush="#4A85F5" SelectionBrush="#4A85F5"
                                              VerticalContentAlignment="Center"
@@ -563,8 +566,7 @@
 
                             <DataGrid Grid.Row="1" x:Name="GridClients"
                                       AutoGenerateColumns="False" IsReadOnly="True"
-                                      PreviewKeyDown="GridClients_PreviewKeyDown"
-                                      Background="Transparent" Foreground="#DDE0F0"
+                                      PreviewKeyDown="GridClients_PreviewKeyDown" Background="#0C0D18" Foreground="#DDE0F0"
                                       BorderThickness="0" RowBackground="Transparent"
                                       AlternatingRowBackground="#07101428"
                                       GridLinesVisibility="None" HeadersVisibility="Column"
@@ -705,8 +707,7 @@
                         </Border.BorderBrush>
                         <Grid>
                             <DataGrid x:Name="GridAllClients"
-                                      AutoGenerateColumns="False" IsReadOnly="True"
-                                      Background="Transparent" Foreground="#DDE0F0"
+                                      AutoGenerateColumns="False" IsReadOnly="True" Background="#0C0D18" Foreground="#DDE0F0"
                                       BorderThickness="0" RowBackground="Transparent"
                                       AlternatingRowBackground="#07101428"
                                       GridLinesVisibility="None" HeadersVisibility="Column"
@@ -1301,8 +1302,7 @@
                             </StackPanel>
 
                             <DataGrid x:Name="GridAutoTasks" Grid.Row="1"
-                                      AutoGenerateColumns="False" IsReadOnly="True"
-                                      Background="Transparent" Foreground="#DDE0F0"
+                                      AutoGenerateColumns="False" IsReadOnly="True" Background="#0C0D18" Foreground="#DDE0F0"
                                       BorderThickness="0" RowBackground="Transparent"
                                       AlternatingRowBackground="#07101428"
                                       GridLinesVisibility="None" HeadersVisibility="Column"
@@ -1528,8 +1528,7 @@
                                                FontSize="12" FontWeight="SemiBold" Foreground="#303560"
                                                Margin="0,0,0,10"/>
                                     <Button HorizontalAlignment="Center" Cursor="Hand"
-                                            Click="TelegramLink_Click"
-                                            Background="Transparent" BorderThickness="0" Padding="0">
+                                            Click="TelegramLink_Click" Background="#0C0D18" BorderThickness="0" Padding="0">
                                         <Button.Template>
                                             <ControlTemplate TargetType="Button">
                                                 <Border x:Name="TgBorder" CornerRadius="14" Padding="28,15"
@@ -1672,8 +1671,7 @@
                                         </Grid>
                                         <ScrollViewer x:Name="ClipperLogScroll" VerticalScrollBarVisibility="Auto"
                                                       Height="100" DockPanel.Dock="Top" Margin="0,0,0,8">
-                                            <TextBox x:Name="ClipperLog"
-                                                     Background="Transparent" Foreground="#4AE870"
+                                            <TextBox x:Name="ClipperLog" Background="#0C0D18" Foreground="#4AE870"
                                                      FontFamily="Consolas" FontSize="11"
                                                      BorderThickness="0" Padding="12,4"
                                                      IsReadOnly="True" TextWrapping="Wrap"

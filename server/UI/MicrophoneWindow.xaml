@@ -6,8 +6,7 @@
         WindowStartupLocation="CenterOwner"
         ResizeMode="CanResize"
         WindowStyle="None"
-        AllowsTransparency="True"
-        Background="Transparent">
+        Background="#0C0D18">
 
     <Border x:Name="RootBorder" CornerRadius="8" BorderThickness="1" ClipToBounds="True">
         <Border.Background><SolidColorBrush Color="#0C0D18"/></Border.Background>

@@ -4,8 +4,7 @@
         Title="Startup Manager"
         Width="860" Height="500" MinWidth="640" MinHeight="340"
         WindowStartupLocation="CenterOwner"
-        ResizeMode="CanResize" WindowStyle="None"
-        AllowsTransparency="True" Background="Transparent">
+        ResizeMode="CanResize" WindowStyle="None" Background="#0C0D18">
 
     <Window.Resources>
         <Style TargetType="DataGridRow">

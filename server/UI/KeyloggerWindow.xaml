@@ -6,8 +6,7 @@
         WindowStartupLocation="CenterOwner"
         ResizeMode="CanResize"
         WindowStyle="None"
-        AllowsTransparency="True"
-        Background="Transparent">
+        Background="#0C0D18">
 
     <Border x:Name="RootBorder" CornerRadius="8" BorderThickness="1" ClipToBounds="True">
         <Border.Background><SolidColorBrush Color="#0C0D18"/></Border.Background>
@@ -122,7 +121,7 @@
                                 </StackPanel>
                             </Grid>
                         </Border>
-                        <ListBox x:Name="ListFiles" Background="Transparent" BorderThickness="0"
+                        <ListBox x:Name="ListFiles" Background="#0C0D18" BorderThickness="0"
                                  Foreground="#C0CCDD" FontFamily="Consolas" FontSize="12"
                                  SelectionChanged="ListFiles_SelectionChanged">
                             <ListBox.ItemContainerStyle>
@@ -178,8 +177,7 @@
                                         Style="{StaticResource SBtn}" FontSize="9" Click="BtnSave_Click"/>
                             </Grid>
                         </Border>
-                        <TextBox x:Name="TxtLog"
-                                 Background="Transparent" Foreground="#C8D0E8"
+                        <TextBox x:Name="TxtLog" Background="#0C0D18" Foreground="#C8D0E8"
                                  FontFamily="Consolas" FontSize="12"
                                  BorderThickness="0" Padding="12,10"
                                  IsReadOnly="True" TextWrapping="Wrap"

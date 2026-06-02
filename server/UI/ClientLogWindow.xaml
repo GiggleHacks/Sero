@@ -1,4 +1,4 @@
-<Window x:Class="SeroServer.UI.ClientLogWindow"
+﻿<Window x:Class="SeroServer.UI.ClientLogWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         Title="Client Logs"
@@ -6,8 +6,7 @@
         WindowStartupLocation="CenterOwner"
         ResizeMode="CanResize"
         WindowStyle="None"
-        AllowsTransparency="True"
-        Background="Transparent"
+        Background="#0C0D18"
         MouseLeftButtonDown="Window_MouseLeftButtonDown">
 
     <Border Background="#080B15" CornerRadius="12"

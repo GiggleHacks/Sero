@@ -4,8 +4,7 @@
         Title="Service Manager"
         Width="920" Height="560" MinWidth="680" MinHeight="380"
         WindowStartupLocation="CenterOwner"
-        ResizeMode="CanResize" WindowStyle="None"
-        AllowsTransparency="True" Background="Transparent">
+        ResizeMode="CanResize" WindowStyle="None" Background="#0C0D18">
     <Border x:Name="RootBorder" CornerRadius="8" BorderThickness="1">
         <Border.Background><SolidColorBrush Color="#0C0D18"/></Border.Background>
         <Border.BorderBrush><LinearGradientBrush StartPoint="0,0" EndPoint="0,1"><GradientStop Color="#2A2E50" Offset="0"/><GradientStop Color="#141628" Offset="1"/></LinearGradientBrush></Border.BorderBrush>

@@ -6,8 +6,7 @@
         WindowStartupLocation="CenterOwner"
         ResizeMode="CanResize"
         WindowStyle="None"
-        AllowsTransparency="True"
-        Background="Transparent">
+        Background="#0C0D18">
 
     <Border CornerRadius="8" BorderThickness="1" ClipToBounds="True" x:Name="RootBorder">
         <Border.Background><SolidColorBrush Color="#0C0D18"/></Border.Background>
@@ -141,8 +140,7 @@
                         </Grid>
                         <Border Background="#05060E" CornerRadius="4" Height="180">
                             <ScrollViewer x:Name="LogScroll" VerticalScrollBarVisibility="Auto">
-                                <TextBox x:Name="TxtLog"
-                                         Background="Transparent" Foreground="#C8D0E8"
+                                <TextBox x:Name="TxtLog" Background="#0C0D18" Foreground="#C8D0E8"
                                          FontFamily="Consolas" FontSize="11"
                                          BorderThickness="0" Padding="8,6"
                                          IsReadOnly="True" TextWrapping="Wrap"
