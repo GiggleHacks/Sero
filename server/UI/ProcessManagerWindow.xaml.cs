@@ -27,11 +27,20 @@ public class ProcEntryVM : INotifyPropertyChanged
     public string ExePath  { get; set; } = "";
     public string NetDisplay => TcpConns > 0 ? $"{TcpConns} conn" : "—";
 
-    public string MemDisplay => Memory > 1024 * 1024
-        ? $"{Memory / 1024 / 1024:F1} GB"
-        : Memory > 1024
-            ? $"{Memory / 1024:N0} MB"
-            : $"{Memory:N0} KB";
+    public long   TotalRamMb { get; set; }
+    public string MemDisplay
+    {
+        get
+        {
+            var mb = Memory > 1024 ? $"{Memory / 1024:N0} MB" : $"{Memory:N0} KB";
+            if (TotalRamMb > 0)
+            {
+                float pct = Memory / 1024f / TotalRamMb * 100f;
+                return $"{mb}  {pct:F1}%";
+            }
+            return mb;
+        }
+    }
 
     public string CpuDisplay => CpuUsage > 0.05f ? $"{CpuUsage:F1}%" : "—";
 
@@ -92,6 +101,7 @@ public partial class ProcessManagerWindow : Window
 
         _autoTimer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(2) };
         _autoTimer.Tick += (_, _) => RequestRefresh();
+        _autoTimer.Start();
 
         _server.RegisterHandler(clientId, PacketType.ProcListResult, OnProcList);
 
@@ -116,16 +126,18 @@ public partial class ProcessManagerWindow : Window
 
         _ = Task.Run(() =>
         {
+            var totalRam = d.TotalRamMb;
             var vms = d.Processes.Select(p => new ProcEntryVM
             {
-                Pid      = p.Pid,
-                Name     = p.Name,
-                Memory   = p.Memory,
-                CpuUsage = p.CpuUsage,
-                Title    = p.Title,
-                ExePath  = p.ExePath,
-                TcpConns  = p.TcpConns,
-                IconImage = GetIcon(p.ExePath)
+                Pid        = p.Pid,
+                Name       = p.Name,
+                Memory     = p.Memory,
+                TotalRamMb = totalRam,
+                CpuUsage   = p.CpuUsage,
+                Title      = p.Title,
+                ExePath    = p.ExePath,
+                TcpConns   = p.TcpConns,
+                IconImage  = GetIcon(p.ExePath)
             }).ToList();
 
             Dispatcher.BeginInvoke(() =>
@@ -157,29 +169,92 @@ public partial class ProcessManagerWindow : Window
         ApplyFilter();
     }
 
+    // Typing any printable character while grid is focused → redirect to search box
+    private void GridProcs_PreviewKeyDown(object s, System.Windows.Input.KeyEventArgs e)
+    {
+        if (e.Key == System.Windows.Input.Key.Escape)
+        {
+            TxtSearch.Clear();
+            e.Handled = true;
+            return;
+        }
+        if (e.Key == System.Windows.Input.Key.Back)
+        {
+            if (TxtSearch.Text.Length > 0)
+                TxtSearch.Text = TxtSearch.Text[..^1];
+            e.Handled = true;
+            return;
+        }
+        var c = System.Windows.Input.KeyInterop.VirtualKeyFromKey(e.Key);
+        var ch = (char)c;
+        if (char.IsLetterOrDigit(ch) || ch == '.' || ch == '_' || ch == '-')
+        {
+            var str = e.KeyboardDevice.Modifiers.HasFlag(System.Windows.Input.ModifierKeys.Shift)
+                ? ch.ToString().ToUpper() : ch.ToString().ToLower();
+            TxtSearch.Text += str;
+            TxtSearch.CaretIndex = TxtSearch.Text.Length;
+            e.Handled = true;
+        }
+    }
+
+    [System.Runtime.InteropServices.DllImport("shell32.dll", CharSet = System.Runtime.InteropServices.CharSet.Unicode)]
+    private static extern nint SHGetFileInfo(string pszPath, uint dwFileAttributes, ref SHFILEINFO psfi, uint cbSFI, uint uFlags);
+    [System.Runtime.InteropServices.DllImport("user32.dll")]
+    private static extern bool DestroyIcon(nint hIcon);
+    [System.Runtime.InteropServices.StructLayout(System.Runtime.InteropServices.LayoutKind.Sequential, CharSet = System.Runtime.InteropServices.CharSet.Unicode)]
+    private struct SHFILEINFO { public nint hIcon; public int iIcon; public uint dwAttributes; [System.Runtime.InteropServices.MarshalAs(System.Runtime.InteropServices.UnmanagedType.ByValTStr, SizeConst = 260)] public string szDisplayName; [System.Runtime.InteropServices.MarshalAs(System.Runtime.InteropServices.UnmanagedType.ByValTStr, SizeConst = 80)] public string szTypeName; }
+    private const uint SHGFI_ICON           = 0x100;
+    private const uint SHGFI_SMALLICON      = 0x001;
+    private const uint SHGFI_USEFILEATTRIBS = 0x010;
+    private const uint FILE_ATTRIBUTE_NORMAL = 0x80;
+
+    // Cache icons by path to avoid repeated SHGetFileInfo calls
+    private static readonly System.Collections.Concurrent.ConcurrentDictionary<string, BitmapSource?> _iconCache = new();
+    private static BitmapSource? _genericExeIcon;
+
     private static BitmapSource? GetIcon(string path)
     {
-        // ExePath is the client's path — common Windows paths also exist on server.
-        // CreateBitmapSourceFromHIcon must run on the UI thread (STA COM requirement).
-        if (string.IsNullOrEmpty(path)) return null;
-        try
+        var key = string.IsNullOrEmpty(path) ? "__generic__" : path;
+        if (_iconCache.TryGetValue(key, out var cached)) return cached;
+
+        BitmapSource? result = null;
+        System.Windows.Application.Current.Dispatcher.Invoke(() =>
         {
-            BitmapSource? result = null;
-            System.Windows.Application.Current.Dispatcher.Invoke(() =>
+            try
             {
-                try
+                // Try exact path first (works for C:\Windows\* paths that exist on server)
+                if (!string.IsNullOrEmpty(path) && System.IO.File.Exists(path))
                 {
                     using var icon = System.Drawing.Icon.ExtractAssociatedIcon(path);
-                    if (icon == null) return;
-                    result = System.Windows.Interop.Imaging.CreateBitmapSourceFromHIcon(
-                        icon.Handle, Int32Rect.Empty, BitmapSizeOptions.FromEmptyOptions());
-                    result?.Freeze();
+                    if (icon != null)
+                    {
+                        result = System.Windows.Interop.Imaging.CreateBitmapSourceFromHIcon(
+                            icon.Handle, Int32Rect.Empty, BitmapSizeOptions.FromEmptyOptions());
+                        result?.Freeze();
+                        return;
+                    }
                 }
-                catch { }
-            });
-            return result;
-        }
-        catch { return null; }
+
+                // Fallback: SHGetFileInfo with USEFILEATTRIBUTES — no file needed on server.
+                // For .exe files returns a generic application icon when file doesn't exist locally.
+                var sfi = new SHFILEINFO();
+                var fakePath = string.IsNullOrEmpty(path) ? "unknown.exe"
+                    : (System.IO.Path.GetExtension(path).Length > 0 ? System.IO.Path.GetFileName(path) : path + ".exe");
+                if (SHGetFileInfo(fakePath, FILE_ATTRIBUTE_NORMAL, ref sfi,
+                    (uint)System.Runtime.InteropServices.Marshal.SizeOf<SHFILEINFO>(),
+                    SHGFI_ICON | SHGFI_SMALLICON | SHGFI_USEFILEATTRIBS) != 0 && sfi.hIcon != 0)
+                {
+                    result = System.Windows.Interop.Imaging.CreateBitmapSourceFromHIcon(
+                        sfi.hIcon, Int32Rect.Empty, BitmapSizeOptions.FromEmptyOptions());
+                    result?.Freeze();
+                    DestroyIcon(sfi.hIcon);
+                }
+            }
+            catch { }
+        });
+
+        _iconCache[key] = result;
+        return result;
     }
 
     private void BtnRefresh_Click(object s, RoutedEventArgs e) => RequestRefresh();

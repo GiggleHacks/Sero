@@ -440,7 +440,7 @@ public class ProcEntry
     public string Title    { get; set; } = string.Empty;
     public string ExePath  { get; set; } = string.Empty;
 }
-public class ProcListResultData  { public List<ProcEntry> Processes { get; set; } = []; }
+public class ProcListResultData  { public List<ProcEntry> Processes { get; set; } = []; public long TotalRamMb { get; set; } }
 public class ProcKillData        { public int Pid { get; set; } }
 public class ProcSuspendData2    { public int Pid { get; set; } }
 public class ProcResumeData2     { public int Pid { get; set; } }

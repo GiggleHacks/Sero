@@ -153,7 +153,8 @@
                       VirtualizingStackPanel.IsVirtualizing="True"
                       VirtualizingStackPanel.VirtualizationMode="Recycling"
                       ScrollViewer.HorizontalScrollBarVisibility="Auto"
-                      ColumnHeaderStyle="{StaticResource SColHeader}">
+                      ColumnHeaderStyle="{StaticResource SColHeader}"
+                      PreviewKeyDown="GridProcs_PreviewKeyDown">
                 <DataGrid.ContextMenu>
                     <ContextMenu>
                         <MenuItem Header="Kill Process"    Click="BtnKill_Click"/>
@@ -207,7 +208,7 @@
                         </DataGridTemplateColumn.CellTemplate>
                     </DataGridTemplateColumn>
                     <!-- Network connections -->
-                    <DataGridTextColumn Header="NET" Binding="{Binding NetDisplay}" Width="70"
+                    <DataGridTextColumn Header="RÉSEAU" Binding="{Binding NetDisplay}" Width="80"
                                         FontFamily="Consolas" FontSize="11"/>
                     <!-- Title -->
                     <DataGridTextColumn Header="TITLE" Binding="{Binding Title}" Width="200" FontSize="11"/>

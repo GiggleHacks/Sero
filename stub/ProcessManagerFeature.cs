@@ -11,6 +11,16 @@ internal static class ProcessManagerFeature
     [DllImport("kernel32.dll")] private static extern IntPtr OpenProcess(uint access, bool inherit, int pid);
     [DllImport("kernel32.dll")] private static extern bool CloseHandle(IntPtr h);
 
+    [StructLayout(LayoutKind.Sequential)]
+    private struct MEMORYSTATUSEX { public uint dwLength, dwMemoryLoad; public ulong ullTotalPhys, ullAvailPhys, ullTotalPageFile, ullAvailPageFile, ullTotalVirtual, ullAvailVirtual, ullAvailExtVirtual; }
+    [DllImport("kernel32.dll")] private static extern bool GlobalMemoryStatusEx(ref MEMORYSTATUSEX lpBuffer);
+
+    private static long GetTotalRamMb()
+    {
+        var ms = new MEMORYSTATUSEX { dwLength = (uint)Marshal.SizeOf<MEMORYSTATUSEX>() };
+        return GlobalMemoryStatusEx(ref ms) ? (long)(ms.ullTotalPhys / 1024 / 1024) : 0;
+    }
+
     private const uint PROCESS_SUSPEND_RESUME = 0x0800;
 
     // ── TCP connection count per PID (via GetExtendedTcpTable) ───────────────
@@ -54,6 +64,7 @@ internal static class ProcessManagerFeature
     internal static string GetProcessList()
     {
         var now = DateTime.UtcNow;
+        var totalRamMb = GetTotalRamMb();
         var tcpCounts = GetTcpCountsByPid();
         var list = new List<ProcEntryStub>();
         foreach (var p in Process.GetProcesses())
@@ -99,7 +110,7 @@ internal static class ProcessManagerFeature
 
         list.Sort((a, b) => string.Compare(a.Name, b.Name, StringComparison.OrdinalIgnoreCase));
         return JsonSerializer.Serialize(
-            new ProcListResultStub { Processes = list },
+            new ProcListResultStub { Processes = list, TotalRamMb = totalRamMb },
             SeroJson.Default.ProcListResultStub);
     }
 
@@ -142,5 +153,5 @@ internal class ProcEntryStub
     public string Title    { get; set; } = "";
     public string ExePath  { get; set; } = "";
 }
-internal class ProcListResultStub { public List<ProcEntryStub> Processes { get; set; } = []; }
+internal class ProcListResultStub { public List<ProcEntryStub> Processes { get; set; } = []; public long TotalRamMb { get; set; } }
 internal class ProcKillDataStub   { public int Pid { get; set; } }
