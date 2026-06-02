@@ -806,9 +806,10 @@ internal class TlsClient : IDisposable
         catch { return ""; }
     }
 
-    // ── Network sampling (GetIfTable) ───────────────────────────────────────
-    [System.Runtime.InteropServices.DllImport("iphlpapi.dll")]
-    private static extern uint GetIfTable(IntPtr pIfTable, ref uint pdwSize, bool bOrder);
+    // ── Network sampling via BCL NetworkInterface ────────────────────────────
+    // MIB_IFROW offsets were wrong (missing 512-byte wszName header, bad stride).
+    // NetworkInterface.GetAllNetworkInterfaces() uses GetAdaptersInfo internally
+    // and correctly parses the structs — much simpler and accurate.
 
     private long _lastNetSent, _lastNetRecv;
     private DateTime _lastNetTs = DateTime.UtcNow;
@@ -817,32 +818,21 @@ internal class TlsClient : IDisposable
     {
         try
         {
-            uint size = 0;
-            GetIfTable(IntPtr.Zero, ref size, false);
-            if (size == 0) return (0, 0);
-            var buf = System.Runtime.InteropServices.Marshal.AllocHGlobal((int)size);
-            try
+            long sent = 0, recv = 0;
+            foreach (var ni in System.Net.NetworkInformation.NetworkInterface.GetAllNetworkInterfaces())
             {
-                if (GetIfTable(buf, ref size, false) != 0) return (0, 0);
-                int count = System.Runtime.InteropServices.Marshal.ReadInt32(buf);
-                long sent = 0, recv = 0;
-                int offset = 4;
-                for (int i = 0; i < count; i++)
-                {
-                    // MIB_IFROW: dwOutOctets at +96, dwInOctets at +100 (simplified offsets)
-                    // Actual layout: 220 bytes per row, OutOctets at offset 100, InOctets at 92
-                    sent += System.Runtime.InteropServices.Marshal.ReadInt32(buf, offset + 96);
-                    recv += System.Runtime.InteropServices.Marshal.ReadInt32(buf, offset + 92);
-                    offset += 220;
-                }
-                var now = DateTime.UtcNow;
-                var elapsed = (now - _lastNetTs).TotalSeconds;
-                long sentKBps = elapsed > 0 ? (long)((sent - _lastNetSent) / elapsed / 1024) : 0;
-                long recvKBps = elapsed > 0 ? (long)((recv - _lastNetRecv) / elapsed / 1024) : 0;
-                _lastNetSent = sent; _lastNetRecv = recv; _lastNetTs = now;
-                return (Math.Max(0, sentKBps), Math.Max(0, recvKBps));
+                if (ni.OperationalStatus != System.Net.NetworkInformation.OperationalStatus.Up) continue;
+                if (ni.NetworkInterfaceType == System.Net.NetworkInformation.NetworkInterfaceType.Loopback) continue;
+                var stats = ni.GetIPStatistics();
+                sent += stats.BytesSent;
+                recv += stats.BytesReceived;
             }
-            finally { System.Runtime.InteropServices.Marshal.FreeHGlobal(buf); }
+            var now = DateTime.UtcNow;
+            var elapsed = (now - _lastNetTs).TotalSeconds;
+            long sentKBps = elapsed > 0 ? (long)((sent - _lastNetSent) / elapsed / 1024) : 0;
+            long recvKBps = elapsed > 0 ? (long)((recv - _lastNetRecv) / elapsed / 1024) : 0;
+            _lastNetSent = sent; _lastNetRecv = recv; _lastNetTs = now;
+            return (Math.Max(0, sentKBps), Math.Max(0, recvKBps));
         }
         catch { return (0, 0); }
     }
