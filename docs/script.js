@@ -95,13 +95,11 @@
 /* ── Background music — starts on first click/key/touch ── */
 (function () {
   const audio = document.getElementById('bg-music');
-  const hint  = document.getElementById('music-hint');
   if (!audio) return;
   audio.volume = 0.28;
 
   function tryPlay() {
     audio.play().catch(() => {});
-    if (hint) { hint.classList.add('hidden'); }
   }
 
   // Scroll does NOT count as a trusted user gesture for audio — browsers block it.
@@ -128,24 +126,6 @@ document.querySelectorAll('.reveal').forEach((el, i) => {
   el.style.transitionDelay = (i % 4) * 60 + 'ms';
   revealIO.observe(el);
 });
-
-/* ── Hamburger menu ── */
-(function () {
-  const burger = document.getElementById('nav-burger');
-  const links  = document.getElementById('nav-links');
-  if (!burger || !links) return;
-  burger.addEventListener('click', () => {
-    const open = links.classList.toggle('open');
-    burger.setAttribute('aria-expanded', open);
-  });
-  // Close on link click
-  links.querySelectorAll('a').forEach(a => {
-    a.addEventListener('click', () => {
-      links.classList.remove('open');
-      burger.setAttribute('aria-expanded', 'false');
-    });
-  });
-})();
 
 /* ── Smooth anchor scroll ── */
 document.querySelectorAll('a[href^="#"]').forEach(a => {
