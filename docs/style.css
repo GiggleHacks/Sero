@@ -188,7 +188,6 @@ body::after {
 .screenshot-section {
   position: relative; z-index: 1;
   padding-bottom: 96px;
-  overflow: hidden;
 }
 .screen-frame {
   border-radius: 10px; overflow: hidden;
