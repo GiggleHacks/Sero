@@ -1,4 +1,4 @@
-/* ── Three.js — lit wave grid ── */
+/* ── Three.js — lit wave surface ── */
 (function () {
   const canvas = document.getElementById('bg-canvas');
   if (!canvas || typeof THREE === 'undefined') return;
@@ -11,108 +11,104 @@
   renderer.setClearColor(0x07080f, 1);
 
   const scene = new THREE.Scene();
-  scene.fog = new THREE.FogExp2(0x07080f, mobile ? 0.028 : 0.019);
+  scene.fog = new THREE.FogExp2(0x07080f, mobile ? 0.026 : 0.017);
 
-  const camera = new THREE.PerspectiveCamera(44, 1, 0.1, 80);
-  camera.position.set(0, 4.2, 8.0);
-  camera.lookAt(0, -0.5, -5);
+  const camera = new THREE.PerspectiveCamera(46, 1, 0.1, 80);
+  camera.position.set(0, 3.8, 8.2);
+  camera.lookAt(0, -0.8, -5);
 
-  // ── Lights — brand colors sweep across the surface for dynamic highlights ─
-  scene.add(new THREE.AmbientLight(0x0d1a30, 1.6));
+  // ── Lights ─────────────────────────────────────────────────────────────────
+  scene.add(new THREE.AmbientLight(0x06101e, 0.9));
 
-  const light1 = new THREE.PointLight(0x4a85f5, mobile ? 2.2 : 3.4, 42);
-  light1.position.set(5, 8, -2);
+  // Directional from upper-left — crisp shadows across surface peaks
+  const dirLight = new THREE.DirectionalLight(0x6090e0, mobile ? 1.0 : 1.6);
+  dirLight.position.set(-6, 12, 2);
+  scene.add(dirLight);
+
+  // Brand-color point lights — sweep slowly for dynamic highlights
+  const light1 = new THREE.PointLight(0x4a85f5, mobile ? 2.6 : 4.2, 44);
+  light1.position.set(4, 7, -3);
   scene.add(light1);
 
-  const light2 = new THREE.PointLight(0x7c5ce8, mobile ? 1.6 : 2.6, 34);
-  light2.position.set(-8, 6, -10);
+  const light2 = new THREE.PointLight(0x7c5ce8, mobile ? 1.8 : 3.0, 36);
+  light2.position.set(-9, 5, -11);
   scene.add(light2);
 
-  // ── Main surface — high-res PBR mesh with vertex colors ───────────────────
-  const S1 = lowEnd ? 30 : mobile ? 48 : 90;
-  const geo1 = new THREE.PlaneGeometry(55, 80, S1, S1);
+  // ── Main surface ───────────────────────────────────────────────────────────
+  const S1 = lowEnd ? 32 : mobile ? 52 : 96;
+  const geo1 = new THREE.PlaneGeometry(56, 82, S1, S1);
   geo1.rotateX(-Math.PI / 2);
   const pos1  = geo1.attributes.position;
   const base1 = new Float32Array(pos1.count);
   for (let i = 0; i < pos1.count; i++) base1[i] = pos1.getY(i);
 
-  // Vertex color buffer — height-mapped, dark navy valleys → brand blue peaks
   const vcBuf = new Float32Array(pos1.count * 3);
   geo1.setAttribute('color', new THREE.BufferAttribute(vcBuf, 3));
 
   const surface = new THREE.Mesh(geo1, new THREE.MeshStandardMaterial({
     vertexColors: true,
-    roughness: 0.42,
-    metalness: 0.38,
+    roughness: 0.28,
+    metalness: 0.52,
     side: THREE.DoubleSide,
+    envMapIntensity: 0,
   }));
   surface.position.set(0, -1.2, -6);
   scene.add(surface);
 
-  // Second layer — slightly below, different phase, adds depth parallax
+  // Far depth layer — faint, slower waves, atmospheric recession
+  let farData = null;
   if (!mobile) {
-    const geo2 = new THREE.PlaneGeometry(55, 80, 40, 40);
-    geo2.rotateX(-Math.PI / 2);
-    const pos2b = geo2.attributes.position;
-    const base2b = new Float32Array(pos2b.count);
-    for (let i = 0; i < pos2b.count; i++) base2b[i] = pos2b.getY(i);
-    const vcBuf2 = new Float32Array(pos2b.count * 3);
-    geo2.setAttribute('color', new THREE.BufferAttribute(vcBuf2, 3));
-    const layer2 = new THREE.Mesh(geo2, new THREE.MeshStandardMaterial({
-      vertexColors: true, roughness: 0.55, metalness: 0.20,
-      side: THREE.DoubleSide, transparent: true, opacity: 0.45,
-    }));
-    layer2.position.set(0, -2.2, -7);
-    scene.add(layer2);
-    // Store refs for tick
-    surface._layer2 = { pos: pos2b, base: base2b, buf: vcBuf2, geo: geo2, mesh: layer2 };
-  }
-
-  // Far faint layer for depth
-  let farPos = null, farBase = null;
-  if (!mobile) {
-    const geoF = new THREE.PlaneGeometry(90, 120, 24, 24);
+    const geoF = new THREE.PlaneGeometry(90, 120, 28, 28);
     geoF.rotateX(-Math.PI / 2);
-    farPos  = geoF.attributes.position;
-    farBase = new Float32Array(farPos.count);
-    for (let i = 0; i < farPos.count; i++) farBase[i] = farPos.getY(i);
-    const vcFar = new Float32Array(farPos.count * 3);
-    geoF.setAttribute('color', new THREE.BufferAttribute(vcFar, 3));
+    const posF  = geoF.attributes.position;
+    const baseF = new Float32Array(posF.count);
+    for (let i = 0; i < posF.count; i++) baseF[i] = posF.getY(i);
+    const vcF = new Float32Array(posF.count * 3);
+    geoF.setAttribute('color', new THREE.BufferAttribute(vcF, 3));
     const farSurf = new THREE.Mesh(geoF, new THREE.MeshStandardMaterial({
-      vertexColors: true, roughness: 0.6, metalness: 0.15,
-      side: THREE.DoubleSide, transparent: true, opacity: 0.30,
+      vertexColors: true, roughness: 0.40, metalness: 0.30,
+      side: THREE.DoubleSide, transparent: true, opacity: 0.35,
     }));
-    farSurf.position.set(0, -4.0, -18);
+    farSurf.position.set(0, -3.8, -18);
     scene.add(farSurf);
-    surface._far = { pos: farPos, base: farBase, buf: vcFar, geo: geoF };
+    farData = { pos: posF, base: baseF, buf: vcF, geo: geoF };
   }
 
-  // ── Height → vertex color: dark navy valleys → brand blue peaks ──────────
+  // ── Vertex color: navy depths → sharp bright blue peaks ───────────────────
   function applyVC(buf, idx, h) {
-    const n = Math.max(0, Math.min(1, (h + 0.85) / 1.65));
+    // gamma-boosted mapping — dark valleys, vivid peaks
+    const n = Math.pow(Math.max(0, Math.min(1, (h + 0.9) / 1.7)), 0.55);
     let r, g, b;
-    if (n < 0.5) {
-      const s = n / 0.5;
-      r = 0.016 + s * 0.044; g = 0.031 + s * 0.095; b = 0.059 + s * 0.205;
+    if (n < 0.38) {
+      const s = n / 0.38;
+      r = 0.012 + s * 0.028; g = 0.022 + s * 0.068; b = 0.048 + s * 0.182;
+    } else if (n < 0.72) {
+      const s = (n - 0.38) / 0.34;
+      r = 0.040 + s * 0.115; g = 0.090 + s * 0.235; b = 0.230 + s * 0.295;
     } else {
-      const s = (n - 0.5) / 0.5;
-      r = 0.060 + s * 0.090; g = 0.126 + s * 0.248; b = 0.264 + s * 0.362;
+      const s = (n - 0.72) / 0.28;
+      r = 0.155 + s * 0.310; g = 0.325 + s * 0.385; b = 0.525 + s * 0.305;
     }
     buf[idx] = r; buf[idx+1] = g; buf[idx+2] = b;
   }
 
-  // ── Wave functions ────────────────────────────────────────────────────────
+  // ── Wave functions — broad swell + fine surface ripples ───────────────────
   function ambientWave(x, z, t) {
-    return Math.sin(x * 0.16 + t * 0.72) * 0.32
-         + Math.sin(z * 0.11 + t * 0.50) * 0.24
-         + Math.sin((x - z) * 0.075 + t * 0.35) * 0.14
-         + Math.sin((x + z) * 0.038 + t * 0.20) * 0.09
-         + Math.sin(x * 0.035 + z * 0.028 + t * 0.13) * 0.06;
+    // Main swell
+    const swell = Math.sin(x * 0.16 + t * 0.72) * 0.30
+                + Math.sin(z * 0.11 + t * 0.50) * 0.22
+                + Math.sin((x - z) * 0.072 + t * 0.35) * 0.14
+                + Math.sin((x + z) * 0.036 + t * 0.19) * 0.09;
+    // Fine ripple detail — adds visible texture without chaos
+    const ripple = Math.sin(x * 0.46 + z * 0.34 + t * 1.10) * 0.048
+                 + Math.sin(x * 0.62 - z * 0.44 + t * 0.88) * 0.034
+                 + Math.sin(x * 0.31 + z * 0.55 + t * 1.38) * 0.024;
+    return swell + ripple;
   }
 
   function sonarWave(x, z, t) {
     const d = Math.hypot(x, z);
-    return Math.max(0, Math.sin(t * 1.9 - d * 0.22)) * Math.exp(-d * 0.050) * 0.70;
+    return Math.max(0, Math.sin(t * 1.9 - d * 0.22)) * Math.exp(-d * 0.048) * 0.65;
   }
 
   // ── Resize ────────────────────────────────────────────────────────────────
@@ -141,7 +137,7 @@
     const dt = Math.min(clock.getDelta(), 0.05);
     t += dt * SPEED;
 
-    // Main surface — heights + vertex colors
+    // Main surface
     for (let i = 0; i < pos1.count; i++) {
       const x = pos1.getX(i), z = pos1.getZ(i);
       const y = base1[i] + ambientWave(x, z, t) + (mobile ? 0 : sonarWave(x, z, t));
@@ -152,48 +148,37 @@
     geo1.attributes.color.needsUpdate = true;
     geo1.computeVertexNormals();
 
-    // Second parallax layer
-    const L2 = surface._layer2;
-    if (L2) {
-      for (let i = 0; i < L2.pos.count; i++) {
-        const x = L2.pos.getX(i), z = L2.pos.getZ(i);
-        const y = L2.base[i] + ambientWave(x, z, t * 0.78 + 1.4) * 0.7;
-        L2.pos.setY(i, y);
-        applyVC(L2.buf, i * 3, y * 0.6);
-      }
-      L2.pos.needsUpdate = true;
-      L2.geo.attributes.color.needsUpdate = true;
-      L2.geo.computeVertexNormals();
-    }
-
     // Far layer
-    const FL = surface._far;
-    if (FL) {
-      for (let i = 0; i < FL.pos.count; i++) {
-        const x = FL.pos.getX(i), z = FL.pos.getZ(i);
-        const y = FL.base[i] + ambientWave(x, z, t * 0.38) * 0.42;
-        FL.pos.setY(i, y);
-        applyVC(FL.buf, i * 3, y * 0.4);
+    if (farData) {
+      const { pos, base, buf, geo } = farData;
+      for (let i = 0; i < pos.count; i++) {
+        const x = pos.getX(i), z = pos.getZ(i);
+        const y = base[i] + ambientWave(x, z, t * 0.36) * 0.38;
+        pos.setY(i, y);
+        applyVC(buf, i * 3, y * 0.38);
       }
-      FL.pos.needsUpdate = true;
-      FL.geo.attributes.color.needsUpdate = true;
-      FL.geo.computeVertexNormals();
+      pos.needsUpdate = true;
+      geo.attributes.color.needsUpdate = true;
+      geo.computeVertexNormals();
     }
 
-    // Moving lights — sweep slowly in X/Z creating traveling highlight bands
+    // Moving point lights
     light1.position.x = Math.sin(t * 0.085) * 14 + Math.sin(t * 0.031) * 4;
     light1.position.z = -6 + Math.cos(t * 0.062) * 10;
-    light1.position.y = 7 + Math.sin(t * 0.100) * 1.5;
-
+    light1.position.y = 7  + Math.sin(t * 0.100) * 1.5;
     light2.position.x = Math.sin(t * 0.058 + 1.9) * 16;
     light2.position.z = -6 + Math.cos(t * 0.044 + 0.8) * 12;
-    light2.position.y = 5 + Math.sin(t * 0.076 + 1.2) * 2;
+    light2.position.y = 5  + Math.sin(t * 0.076 + 1.2) * 2;
+
+    // Directional light gentle rotation
+    dirLight.position.x = -6 + Math.sin(t * 0.030) * 3;
+    dirLight.position.z =  2 + Math.cos(t * 0.024) * 4;
 
     // Camera
-    camera.position.x = Math.sin(t * 0.110) * 0.48 + Math.sin(t * 0.037) * 0.13;
-    camera.position.y = 4.2 + Math.sin(t * 0.068) * 0.18 + Math.sin(t * 0.039) * 0.07;
-    camera.position.z = 8.0 + Math.sin(t * 0.018) * 1.2;
-    camera.lookAt(Math.sin(t * 0.085) * 0.16, -0.5, -5);
+    camera.position.x = Math.sin(t * 0.110) * 0.50 + Math.sin(t * 0.037) * 0.14;
+    camera.position.y = 3.8 + Math.sin(t * 0.068) * 0.18 + Math.sin(t * 0.039) * 0.07;
+    camera.position.z = 8.2 + Math.sin(t * 0.018) * 1.1;
+    camera.lookAt(Math.sin(t * 0.085) * 0.16, -0.8, -5);
 
     renderer.render(scene, camera);
   }
