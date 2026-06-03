@@ -18,12 +18,12 @@
   camera.lookAt(0, -0.5, -5);
 
   // ── Main grid — single solid color, wave-deformed ─────────────────────────
-  const S1 = lowEnd ? 20 : mobile ? 30 : 60;
-  const geo1 = new THREE.PlaneGeometry(50, 70, S1, S1);
+  const S1 = lowEnd ? 22 : mobile ? 34 : 66;
+  const geo1 = new THREE.PlaneGeometry(50, 72, S1, S1);
   geo1.rotateX(-Math.PI / 2);
   const mesh1 = new THREE.Mesh(geo1, new THREE.MeshBasicMaterial({
-    color: 0x0d3060, wireframe: true, transparent: true,
-    opacity: mobile ? 0.36 : 0.40,
+    color: 0x112460, wireframe: true, transparent: true,
+    opacity: mobile ? 0.40 : 0.46,
   }));
   mesh1.position.set(0, -1.2, -6);
   scene.add(mesh1);
@@ -38,7 +38,7 @@
     const geo2 = new THREE.PlaneGeometry(80, 100, 22, 22);
     geo2.rotateX(-Math.PI / 2);
     const mesh2 = new THREE.Mesh(geo2, new THREE.MeshBasicMaterial({
-      color: 0x071a35, wireframe: true, transparent: true, opacity: 0.10,
+      color: 0x091a40, wireframe: true, transparent: true, opacity: 0.12,
     }));
     mesh2.position.set(0, -4.0, -18);
     scene.add(mesh2);
@@ -49,10 +49,11 @@
 
   // ── Wave functions ────────────────────────────────────────────────────────
   function ambientWave(x, z, t) {
-    return Math.sin(x * 0.28 + t * 0.78) * 0.42
-         + Math.sin(z * 0.18 + t * 0.53) * 0.30
-         + Math.sin((x - z) * 0.12 + t * 0.37) * 0.18
-         + Math.sin((x + z) * 0.062 + t * 0.21) * 0.11;
+    return Math.sin(x * 0.28 + t * 0.78) * 0.48
+         + Math.sin(z * 0.18 + t * 0.53) * 0.34
+         + Math.sin((x - z) * 0.12 + t * 0.37) * 0.20
+         + Math.sin((x + z) * 0.062 + t * 0.21) * 0.13
+         + Math.sin(x * 0.055 + z * 0.042 + t * 0.14) * 0.09;
   }
 
   function sonarWave(x, z, t) {
@@ -94,10 +95,11 @@
       farPos.needsUpdate = true;
     }
 
-    // Camera: dual-frequency sway
-    camera.position.x = Math.sin(t * 0.110) * 0.45 + Math.sin(t * 0.037) * 0.12;
-    camera.position.y = 4.2 + Math.sin(t * 0.072) * 0.18 + Math.sin(t * 0.041) * 0.07;
-    camera.lookAt(Math.sin(t * 0.090) * 0.15, -0.5, -5);
+    // Camera: tri-axis drift — X sway + Y breathe + Z slow forward/back
+    camera.position.x = Math.sin(t * 0.110) * 0.50 + Math.sin(t * 0.037) * 0.14;
+    camera.position.y = 4.2 + Math.sin(t * 0.072) * 0.20 + Math.sin(t * 0.041) * 0.08;
+    camera.position.z = 8.0 + Math.sin(t * 0.022) * 1.8;
+    camera.lookAt(Math.sin(t * 0.090) * 0.18, -0.5, -5);
 
     renderer.render(scene, camera);
   }
