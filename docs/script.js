@@ -1,4 +1,4 @@
-/* ── Three.js — radar grid ── */
+/* ── Three.js — lit wave grid ── */
 (function () {
   const canvas = document.getElementById('bg-canvas');
   if (!canvas || typeof THREE === 'undefined') return;
@@ -11,37 +11,66 @@
   renderer.setClearColor(0x07080f, 1);
 
   const scene = new THREE.Scene();
-  scene.fog = new THREE.FogExp2(0x07080f, mobile ? 0.028 : 0.020);
+  scene.fog = new THREE.FogExp2(0x07080f, mobile ? 0.028 : 0.019);
 
   const camera = new THREE.PerspectiveCamera(44, 1, 0.1, 80);
   camera.position.set(0, 4.2, 8.0);
   camera.lookAt(0, -0.5, -5);
 
-  // ── Main grid — single solid color, wave-deformed ─────────────────────────
+  // ── Lights — brand colors sweep across the surface for dynamic highlights ─
+  scene.add(new THREE.AmbientLight(0x080c18, 1.0));
+
+  const light1 = new THREE.PointLight(0x4a85f5, mobile ? 1.8 : 2.8, 40);
+  light1.position.set(5, 8, -2);
+  scene.add(light1);
+
+  const light2 = new THREE.PointLight(0x7c5ce8, mobile ? 1.2 : 2.0, 32);
+  light2.position.set(-8, 6, -10);
+  scene.add(light2);
+
+  // ── Main grid ─────────────────────────────────────────────────────────────
   const S1 = lowEnd ? 22 : mobile ? 34 : 66;
   const geo1 = new THREE.PlaneGeometry(50, 72, S1, S1);
   geo1.rotateX(-Math.PI / 2);
-  const mesh1 = new THREE.Mesh(geo1, new THREE.MeshBasicMaterial({
-    color: 0x112460, wireframe: true, transparent: true,
-    opacity: mobile ? 0.40 : 0.46,
+
+  // Solid PBR surface — lit, responds to moving lights for realistic shading
+  const solidMesh = new THREE.Mesh(geo1, new THREE.MeshStandardMaterial({
+    color: 0x040810,
+    emissive: 0x02050e,
+    roughness: 0.55,
+    metalness: 0.30,
+    side: THREE.DoubleSide,
+    transparent: true,
+    opacity: 0.92,
+    polygonOffset: true,
+    polygonOffsetFactor: 1,
+    polygonOffsetUnits: 1,
   }));
-  mesh1.position.set(0, -1.2, -6);
-  scene.add(mesh1);
+  solidMesh.position.set(0, -1.2, -6);
+  scene.add(solidMesh);
+
+  // Wireframe overlay on the same geometry — grid lines on top
+  const wireMesh = new THREE.Mesh(geo1, new THREE.MeshBasicMaterial({
+    color: 0x1a4a90,
+    wireframe: true,
+    transparent: true,
+    opacity: mobile ? 0.38 : 0.44,
+  }));
+  wireMesh.position.set(0, -1.2, -6);
+  scene.add(wireMesh);
 
   const pos1  = geo1.attributes.position;
   const base1 = new Float32Array(pos1.count);
   for (let i = 0; i < pos1.count; i++) base1[i] = pos1.getY(i);
 
-  // ── Far sparse grid (parallax depth) ─────────────────────────────────────
+  // ── Far sparse grid ───────────────────────────────────────────────────────
   let farPos = null, farBase = null;
   if (!mobile) {
     const geo2 = new THREE.PlaneGeometry(80, 100, 22, 22);
     geo2.rotateX(-Math.PI / 2);
-    const mesh2 = new THREE.Mesh(geo2, new THREE.MeshBasicMaterial({
-      color: 0x091a40, wireframe: true, transparent: true, opacity: 0.12,
-    }));
-    mesh2.position.set(0, -4.0, -18);
-    scene.add(mesh2);
+    scene.add(Object.assign(new THREE.Mesh(geo2, new THREE.MeshBasicMaterial({
+      color: 0x091a40, wireframe: true, transparent: true, opacity: 0.10,
+    })), { position: new THREE.Vector3(0, -4.0, -18) }));
     farPos  = geo2.attributes.position;
     farBase = new Float32Array(farPos.count);
     for (let i = 0; i < farPos.count; i++) farBase[i] = farPos.getY(i);
@@ -49,8 +78,8 @@
 
   // ── Wave functions ────────────────────────────────────────────────────────
   function ambientWave(x, z, t) {
-    return Math.sin(x * 0.26 + t * 0.72) * 0.48
-         + Math.sin(z * 0.17 + t * 0.50) * 0.34
+    return Math.sin(x * 0.26 + t * 0.72) * 0.50
+         + Math.sin(z * 0.17 + t * 0.50) * 0.36
          + Math.sin((x - z) * 0.11 + t * 0.35) * 0.22
          + Math.sin((x + z) * 0.058 + t * 0.20) * 0.14
          + Math.sin(x * 0.052 + z * 0.040 + t * 0.13) * 0.09;
@@ -58,7 +87,7 @@
 
   function sonarWave(x, z, t) {
     const d = Math.hypot(x, z);
-    return Math.max(0, Math.sin(t * 1.9 - d * 0.25)) * Math.exp(-d * 0.055) * 1.05;
+    return Math.max(0, Math.sin(t * 1.9 - d * 0.25)) * Math.exp(-d * 0.055) * 1.1;
   }
 
   // ── Resize ────────────────────────────────────────────────────────────────
@@ -76,32 +105,41 @@
     if (!paused) { clock.start(); tick(); }
   });
 
-  // Delta-time clock — speed stays constant regardless of frame rate
   const clock = new THREE.Clock();
-  const SPEED = mobile ? 0.096 : 0.108; // units/second (= 0.0016 or 0.0018 × 60)
+  const SPEED = mobile ? 0.130 : 0.150;
 
   let t = 0;
   function tick() {
     if (paused) return;
     requestAnimationFrame(tick);
 
-    const dt = Math.min(clock.getDelta(), 0.05); // cap at 50ms — no jump after tab restore
+    const dt = Math.min(clock.getDelta(), 0.05);
     t += dt * SPEED;
 
-    // Main grid wave
+    // Update vertices + recompute normals for accurate PBR shading
     for (let i = 0; i < pos1.count; i++)
       pos1.setY(i, base1[i] + ambientWave(pos1.getX(i), pos1.getZ(i), t)
                              + (mobile ? 0 : sonarWave(pos1.getX(i), pos1.getZ(i), t)));
     pos1.needsUpdate = true;
+    geo1.computeVertexNormals();
 
-    // Far grid (slower, shallower)
+    // Far grid
     if (farPos && farBase) {
       for (let i = 0; i < farPos.count; i++)
         farPos.setY(i, farBase[i] + ambientWave(farPos.getX(i), farPos.getZ(i), t * 0.38) * 0.42);
       farPos.needsUpdate = true;
     }
 
-    // Camera: smooth tri-axis drift, moderate Z float
+    // Moving lights — sweep slowly in X/Z creating traveling highlight bands
+    light1.position.x = Math.sin(t * 0.085) * 14 + Math.sin(t * 0.031) * 4;
+    light1.position.z = -6 + Math.cos(t * 0.062) * 10;
+    light1.position.y = 7 + Math.sin(t * 0.100) * 1.5;
+
+    light2.position.x = Math.sin(t * 0.058 + 1.9) * 16;
+    light2.position.z = -6 + Math.cos(t * 0.044 + 0.8) * 12;
+    light2.position.y = 5 + Math.sin(t * 0.076 + 1.2) * 2;
+
+    // Camera
     camera.position.x = Math.sin(t * 0.110) * 0.48 + Math.sin(t * 0.037) * 0.13;
     camera.position.y = 4.2 + Math.sin(t * 0.068) * 0.18 + Math.sin(t * 0.039) * 0.07;
     camera.position.z = 8.0 + Math.sin(t * 0.018) * 1.2;
