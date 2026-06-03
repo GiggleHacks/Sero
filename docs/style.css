@@ -385,7 +385,7 @@ body::after {
   text-align: center;
 }
 .cta-inner { display: flex; flex-direction: column; align-items: center; gap: 20px; }
-.cta-logo { width: 110px; opacity: 0.55; margin-bottom: 16px; filter: drop-shadow(0 0 24px rgba(59,130,246,0.25)); }
+.cta-logo { width: 82px; opacity: 0.55; margin-bottom: 16px; filter: drop-shadow(0 0 24px rgba(59,130,246,0.25)); }
 .cta-section h2 {
   font-size: clamp(2rem, 4vw, 3rem);
   font-weight: 700; letter-spacing: -0.03em; line-height: 1.1;
