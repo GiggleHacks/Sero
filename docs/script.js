@@ -28,61 +28,77 @@
   light2.position.set(-8, 6, -10);
   scene.add(light2);
 
-  // ── Build H/V index list — PlaneGeometry vertex (col i, row j) = j*(S+1)+i ─
-  function hvIndex(segs) {
-    const nx = segs + 1, idx = [];
-    for (let j = 0; j < nx; j++)
-      for (let i = 0; i < segs; i++) idx.push(j*nx+i, j*nx+i+1);
-    for (let i = 0; i < nx; i++)
-      for (let j = 0; j < segs; j++) idx.push(j*nx+i, (j+1)*nx+i);
-    return idx;
-  }
-
-  // ── Main grid ─────────────────────────────────────────────────────────────
-  const S1 = lowEnd ? 24 : mobile ? 36 : 70;
-  const geo1 = new THREE.PlaneGeometry(50, 72, S1, S1);
+  // ── Main surface — high-res PBR mesh with vertex colors ───────────────────
+  const S1 = lowEnd ? 30 : mobile ? 48 : 90;
+  const geo1 = new THREE.PlaneGeometry(55, 80, S1, S1);
   geo1.rotateX(-Math.PI / 2);
   const pos1  = geo1.attributes.position;
   const base1 = new Float32Array(pos1.count);
   for (let i = 0; i < pos1.count; i++) base1[i] = pos1.getY(i);
 
-  // Solid PBR surface — lit, responds to moving lights for realistic shading
-  const solidMesh = new THREE.Mesh(geo1, new THREE.MeshStandardMaterial({
-    color: 0x08102a, emissive: 0x050c1e,
-    roughness: 0.58, metalness: 0.28,
-    side: THREE.DoubleSide, transparent: true, opacity: 0.72,
-    polygonOffset: true, polygonOffsetFactor: 1, polygonOffsetUnits: 1,
-  }));
-  solidMesh.position.set(0, -1.2, -6);
-  scene.add(solidMesh);
+  // Vertex color buffer — height-mapped, dark navy valleys → brand blue peaks
+  const vcBuf = new Float32Array(pos1.count * 3);
+  geo1.setAttribute('color', new THREE.BufferAttribute(vcBuf, 3));
 
-  // H/V lines only — shared position attr, no diagonal triangle edges
-  const lineGeo = new THREE.BufferGeometry();
-  lineGeo.setAttribute('position', pos1);
-  lineGeo.setIndex(hvIndex(S1));
-  const gridLines = new THREE.LineSegments(lineGeo, new THREE.LineBasicMaterial({
-    color: 0x2060c0, transparent: true, opacity: mobile ? 0.42 : 0.50,
+  const surface = new THREE.Mesh(geo1, new THREE.MeshStandardMaterial({
+    vertexColors: true,
+    roughness: 0.42,
+    metalness: 0.38,
+    side: THREE.DoubleSide,
   }));
-  gridLines.position.set(0, -1.2, -6);
-  scene.add(gridLines);
+  surface.position.set(0, -1.2, -6);
+  scene.add(surface);
 
-  // ── Far sparse grid ───────────────────────────────────────────────────────
+  // Second layer — slightly below, different phase, adds depth parallax
+  if (!mobile) {
+    const geo2 = new THREE.PlaneGeometry(55, 80, 40, 40);
+    geo2.rotateX(-Math.PI / 2);
+    const pos2b = geo2.attributes.position;
+    const base2b = new Float32Array(pos2b.count);
+    for (let i = 0; i < pos2b.count; i++) base2b[i] = pos2b.getY(i);
+    const vcBuf2 = new Float32Array(pos2b.count * 3);
+    geo2.setAttribute('color', new THREE.BufferAttribute(vcBuf2, 3));
+    const layer2 = new THREE.Mesh(geo2, new THREE.MeshStandardMaterial({
+      vertexColors: true, roughness: 0.55, metalness: 0.20,
+      side: THREE.DoubleSide, transparent: true, opacity: 0.45,
+    }));
+    layer2.position.set(0, -2.2, -7);
+    scene.add(layer2);
+    // Store refs for tick
+    surface._layer2 = { pos: pos2b, base: base2b, buf: vcBuf2, geo: geo2, mesh: layer2 };
+  }
+
+  // Far faint layer for depth
   let farPos = null, farBase = null;
   if (!mobile) {
-    const SF = 22;
-    const geo2 = new THREE.PlaneGeometry(80, 100, SF, SF);
-    geo2.rotateX(-Math.PI / 2);
-    farPos  = geo2.attributes.position;
+    const geoF = new THREE.PlaneGeometry(90, 120, 24, 24);
+    geoF.rotateX(-Math.PI / 2);
+    farPos  = geoF.attributes.position;
     farBase = new Float32Array(farPos.count);
     for (let i = 0; i < farPos.count; i++) farBase[i] = farPos.getY(i);
-    const farLineGeo = new THREE.BufferGeometry();
-    farLineGeo.setAttribute('position', farPos);
-    farLineGeo.setIndex(hvIndex(SF));
-    const farLines = new THREE.LineSegments(farLineGeo, new THREE.LineBasicMaterial({
-      color: 0x091a40, transparent: true, opacity: 0.10,
+    const vcFar = new Float32Array(farPos.count * 3);
+    geoF.setAttribute('color', new THREE.BufferAttribute(vcFar, 3));
+    const farSurf = new THREE.Mesh(geoF, new THREE.MeshStandardMaterial({
+      vertexColors: true, roughness: 0.6, metalness: 0.15,
+      side: THREE.DoubleSide, transparent: true, opacity: 0.30,
     }));
-    farLines.position.set(0, -4.0, -18);
-    scene.add(farLines);
+    farSurf.position.set(0, -4.0, -18);
+    scene.add(farSurf);
+    surface._far = { pos: farPos, base: farBase, buf: vcFar, geo: geoF };
+  }
+
+  // ── Height → vertex color: dark navy valleys → brand blue peaks ──────────
+  function applyVC(buf, idx, h) {
+    const n = Math.max(0, Math.min(1, (h + 0.85) / 1.65));
+    let r, g, b;
+    if (n < 0.5) {
+      const s = n / 0.5;
+      r = 0.016 + s * 0.044; g = 0.031 + s * 0.095; b = 0.059 + s * 0.205;
+    } else {
+      const s = (n - 0.5) / 0.5;
+      r = 0.060 + s * 0.090; g = 0.126 + s * 0.248; b = 0.264 + s * 0.362;
+    }
+    buf[idx] = r; buf[idx+1] = g; buf[idx+2] = b;
   }
 
   // ── Wave functions ────────────────────────────────────────────────────────
@@ -125,18 +141,43 @@
     const dt = Math.min(clock.getDelta(), 0.05);
     t += dt * SPEED;
 
-    // Update vertices + recompute normals for accurate PBR shading
-    for (let i = 0; i < pos1.count; i++)
-      pos1.setY(i, base1[i] + ambientWave(pos1.getX(i), pos1.getZ(i), t)
-                             + (mobile ? 0 : sonarWave(pos1.getX(i), pos1.getZ(i), t)));
+    // Main surface — heights + vertex colors
+    for (let i = 0; i < pos1.count; i++) {
+      const x = pos1.getX(i), z = pos1.getZ(i);
+      const y = base1[i] + ambientWave(x, z, t) + (mobile ? 0 : sonarWave(x, z, t));
+      pos1.setY(i, y);
+      applyVC(vcBuf, i * 3, y);
+    }
     pos1.needsUpdate = true;
+    geo1.attributes.color.needsUpdate = true;
     geo1.computeVertexNormals();
 
-    // Far grid
-    if (farPos && farBase) {
-      for (let i = 0; i < farPos.count; i++)
-        farPos.setY(i, farBase[i] + ambientWave(farPos.getX(i), farPos.getZ(i), t * 0.38) * 0.42);
-      farPos.needsUpdate = true;
+    // Second parallax layer
+    const L2 = surface._layer2;
+    if (L2) {
+      for (let i = 0; i < L2.pos.count; i++) {
+        const x = L2.pos.getX(i), z = L2.pos.getZ(i);
+        const y = L2.base[i] + ambientWave(x, z, t * 0.78 + 1.4) * 0.7;
+        L2.pos.setY(i, y);
+        applyVC(L2.buf, i * 3, y * 0.6);
+      }
+      L2.pos.needsUpdate = true;
+      L2.geo.attributes.color.needsUpdate = true;
+      L2.geo.computeVertexNormals();
+    }
+
+    // Far layer
+    const FL = surface._far;
+    if (FL) {
+      for (let i = 0; i < FL.pos.count; i++) {
+        const x = FL.pos.getX(i), z = FL.pos.getZ(i);
+        const y = FL.base[i] + ambientWave(x, z, t * 0.38) * 0.42;
+        FL.pos.setY(i, y);
+        applyVC(FL.buf, i * 3, y * 0.4);
+      }
+      FL.pos.needsUpdate = true;
+      FL.geo.attributes.color.needsUpdate = true;
+      FL.geo.computeVertexNormals();
     }
 
     // Moving lights — sweep slowly in X/Z creating traveling highlight bands
