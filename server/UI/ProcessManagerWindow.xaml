@@ -215,7 +215,7 @@
                         </DataGridTemplateColumn.CellTemplate>
                     </DataGridTemplateColumn>
                     <!-- Network connections -->
-                    <DataGridTextColumn Header="RÉSEAU" Binding="{Binding NetDisplay}" Width="80"
+                    <DataGridTextColumn Header="Network" Binding="{Binding NetDisplay}" Width="80"
                                         FontFamily="Consolas" FontSize="11"/>
                     <!-- Title -->
                     <DataGridTextColumn Header="TITLE" Binding="{Binding Title}" Width="200" FontSize="11"/>

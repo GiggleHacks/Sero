@@ -127,6 +127,16 @@ document.querySelectorAll('.reveal').forEach((el, i) => {
   revealIO.observe(el);
 });
 
+/* ── 3D spin on image click ── */
+document.querySelectorAll('.gallery-item img, .screen-body img').forEach(img => {
+  img.addEventListener('click', () => {
+    img.classList.remove('spin3d');
+    void img.offsetWidth; // reflow to restart animation
+    img.classList.add('spin3d');
+    img.addEventListener('animationend', () => img.classList.remove('spin3d'), { once: true });
+  });
+});
+
 /* ── Smooth anchor scroll ── */
 document.querySelectorAll('a[href^="#"]').forEach(a => {
   a.addEventListener('click', e => {
