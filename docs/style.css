@@ -467,6 +467,9 @@ footer {
 }
 @media (max-width: 640px) {
   .container { padding: 0 16px; }
+  .nav-inner { justify-content: space-between; gap: 0; }
+  .nav-links { display: none; }
+  .btn-gh { font-size: 0.78rem; padding: 6px 10px; }
   .hero { padding: 100px 0 48px; }
   .hero-lead { font-size: 0.95rem; border-left: none; padding-left: 0; }
   .hero-meta { font-size: 0.72rem; gap: 7px; }
@@ -474,7 +477,6 @@ footer {
   .hero-actions .btn-primary,
   .hero-actions .btn-outline { justify-content: center; }
   .feat-grid { grid-template-columns: 1fr; gap: 28px; }
-  .btn-gh { font-size: 0.78rem; padding: 6px 10px; margin-left: auto; }
   .price-table td { padding: 11px 10px; font-size: 0.82rem; }
   .price-note-cell { display: none; }
   .deepdive-card { padding: 20px; }
