@@ -63,21 +63,6 @@
   ring2.position.set(0, -1.19, -6);
   scene.add(ring, ring2);
 
-  // ── Distant stars (static) ────────────────────────────────────────────────
-  const STARS = mobile ? 80 : 180;
-  const sPos  = new Float32Array(STARS * 3);
-  for (let i = 0; i < STARS; i++) {
-    sPos[i*3]   = (Math.random() - 0.5) * 55;
-    sPos[i*3+1] = Math.random() * 7 + 1.5;
-    sPos[i*3+2] = Math.random() * -38 - 6;
-  }
-  const starGeo = new THREE.BufferGeometry();
-  starGeo.setAttribute('position', new THREE.BufferAttribute(sPos, 3));
-  scene.add(new THREE.Points(starGeo, new THREE.PointsMaterial({
-    color: 0xffffff, size: 0.7, sizeAttenuation: true,
-    transparent: true, opacity: 0.28,
-  })));
-
   // ── Wave functions ────────────────────────────────────────────────────────
   function ambientWave(x, z, t) {
     return Math.sin(x * 0.28 + t * 0.78) * 0.42
