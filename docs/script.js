@@ -17,24 +17,18 @@
   camera.position.set(0, 3.8, 8.2);
   camera.lookAt(0, -0.8, -5);
 
-  // ── Lights ─────────────────────────────────────────────────────────────────
-  scene.add(new THREE.AmbientLight(0x06101e, 0.9));
+  // ── Lights — subtle, match original dark-blue grid aesthetic ──────────────
+  scene.add(new THREE.AmbientLight(0x101e38, 2.2));
 
-  // Directional from upper-left — crisp shadows across surface peaks
-  const dirLight = new THREE.DirectionalLight(0x6090e0, mobile ? 1.0 : 1.6);
-  dirLight.position.set(-6, 12, 2);
-  scene.add(dirLight);
-
-  // Brand-color point lights — sweep slowly for dynamic highlights
-  const light1 = new THREE.PointLight(0x4a85f5, mobile ? 2.6 : 4.2, 44);
+  const light1 = new THREE.PointLight(0x4a85f5, mobile ? 1.4 : 2.0, 40);
   light1.position.set(4, 7, -3);
   scene.add(light1);
 
-  const light2 = new THREE.PointLight(0x7c5ce8, mobile ? 1.8 : 3.0, 36);
+  const light2 = new THREE.PointLight(0x7c5ce8, mobile ? 0.9 : 1.4, 32);
   light2.position.set(-9, 5, -11);
   scene.add(light2);
 
-  // ── Main surface ───────────────────────────────────────────────────────────
+  // ── Main surface — single matte color, same palette as original grid ───────
   const S1 = lowEnd ? 32 : mobile ? 52 : 96;
   const geo1 = new THREE.PlaneGeometry(56, 82, S1, S1);
   geo1.rotateX(-Math.PI / 2);
@@ -42,20 +36,19 @@
   const base1 = new Float32Array(pos1.count);
   for (let i = 0; i < pos1.count; i++) base1[i] = pos1.getY(i);
 
-  const vcBuf = new Float32Array(pos1.count * 3);
-  geo1.setAttribute('color', new THREE.BufferAttribute(vcBuf, 3));
-
   const surface = new THREE.Mesh(geo1, new THREE.MeshStandardMaterial({
-    vertexColors: true,
-    roughness: 0.28,
-    metalness: 0.52,
+    color:    0x0e2855,
+    emissive: 0x060f22,
+    roughness: 0.65,
+    metalness: 0.20,
     side: THREE.DoubleSide,
-    envMapIntensity: 0,
+    transparent: true,
+    opacity: 0.90,
   }));
   surface.position.set(0, -1.2, -6);
   scene.add(surface);
 
-  // Far depth layer — faint, slower waves, atmospheric recession
+  // Far depth layer — faint, same palette, atmospheric recession
   let farData = null;
   if (!mobile) {
     const geoF = new THREE.PlaneGeometry(90, 120, 28, 28);
@@ -63,46 +56,25 @@
     const posF  = geoF.attributes.position;
     const baseF = new Float32Array(posF.count);
     for (let i = 0; i < posF.count; i++) baseF[i] = posF.getY(i);
-    const vcF = new Float32Array(posF.count * 3);
-    geoF.setAttribute('color', new THREE.BufferAttribute(vcF, 3));
     const farSurf = new THREE.Mesh(geoF, new THREE.MeshStandardMaterial({
-      vertexColors: true, roughness: 0.40, metalness: 0.30,
-      side: THREE.DoubleSide, transparent: true, opacity: 0.35,
+      color: 0x071a3a, emissive: 0x030c1a,
+      roughness: 0.70, metalness: 0.12,
+      side: THREE.DoubleSide, transparent: true, opacity: 0.32,
     }));
     farSurf.position.set(0, -3.8, -18);
     scene.add(farSurf);
-    farData = { pos: posF, base: baseF, buf: vcF, geo: geoF };
-  }
-
-  // ── Vertex color: navy depths → sharp bright blue peaks ───────────────────
-  function applyVC(buf, idx, h) {
-    // gamma-boosted mapping — dark valleys, vivid peaks
-    const n = Math.pow(Math.max(0, Math.min(1, (h + 0.9) / 1.7)), 0.55);
-    let r, g, b;
-    if (n < 0.38) {
-      const s = n / 0.38;
-      r = 0.012 + s * 0.028; g = 0.022 + s * 0.068; b = 0.048 + s * 0.182;
-    } else if (n < 0.72) {
-      const s = (n - 0.38) / 0.34;
-      r = 0.040 + s * 0.115; g = 0.090 + s * 0.235; b = 0.230 + s * 0.295;
-    } else {
-      const s = (n - 0.72) / 0.28;
-      r = 0.155 + s * 0.310; g = 0.325 + s * 0.385; b = 0.525 + s * 0.305;
-    }
-    buf[idx] = r; buf[idx+1] = g; buf[idx+2] = b;
+    farData = { pos: posF, base: baseF, geo: geoF };
   }
 
   // ── Wave functions — broad swell + fine surface ripples ───────────────────
   function ambientWave(x, z, t) {
-    // Main swell
     const swell = Math.sin(x * 0.16 + t * 0.72) * 0.30
                 + Math.sin(z * 0.11 + t * 0.50) * 0.22
                 + Math.sin((x - z) * 0.072 + t * 0.35) * 0.14
                 + Math.sin((x + z) * 0.036 + t * 0.19) * 0.09;
-    // Fine ripple detail — adds visible texture without chaos
-    const ripple = Math.sin(x * 0.46 + z * 0.34 + t * 1.10) * 0.048
-                 + Math.sin(x * 0.62 - z * 0.44 + t * 0.88) * 0.034
-                 + Math.sin(x * 0.31 + z * 0.55 + t * 1.38) * 0.024;
+    const ripple = Math.sin(x * 0.46 + z * 0.34 + t * 1.10) * 0.045
+                 + Math.sin(x * 0.62 - z * 0.44 + t * 0.88) * 0.032
+                 + Math.sin(x * 0.31 + z * 0.55 + t * 1.38) * 0.022;
     return swell + ripple;
   }
 
@@ -138,27 +110,18 @@
     t += dt * SPEED;
 
     // Main surface
-    for (let i = 0; i < pos1.count; i++) {
-      const x = pos1.getX(i), z = pos1.getZ(i);
-      const y = base1[i] + ambientWave(x, z, t) + (mobile ? 0 : sonarWave(x, z, t));
-      pos1.setY(i, y);
-      applyVC(vcBuf, i * 3, y);
-    }
+    for (let i = 0; i < pos1.count; i++)
+      pos1.setY(i, base1[i] + ambientWave(pos1.getX(i), pos1.getZ(i), t)
+                             + (mobile ? 0 : sonarWave(pos1.getX(i), pos1.getZ(i), t)));
     pos1.needsUpdate = true;
-    geo1.attributes.color.needsUpdate = true;
     geo1.computeVertexNormals();
 
     // Far layer
     if (farData) {
-      const { pos, base, buf, geo } = farData;
-      for (let i = 0; i < pos.count; i++) {
-        const x = pos.getX(i), z = pos.getZ(i);
-        const y = base[i] + ambientWave(x, z, t * 0.36) * 0.38;
-        pos.setY(i, y);
-        applyVC(buf, i * 3, y * 0.38);
-      }
+      const { pos, base, geo } = farData;
+      for (let i = 0; i < pos.count; i++)
+        pos.setY(i, base[i] + ambientWave(pos.getX(i), pos.getZ(i), t * 0.36) * 0.38);
       pos.needsUpdate = true;
-      geo.attributes.color.needsUpdate = true;
       geo.computeVertexNormals();
     }
 
@@ -169,10 +132,6 @@
     light2.position.x = Math.sin(t * 0.058 + 1.9) * 16;
     light2.position.z = -6 + Math.cos(t * 0.044 + 0.8) * 12;
     light2.position.y = 5  + Math.sin(t * 0.076 + 1.2) * 2;
-
-    // Directional light gentle rotation
-    dirLight.position.x = -6 + Math.sin(t * 0.030) * 3;
-    dirLight.position.z =  2 + Math.cos(t * 0.024) * 4;
 
     // Camera
     camera.position.x = Math.sin(t * 0.110) * 0.50 + Math.sin(t * 0.037) * 0.14;
