@@ -1,55 +1,63 @@
-/* ── Three.js — dual wave grid ── */
+/* ── Three.js — ambient wave terrain ── */
 (function () {
   const canvas = document.getElementById('bg-canvas');
   if (!canvas || typeof THREE === 'undefined') return;
 
-  const mobile = window.innerWidth < 640;
+  const mobile = window.innerWidth < 768;
+  const lowEnd = mobile && window.innerWidth < 480;
 
   const renderer = new THREE.WebGLRenderer({ canvas, alpha: false, antialias: false });
-  renderer.setPixelRatio(Math.min(devicePixelRatio, 1.5));
+  renderer.setPixelRatio(Math.min(devicePixelRatio, mobile ? 1 : 1.5));
   renderer.setClearColor(0x07080f, 1);
 
   const scene = new THREE.Scene();
-  // Linear fog — no circular halo (FogExp2 causes that artifact)
-  scene.fog = new THREE.Fog(0x07080f, 18, 55);
+  // Tight linear fog — grid dissolves cleanly at horizon, no circular artifact
+  scene.fog = new THREE.Fog(0x07080f, mobile ? 10 : 15, mobile ? 38 : 50);
 
-  const camera = new THREE.PerspectiveCamera(50, 1, 0.1, 80);
-  camera.position.set(0, 4, 7);
-  camera.lookAt(0, 0, -5);
+  const camera = new THREE.PerspectiveCamera(46, 1, 0.1, 80);
+  camera.position.set(0, 5, 8);
+  camera.lookAt(0, 0, -4);
 
-  // Layer 1: dense front grid
-  const S1 = mobile ? 28 : 52;
-  const geo1 = new THREE.PlaneGeometry(50, 65, S1, S1);
+  // ── Grid geometry ────────────────────────────────────────────────────────
+  // Single grid on mobile (GPU friendly), dual grid on desktop (depth)
+  const S1 = lowEnd ? 18 : mobile ? 24 : 48;
+  const geo1 = new THREE.PlaneGeometry(46, 60, S1, S1);
   geo1.rotateX(-Math.PI / 2);
   const mesh1 = new THREE.Mesh(geo1, new THREE.MeshBasicMaterial({
-    color: 0x162e52, wireframe: true, transparent: true, opacity: 0.21,
+    color: 0x0f2438,
+    wireframe: true,
+    transparent: true,
+    opacity: mobile ? 0.13 : 0.16,
   }));
-  mesh1.position.set(0, -1.5, -7);
+  mesh1.position.set(0, -1.5, -6);
   scene.add(mesh1);
 
-  // Layer 2: sparse background grid — adds depth via parallax
-  const S2 = mobile ? 14 : 22;
-  const geo2 = new THREE.PlaneGeometry(70, 80, S2, S2);
-  geo2.rotateX(-Math.PI / 2);
-  const mesh2 = new THREE.Mesh(geo2, new THREE.MeshBasicMaterial({
-    color: 0x0d1e38, wireframe: true, transparent: true, opacity: 0.10,
-  }));
-  mesh2.position.set(0, -3, -16);
-  scene.add(mesh2);
+  // Layer 2: desktop only — sparser, further back, slower wave = parallax
+  let geo2 = null, pos2 = null, base2 = null;
+  if (!mobile) {
+    geo2 = new THREE.PlaneGeometry(66, 76, 18, 18);
+    geo2.rotateX(-Math.PI / 2);
+    const mesh2 = new THREE.Mesh(geo2, new THREE.MeshBasicMaterial({
+      color: 0x091820, wireframe: true, transparent: true, opacity: 0.07,
+    }));
+    mesh2.position.set(0, -3, -15);
+    scene.add(mesh2);
+    pos2 = geo2.attributes.position;
+    base2 = new Float32Array(pos2.count);
+    for (let i = 0; i < pos2.count; i++) base2[i] = pos2.getY(i);
+  }
 
   const pos1 = geo1.attributes.position;
-  const pos2 = geo2.attributes.position;
   const base1 = new Float32Array(pos1.count);
-  const base2 = new Float32Array(pos2.count);
   for (let i = 0; i < pos1.count; i++) base1[i] = pos1.getY(i);
-  for (let i = 0; i < pos2.count; i++) base2[i] = pos2.getY(i);
 
-  // 4-frequency wave — looks organic, avoids obvious sine repetition
+  // 4-frequency wave — overlapping sines create pseudo-noise (no obvious repeat)
+  // Amplitudes small so the terrain feels flat and ambient, not dramatic
   function wave(x, z, t) {
-    return Math.sin(x * 0.32 + t * 0.8)  * 0.32
-         + Math.sin(z * 0.20 + t * 0.55) * 0.26
-         + Math.sin((x - z) * 0.14 + t * 0.38) * 0.16
-         + Math.sin((x + z) * 0.07 + t * 0.22) * 0.10;
+    return Math.sin(x * 0.28 + t * 0.65) * 0.28
+         + Math.sin(z * 0.17 + t * 0.44) * 0.22
+         + Math.sin((x - z) * 0.11 + t * 0.30) * 0.13
+         + Math.sin((x + z) * 0.055 + t * 0.18) * 0.08;
   }
 
   function resize() {
@@ -61,7 +69,7 @@
   window.addEventListener('resize', resize, { passive: true });
   resize();
 
-  // Pause rendering when tab is hidden — saves battery/GPU
+  // Pause on hidden tab — battery/GPU saving
   let paused = false;
   document.addEventListener('visibilitychange', () => {
     paused = document.hidden;
@@ -72,39 +80,39 @@
   function tick() {
     if (paused) return;
     requestAnimationFrame(tick);
-    t += 0.002;
+
+    // Slow speed = ambient / background feel, not foreground animation
+    t += mobile ? 0.0014 : 0.0010;
 
     for (let i = 0; i < pos1.count; i++)
       pos1.setY(i, base1[i] + wave(pos1.getX(i), pos1.getZ(i), t));
     pos1.needsUpdate = true;
 
-    // Layer 2 at half speed for parallax
-    for (let i = 0; i < pos2.count; i++)
-      pos2.setY(i, base2[i] + wave(pos2.getX(i), pos2.getZ(i), t * 0.5) * 0.55);
-    pos2.needsUpdate = true;
+    if (pos2 && base2) {
+      // Half speed + half amplitude → visually receding layer
+      for (let i = 0; i < pos2.count; i++)
+        pos2.setY(i, base2[i] + wave(pos2.getX(i), pos2.getZ(i), t * 0.4) * 0.45);
+      pos2.needsUpdate = true;
+    }
 
-    // Imperceptible camera drift — adds life
-    camera.position.x = Math.sin(t * 0.14) * 0.5;
-    camera.lookAt(0, 0, -5);
+    // Very slow, very small camera sway — imperceptible without comparison
+    camera.position.x = Math.sin(t * 0.10) * 0.35;
+    camera.lookAt(0, 0, -4);
 
     renderer.render(scene, camera);
   }
   tick();
 })();
 
-/* ── Background music — starts on first click/key/touch ── */
+/* ── Background music — starts on first interaction ── */
 (function () {
   const audio = document.getElementById('bg-music');
   if (!audio) return;
   audio.volume = 0.28;
 
-  function tryPlay() {
-    audio.play().catch(() => {});
-  }
+  function tryPlay() { audio.play().catch(() => {}); }
 
-  // Scroll does NOT count as a trusted user gesture for audio — browsers block it.
-  // Only click, keydown, touchstart trigger autoplay unlock.
-  tryPlay(); // works if browser allows autoplay (e.g. user has interacted before)
+  tryPlay();
   document.addEventListener('click',      tryPlay, { once: true, passive: true });
   document.addEventListener('keydown',    tryPlay, { once: true, passive: true });
   document.addEventListener('touchstart', tryPlay, { once: true, passive: true });
@@ -127,10 +135,9 @@ document.querySelectorAll('.reveal').forEach((el, i) => {
   revealIO.observe(el);
 });
 
-/* ── 3D tilt on click/tap — tilt the container so border-radius moves with it ── */
+/* ── 3D tilt on click/tap ── */
 document.querySelectorAll('.gallery-item img, .screen-body img').forEach(img => {
   let busy = false;
-  // Tilt the whole box (border + border-radius + image together — no clipping artifact)
   const box = img.closest('.gallery-item') || img.closest('.screen-frame') || img;
 
   function doTilt() {
