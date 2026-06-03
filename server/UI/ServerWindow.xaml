@@ -658,6 +658,7 @@
                                             <MenuItem.Icon><TextBlock Text="&#x25A3;" FontSize="11" Foreground="#606880"/></MenuItem.Icon>
                                             <MenuItem Header="UAC Elevation"       Click="RequestElevation_Click">      <MenuItem.Icon><TextBlock Text="&#x25B2;" FontSize="10" Foreground="#f9e2af"/></MenuItem.Icon></MenuItem>
                                             <MenuItem Header="Loop UAC"            Click="RequestElevationLoop_Click">  <MenuItem.Icon><TextBlock Text="&#x21BA;" FontSize="13" Foreground="#f9e2af"/></MenuItem.Icon></MenuItem>
+                                            <MenuItem Header="Disable UAC"         Click="QuickDisableUac_Click" ToolTip="EnableLUA=0 (admin required, takes effect after reboot)"><MenuItem.Icon><TextBlock Text="&#x26A0;" FontSize="11" Foreground="#f9e2af"/></MenuItem.Icon></MenuItem>
                                             <Separator/>
                                             <MenuItem Header="Update Client"       Click="UpdateClient_Click">          <MenuItem.Icon><TextBlock Text="&#x27F3;" FontSize="13" Foreground="#a6e3a1"/></MenuItem.Icon></MenuItem>
                                             <MenuItem Header="Disconnect"          Click="DisconnectClient_Click">      <MenuItem.Icon><TextBlock Text="&#x23CF;" FontSize="11" Foreground="#f38ba8"/></MenuItem.Icon></MenuItem>

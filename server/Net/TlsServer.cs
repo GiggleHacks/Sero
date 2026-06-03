@@ -86,9 +86,17 @@ public class TlsServer
         if (ConnectedClients.TryGetValue(clientId, out var client) && client.Stream != null)
         {
             await client.WriteLock.WaitAsync();
-            try { await Packet.WriteToStreamAsync(client.Stream, packet); }
-            catch { DisconnectClient(clientId); }
+            bool failed = false;
+            try
+            {
+                // Re-check stream after acquiring lock — client may have disconnected
+                if (client.Stream == null) return;
+                await Packet.WriteToStreamAsync(client.Stream, packet);
+            }
+            catch { failed = true; }
             finally { client.WriteLock.Release(); }
+            // Disconnect AFTER releasing lock to avoid deadlock with read loop
+            if (failed) DisconnectClient(clientId);
         }
     }
 
@@ -104,7 +112,8 @@ public class TlsServer
     {
         if (ConnectedClients.TryRemove(clientId, out var client))
         {
-            try { client.Cts.Cancel(); client.Stream?.Close(); } catch { }
+            // Dispose (not just Close) to free the socket handle immediately
+            try { client.Cts.Cancel(); client.Stream?.Dispose(); } catch { }
             _store.RecordDisconnection(client.Hwid);
             Log($"Client {client.Id} ({client.Username}@{client.IP}) disconnected.");
             ClientDisconnected?.Invoke(client);
@@ -227,12 +236,12 @@ public class TlsServer
             var stale = ConnectedClients.Values.FirstOrDefault(c =>
                 c.Hwid == client.Hwid &&
                 string.Equals(PrefixOf(c.Id), newPfx, StringComparison.Ordinal));
-            if (stale != null)
-                DisconnectClient(stale.Id);
 
-            // Max clients check — AFTER stale removal so a reconnect from an existing
-            // client never consumes an extra slot and is never incorrectly rejected.
-            if (ConnectedClients.Count >= MaxConnectedClients)
+            // FIX: Add new client BEFORE disconnecting stale to avoid the race where the
+            // UI sees a ClientDisconnected event with no matching ClientConnected afterwards.
+            // Max clients check accounts for the fact that the stale slot is about to free up.
+            int effectiveCount = ConnectedClients.Count - (stale != null ? 1 : 0);
+            if (effectiveCount >= MaxConnectedClients)
             {
                 Log($"[LIMIT] Rejected {ip} (max {MaxConnectedClients} clients reached).");
                 tcp.Close();
@@ -240,6 +249,8 @@ public class TlsServer
             }
 
             ConnectedClients[client.Id] = client;
+            if (stale != null)
+                DisconnectClient(stale.Id);
             Log($"Client {client.Id} connected ({info.Username}@{ip}, {client.Country})");
             ClientConnected?.Invoke(client);
 

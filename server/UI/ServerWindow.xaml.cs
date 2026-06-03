@@ -501,8 +501,10 @@ public partial class ServerWindow : Window
             else
             {
                 if (_onlineById.ContainsKey(op.client.Id))
+                {
                     toRemove.Add(op.client);
-                toClose.Add(op.client.Id);
+                    toClose.Add(op.client.Id); // only close windows for clients that were visible
+                }
             }
         }
 
