@@ -180,6 +180,10 @@ public enum PacketType
     ClipperGetStats    = 181,  // server→client: request stats
     ClipperStatsResult = 182,  // client→server: {Enabled, Count, LastType, LastOrig, LastNew}
     ClipperDetected    = 183,  // client→server: notification {Type, Original, Replaced}
+
+    // Screenshot
+    Screenshot       = 280,  // server→client: request single frame
+    ScreenshotResult = 281,  // client→server: {Data} base64 JPEG
 }
 
 public class Packet
@@ -619,4 +623,5 @@ public class DeviceEntry
 public class DevListResultData  { public List<DeviceEntry> Devices { get; set; } = []; }
 public class DevUninstallData   { public string DeviceId { get; set; } = string.Empty; }
 public class DevAckData         { public bool Success { get; set; } public string Error { get; set; } = string.Empty; }
+public class ScreenshotResultData { public string Data { get; set; } = string.Empty; }
 

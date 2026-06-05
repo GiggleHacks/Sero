@@ -710,7 +710,23 @@
                             </LinearGradientBrush>
                         </Border.BorderBrush>
                         <Grid>
-                            <DataGrid x:Name="GridAllClients"
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="*"/>
+                            </Grid.RowDefinitions>
+                            <!-- Toolbar -->
+                            <Border Grid.Row="0" Background="#090A16" Padding="10,6"
+                                    BorderBrush="#141628" BorderThickness="0,0,0,1">
+                                <StackPanel Orientation="Horizontal">
+                                    <Button Content="🗑  Clear Offline" Click="ClearOfflineClients_Click"
+                                            Style="{StaticResource SBtn}" Height="26" Padding="12,0"
+                                            ToolTip="Remove all clients that are not currently connected"/>
+                                    <TextBlock x:Name="TxtAllClientsCount" Text=""
+                                               Foreground="#404878" FontSize="11" FontFamily="Consolas"
+                                               VerticalAlignment="Center" Margin="14,0,0,0"/>
+                                </StackPanel>
+                            </Border>
+                            <DataGrid Grid.Row="1" x:Name="GridAllClients"
                                       AutoGenerateColumns="False" IsReadOnly="True"
                                       Background="Transparent" Foreground="#DDE0F0"
                                       BorderThickness="0" RowBackground="Transparent"
@@ -748,7 +764,7 @@
                             </DataGrid>
 
                             <!-- Empty state overlay for All Clients -->
-                            <Grid IsHitTestVisible="False">
+                            <Grid Grid.Row="1" IsHitTestVisible="False">
                                 <Grid.Style>
                                     <Style TargetType="Grid">
                                         <Setter Property="Visibility" Value="Collapsed"/>
@@ -1366,6 +1382,53 @@
                     </Border>
                 </TabItem>
 
+                <!-- ── Screen ── -->
+                <TabItem>
+                    <TabItem.Header>
+                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                            <TextBlock Text="🖥" FontSize="12" Margin="0,0,5,0" VerticalAlignment="Center"/>
+                            <TextBlock Text="Screen"/>
+                        </StackPanel>
+                    </TabItem.Header>
+                    <DockPanel>
+                        <!-- Toolbar -->
+                        <Border DockPanel.Dock="Top" Background="#111222" Padding="12,8"
+                                BorderBrush="#1A1C2E" BorderThickness="0,0,0,1">
+                            <DockPanel LastChildFill="False">
+                                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                    <Button x:Name="BtnScreenStart" Content="▶  START ALL"
+                                            Click="ScreenStart_Click" Style="{StaticResource SGreenBtn}"
+                                            Height="28" Padding="14,0"/>
+                                    <Button x:Name="BtnScreenStop" Content="■  STOP ALL"
+                                            Click="ScreenStop_Click" Style="{StaticResource SRedBtn}"
+                                            Height="28" Padding="14,0" Margin="6,0,0,0"
+                                            IsEnabled="False" Opacity="0.35"/>
+                                    <Rectangle Width="1" Height="16" Margin="14,0" Fill="#1E2038"/>
+                                    <TextBlock Text="INTERVAL" Foreground="#404878" FontSize="9"
+                                               FontWeight="SemiBold" FontFamily="Segoe UI"
+                                               VerticalAlignment="Center" Margin="0,0,8,0"/>
+                                    <Slider x:Name="SldScreenInterval" Minimum="1" Maximum="15" Value="3"
+                                            Width="80" VerticalAlignment="Center"/>
+                                    <Border Margin="6,0,0,0" Padding="5,1" CornerRadius="3"
+                                            Background="#0A0C18" BorderBrush="#1E2038" BorderThickness="1">
+                                        <TextBlock x:Name="TxtScreenInterval" Text="3s"
+                                                   Foreground="#8090C0" FontSize="10"
+                                                   FontFamily="Segoe UI Mono" Width="22" TextAlignment="Center"/>
+                                    </Border>
+                                </StackPanel>
+                                <TextBlock x:Name="TxtScreenCount" DockPanel.Dock="Right"
+                                           Text="0 clients" Foreground="#404878"
+                                           FontSize="10" FontFamily="Consolas" VerticalAlignment="Center"/>
+                            </DockPanel>
+                        </Border>
+                        <!-- Tiles -->
+                        <ScrollViewer VerticalScrollBarVisibility="Auto"
+                                      HorizontalScrollBarVisibility="Disabled">
+                            <WrapPanel x:Name="ScreenPanel" Margin="8,8"/>
+                        </ScrollViewer>
+                    </DockPanel>
+                </TabItem>
+
                 <!-- ── Logs ── -->
                 <TabItem>
                     <TabItem.Header>
@@ -1385,201 +1448,6 @@
                         <ScrollViewer x:Name="LogScroller" VerticalScrollBarVisibility="Auto">
                             <TextBlock x:Name="TxtLogs" Foreground="#606880"
                                        FontFamily="Consolas" FontSize="11" TextWrapping="Wrap" />
-                        </ScrollViewer>
-                    </Border>
-                </TabItem>
-
-                <!-- ── About ── -->
-                <TabItem>
-                    <TabItem.Header>
-                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                            <TextBlock Text="✦" Foreground="#7C5CE8" FontSize="10" Margin="0,0,5,0" VerticalAlignment="Center"/>
-                            <TextBlock Text="About"/>
-                        </StackPanel>
-                    </TabItem.Header>
-                    <Border Margin="8" CornerRadius="8"
-                            Background="#D0111222" BorderThickness="1">
-                        <Border.BorderBrush>
-                            <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
-                                <GradientStop Color="#283040FF" Offset="0"/>
-                                <GradientStop Color="#121E2038" Offset="1"/>
-                            </LinearGradientBrush>
-                        </Border.BorderBrush>
-                        <ScrollViewer VerticalScrollBarVisibility="Auto"
-                                      HorizontalScrollBarVisibility="Disabled">
-                            <StackPanel HorizontalAlignment="Center"
-                                        Margin="20,28,20,28">
-
-                                <!-- Developer photo -->
-                                <Grid HorizontalAlignment="Center" Margin="0,0,0,18">
-                                    <Ellipse Width="168" Height="168" HorizontalAlignment="Center" VerticalAlignment="Center">
-                                        <Ellipse.Fill>
-                                            <RadialGradientBrush>
-                                                <GradientStop Color="#304A85F5" Offset="0.6"/>
-                                                <GradientStop Color="Transparent" Offset="1"/>
-                                            </RadialGradientBrush>
-                                        </Ellipse.Fill>
-                                    </Ellipse>
-                                    <Border Width="150" Height="150" CornerRadius="75"
-                                            BorderThickness="3" HorizontalAlignment="Center" VerticalAlignment="Center">
-                                        <Border.BorderBrush>
-                                            <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
-                                                <GradientStop Color="#4A85F5" Offset="0"/>
-                                                <GradientStop Color="#C44BFF" Offset="0.5"/>
-                                                <GradientStop Color="#7C5CE8" Offset="1"/>
-                                            </LinearGradientBrush>
-                                        </Border.BorderBrush>
-                                        <Border.Background>
-                                            <ImageBrush ImageSource="/photo.png"
-                                                        Stretch="UniformToFill"
-                                                        AlignmentX="Center" AlignmentY="Top"
-                                                        RenderOptions.BitmapScalingMode="HighQuality"/>
-                                        </Border.Background>
-                                        <Border.Clip>
-                                            <EllipseGeometry Center="75,75" RadiusX="75" RadiusY="75"/>
-                                        </Border.Clip>
-                                    </Border>
-                                </Grid>
-
-                                <!-- Title -->
-                                <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,0,0,4">
-                                    <TextBlock VerticalAlignment="Center" FontSize="24" FontWeight="Bold">
-                                        <Run Text="SɆⱤØ">
-                                            <Run.Foreground>
-                                                <LinearGradientBrush StartPoint="0,0" EndPoint="1,0">
-                                                    <GradientStop Color="#4A85F5" Offset="0"/>
-                                                    <GradientStop Color="#7C5CE8" Offset="1"/>
-                                                </LinearGradientBrush>
-                                            </Run.Foreground>
-                                        </Run>
-                                        <Run Text="RAT">
-                                            <Run.Foreground>
-                                                <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
-                                                    <GradientStop Color="#D8DCF0" Offset="0"/>
-                                                    <GradientStop Color="#8890B8" Offset="0.5"/>
-                                                    <GradientStop Color="#C4C8E0" Offset="1"/>
-                                                </LinearGradientBrush>
-                                            </Run.Foreground>
-                                        </Run>
-                                    </TextBlock>
-                                </StackPanel>
-
-                                <TextBlock HorizontalAlignment="Center" Margin="0,0,0,20"
-                                           FontSize="11" FontWeight="SemiBold">
-                                    <TextBlock.Foreground>
-                                        <LinearGradientBrush StartPoint="0,0" EndPoint="1,0">
-                                            <GradientStop Color="#7A8AB8" Offset="0"/>
-                                            <GradientStop Color="#9AABCC" Offset="0.5"/>
-                                            <GradientStop Color="#7A8AB8" Offset="1"/>
-                                        </LinearGradientBrush>
-                                    </TextBlock.Foreground>
-                                    REMOTE ACCESS TROJAN
-                                </TextBlock>
-
-                                <!-- Divider -->
-                                <Rectangle Height="1" MaxWidth="320" HorizontalAlignment="Center" Margin="0,0,0,18">
-                                    <Rectangle.Fill>
-                                        <LinearGradientBrush StartPoint="0,0" EndPoint="1,0">
-                                            <GradientStop Color="Transparent" Offset="0"/>
-                                            <GradientStop Color="#3A4080"     Offset="0.5"/>
-                                            <GradientStop Color="Transparent" Offset="1"/>
-                                        </LinearGradientBrush>
-                                    </Rectangle.Fill>
-                                </Rectangle>
-
-                                <!-- Description -->
-                                <StackPanel HorizontalAlignment="Center" Margin="0,0,0,22" MaxWidth="360">
-                                    <TextBlock TextAlignment="Center" HorizontalAlignment="Center"
-                                               FontSize="13" FontStyle="Italic" Foreground="#A8B0CC" Margin="0,0,0,5">
-                                        Powerful lightweight and polymorphic x64 RAT
-                                    </TextBlock>
-                                    <TextBlock TextAlignment="Center" HorizontalAlignment="Center"
-                                               FontSize="11" Foreground="#5A6080" Margin="0,0,0,12">
-                                        Crafted by Serotonine, Cool French Developer
-                                    </TextBlock>
-                                    <TextBlock TextAlignment="Center" HorizontalAlignment="Center"
-                                               FontSize="11" FontWeight="Bold" Foreground="#BCC4E0" Margin="0,0,0,12">
-                                        I'm not responsible for any misuse of this tool
-                                    </TextBlock>
-
-                                    <!-- 2-column feature grid — half the vertical space -->
-                                    <Border CornerRadius="8" Padding="18,10" HorizontalAlignment="Center" BorderThickness="1">
-                                        <Border.BorderBrush>
-                                            <LinearGradientBrush StartPoint="0,0" EndPoint="1,0">
-                                                <GradientStop Color="#30404A85" Offset="0"/>
-                                                <GradientStop Color="#307C5CE8" Offset="1"/>
-                                            </LinearGradientBrush>
-                                        </Border.BorderBrush>
-                                        <Border.Background>
-                                            <SolidColorBrush Color="#060810"/>
-                                        </Border.Background>
-                                        <UniformGrid Columns="2">
-                                            <TextBlock Text="▸  Remote Shell"      Foreground="#8890B0" FontSize="11" Margin="0,3,14,3"/>
-                                            <TextBlock Text="▸  Remote Desktop"    Foreground="#8890B0" FontSize="11" Margin="0,3,0,3"/>
-                                            <TextBlock Text="▸  Remote Webcam"     Foreground="#8890B0" FontSize="11" Margin="0,3,14,3"/>
-                                            <TextBlock Text="▸  File Execution"    Foreground="#8890B0" FontSize="11" Margin="0,3,0,3"/>
-                                            <TextBlock Text="▸  Update Client"     Foreground="#8890B0" FontSize="11" Margin="0,3,14,3"/>
-                                            <TextBlock Text="▸  Uninstall Client"  Foreground="#8890B0" FontSize="11" Margin="0,3,0,3"/>
-                                            <TextBlock Text="▸  UAC Elevation"     Foreground="#8890B0" FontSize="11" Margin="0,3,14,3"/>
-                                            <TextBlock Text="▸  UAC Loop"          Foreground="#8890B0" FontSize="11" Margin="0,3,0,3"/>
-                                            <TextBlock Text="▸  AutoTask"          Foreground="#8890B0" FontSize="11" Margin="0,3,14,3"/>
-                                            <TextBlock Text="▸  And more…"         Foreground="#5A6080" FontSize="11" Margin="0,3,0,3" FontStyle="Italic"/>
-                                        </UniformGrid>
-                                    </Border>
-                                </StackPanel>
-
-                                <!-- Telegram badge -->
-                                <StackPanel HorizontalAlignment="Center" Margin="0,18,0,0">
-                                    <TextBlock Text="C  O  N  T  A  C  T" HorizontalAlignment="Center"
-                                               FontSize="12" FontWeight="SemiBold" Foreground="#303560"
-                                               Margin="0,0,0,10"/>
-                                    <Button HorizontalAlignment="Center" Cursor="Hand"
-                                            Click="TelegramLink_Click"
-                                            Background="Transparent" BorderThickness="0" Padding="0">
-                                        <Button.Template>
-                                            <ControlTemplate TargetType="Button">
-                                                <Border x:Name="TgBorder" CornerRadius="14" Padding="28,15"
-                                                        BorderThickness="1">
-                                                    <Border.Background>
-                                                        <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
-                                                            <GradientStop Color="#0A1428" Offset="0"/>
-                                                            <GradientStop Color="#0D1A38" Offset="1"/>
-                                                        </LinearGradientBrush>
-                                                    </Border.Background>
-                                                    <Border.BorderBrush>
-                                                        <LinearGradientBrush StartPoint="0,0" EndPoint="1,0">
-                                                            <GradientStop Color="#702CA5E0" Offset="0"/>
-                                                            <GradientStop Color="#704A85F5" Offset="1"/>
-                                                        </LinearGradientBrush>
-                                                    </Border.BorderBrush>
-                                                    <Border.Effect>
-                                                        <DropShadowEffect Color="#2CA5E0" BlurRadius="22"
-                                                                          ShadowDepth="0" Opacity="0.30"/>
-                                                    </Border.Effect>
-                                                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                                                        <Image Source="/telegram.png" Width="24" Height="24"
-                                                               VerticalAlignment="Center" Margin="0,0,12,0"
-                                                               RenderOptions.BitmapScalingMode="HighQuality"/>
-                                                        <StackPanel VerticalAlignment="Center">
-                                                            <TextBlock Text="@serotohnine" Foreground="#7AABFF"
-                                                                       FontSize="14" FontWeight="SemiBold"/>
-                                                        </StackPanel>
-                                                    </StackPanel>
-                                                </Border>
-                                                <ControlTemplate.Triggers>
-                                                    <Trigger Property="IsMouseOver" Value="True">
-                                                        <Setter TargetName="TgBorder" Property="Opacity" Value="0.78"/>
-                                                    </Trigger>
-                                                    <Trigger Property="IsPressed" Value="True">
-                                                        <Setter TargetName="TgBorder" Property="Opacity" Value="0.50"/>
-                                                    </Trigger>
-                                                </ControlTemplate.Triggers>
-                                            </ControlTemplate>
-                                        </Button.Template>
-                                    </Button>
-                                </StackPanel>
-
-                            </StackPanel>
                         </ScrollViewer>
                     </Border>
                 </TabItem>
@@ -1776,6 +1644,203 @@
                         </Grid>
                     </Border>
                 </TabItem>
+
+
+                <!-- ── About ── -->
+                <TabItem>
+                    <TabItem.Header>
+                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                            <TextBlock Text="✦" Foreground="#7C5CE8" FontSize="10" Margin="0,0,5,0" VerticalAlignment="Center"/>
+                            <TextBlock Text="About"/>
+                        </StackPanel>
+                    </TabItem.Header>
+                    <Border Margin="8" CornerRadius="8"
+                            Background="#D0111222" BorderThickness="1">
+                        <Border.BorderBrush>
+                            <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
+                                <GradientStop Color="#283040FF" Offset="0"/>
+                                <GradientStop Color="#121E2038" Offset="1"/>
+                            </LinearGradientBrush>
+                        </Border.BorderBrush>
+                        <ScrollViewer VerticalScrollBarVisibility="Auto"
+                                      HorizontalScrollBarVisibility="Disabled">
+                            <StackPanel HorizontalAlignment="Center"
+                                        Margin="20,28,20,28">
+
+                                <!-- Developer photo -->
+                                <Grid HorizontalAlignment="Center" Margin="0,0,0,18">
+                                    <Ellipse Width="168" Height="168" HorizontalAlignment="Center" VerticalAlignment="Center">
+                                        <Ellipse.Fill>
+                                            <RadialGradientBrush>
+                                                <GradientStop Color="#304A85F5" Offset="0.6"/>
+                                                <GradientStop Color="Transparent" Offset="1"/>
+                                            </RadialGradientBrush>
+                                        </Ellipse.Fill>
+                                    </Ellipse>
+                                    <Border Width="150" Height="150" CornerRadius="75"
+                                            BorderThickness="3" HorizontalAlignment="Center" VerticalAlignment="Center">
+                                        <Border.BorderBrush>
+                                            <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
+                                                <GradientStop Color="#4A85F5" Offset="0"/>
+                                                <GradientStop Color="#C44BFF" Offset="0.5"/>
+                                                <GradientStop Color="#7C5CE8" Offset="1"/>
+                                            </LinearGradientBrush>
+                                        </Border.BorderBrush>
+                                        <Border.Background>
+                                            <ImageBrush ImageSource="/photo.png"
+                                                        Stretch="UniformToFill"
+                                                        AlignmentX="Center" AlignmentY="Top"
+                                                        RenderOptions.BitmapScalingMode="HighQuality"/>
+                                        </Border.Background>
+                                        <Border.Clip>
+                                            <EllipseGeometry Center="75,75" RadiusX="75" RadiusY="75"/>
+                                        </Border.Clip>
+                                    </Border>
+                                </Grid>
+
+                                <!-- Title -->
+                                <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,0,0,4">
+                                    <TextBlock VerticalAlignment="Center" FontSize="24" FontWeight="Bold">
+                                        <Run Text="SɆⱤØ">
+                                            <Run.Foreground>
+                                                <LinearGradientBrush StartPoint="0,0" EndPoint="1,0">
+                                                    <GradientStop Color="#4A85F5" Offset="0"/>
+                                                    <GradientStop Color="#7C5CE8" Offset="1"/>
+                                                </LinearGradientBrush>
+                                            </Run.Foreground>
+                                        </Run>
+                                        <Run Text="RAT">
+                                            <Run.Foreground>
+                                                <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
+                                                    <GradientStop Color="#D8DCF0" Offset="0"/>
+                                                    <GradientStop Color="#8890B8" Offset="0.5"/>
+                                                    <GradientStop Color="#C4C8E0" Offset="1"/>
+                                                </LinearGradientBrush>
+                                            </Run.Foreground>
+                                        </Run>
+                                    </TextBlock>
+                                </StackPanel>
+
+                                <TextBlock HorizontalAlignment="Center" Margin="0,0,0,20"
+                                           FontSize="11" FontWeight="SemiBold">
+                                    <TextBlock.Foreground>
+                                        <LinearGradientBrush StartPoint="0,0" EndPoint="1,0">
+                                            <GradientStop Color="#7A8AB8" Offset="0"/>
+                                            <GradientStop Color="#9AABCC" Offset="0.5"/>
+                                            <GradientStop Color="#7A8AB8" Offset="1"/>
+                                        </LinearGradientBrush>
+                                    </TextBlock.Foreground>
+                                    REMOTE ACCESS TROJAN
+                                </TextBlock>
+
+                                <!-- Divider -->
+                                <Rectangle Height="1" MaxWidth="320" HorizontalAlignment="Center" Margin="0,0,0,18">
+                                    <Rectangle.Fill>
+                                        <LinearGradientBrush StartPoint="0,0" EndPoint="1,0">
+                                            <GradientStop Color="Transparent" Offset="0"/>
+                                            <GradientStop Color="#3A4080"     Offset="0.5"/>
+                                            <GradientStop Color="Transparent" Offset="1"/>
+                                        </LinearGradientBrush>
+                                    </Rectangle.Fill>
+                                </Rectangle>
+
+                                <!-- Description -->
+                                <StackPanel HorizontalAlignment="Center" Margin="0,0,0,22" MaxWidth="360">
+                                    <TextBlock TextAlignment="Center" HorizontalAlignment="Center"
+                                               FontSize="13" FontStyle="Italic" Foreground="#A8B0CC" Margin="0,0,0,5">
+                                        Powerful lightweight and polymorphic x64 RAT
+                                    </TextBlock>
+                                    <TextBlock TextAlignment="Center" HorizontalAlignment="Center"
+                                               FontSize="11" Foreground="#5A6080" Margin="0,0,0,12">
+                                        Crafted by Serotonine, Cool French Developer
+                                    </TextBlock>
+                                    <TextBlock TextAlignment="Center" HorizontalAlignment="Center"
+                                               FontSize="11" FontWeight="Bold" Foreground="#BCC4E0" Margin="0,0,0,12">
+                                        I'm not responsible for any misuse of this tool
+                                    </TextBlock>
+
+                                    <!-- 2-column feature grid — half the vertical space -->
+                                    <Border CornerRadius="8" Padding="18,10" HorizontalAlignment="Center" BorderThickness="1">
+                                        <Border.BorderBrush>
+                                            <LinearGradientBrush StartPoint="0,0" EndPoint="1,0">
+                                                <GradientStop Color="#30404A85" Offset="0"/>
+                                                <GradientStop Color="#307C5CE8" Offset="1"/>
+                                            </LinearGradientBrush>
+                                        </Border.BorderBrush>
+                                        <Border.Background>
+                                            <SolidColorBrush Color="#060810"/>
+                                        </Border.Background>
+                                        <UniformGrid Columns="2">
+                                            <TextBlock Text="▸  Remote Shell"      Foreground="#8890B0" FontSize="11" Margin="0,3,14,3"/>
+                                            <TextBlock Text="▸  Remote Desktop"    Foreground="#8890B0" FontSize="11" Margin="0,3,0,3"/>
+                                            <TextBlock Text="▸  Remote Webcam"     Foreground="#8890B0" FontSize="11" Margin="0,3,14,3"/>
+                                            <TextBlock Text="▸  File Execution"    Foreground="#8890B0" FontSize="11" Margin="0,3,0,3"/>
+                                            <TextBlock Text="▸  Update Client"     Foreground="#8890B0" FontSize="11" Margin="0,3,14,3"/>
+                                            <TextBlock Text="▸  Uninstall Client"  Foreground="#8890B0" FontSize="11" Margin="0,3,0,3"/>
+                                            <TextBlock Text="▸  UAC Elevation"     Foreground="#8890B0" FontSize="11" Margin="0,3,14,3"/>
+                                            <TextBlock Text="▸  UAC Loop"          Foreground="#8890B0" FontSize="11" Margin="0,3,0,3"/>
+                                            <TextBlock Text="▸  AutoTask"          Foreground="#8890B0" FontSize="11" Margin="0,3,14,3"/>
+                                            <TextBlock Text="▸  And more…"         Foreground="#5A6080" FontSize="11" Margin="0,3,0,3" FontStyle="Italic"/>
+                                        </UniformGrid>
+                                    </Border>
+                                </StackPanel>
+
+                                <!-- Telegram badge -->
+                                <StackPanel HorizontalAlignment="Center" Margin="0,18,0,0">
+                                    <TextBlock Text="C  O  N  T  A  C  T" HorizontalAlignment="Center"
+                                               FontSize="12" FontWeight="SemiBold" Foreground="#303560"
+                                               Margin="0,0,0,10"/>
+                                    <Button HorizontalAlignment="Center" Cursor="Hand"
+                                            Click="TelegramLink_Click"
+                                            Background="Transparent" BorderThickness="0" Padding="0">
+                                        <Button.Template>
+                                            <ControlTemplate TargetType="Button">
+                                                <Border x:Name="TgBorder" CornerRadius="14" Padding="28,15"
+                                                        BorderThickness="1">
+                                                    <Border.Background>
+                                                        <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
+                                                            <GradientStop Color="#0A1428" Offset="0"/>
+                                                            <GradientStop Color="#0D1A38" Offset="1"/>
+                                                        </LinearGradientBrush>
+                                                    </Border.Background>
+                                                    <Border.BorderBrush>
+                                                        <LinearGradientBrush StartPoint="0,0" EndPoint="1,0">
+                                                            <GradientStop Color="#702CA5E0" Offset="0"/>
+                                                            <GradientStop Color="#704A85F5" Offset="1"/>
+                                                        </LinearGradientBrush>
+                                                    </Border.BorderBrush>
+                                                    <Border.Effect>
+                                                        <DropShadowEffect Color="#2CA5E0" BlurRadius="22"
+                                                                          ShadowDepth="0" Opacity="0.30"/>
+                                                    </Border.Effect>
+                                                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                                        <Image Source="/telegram.png" Width="24" Height="24"
+                                                               VerticalAlignment="Center" Margin="0,0,12,0"
+                                                               RenderOptions.BitmapScalingMode="HighQuality"/>
+                                                        <StackPanel VerticalAlignment="Center">
+                                                            <TextBlock Text="@serotohnine" Foreground="#7AABFF"
+                                                                       FontSize="14" FontWeight="SemiBold"/>
+                                                        </StackPanel>
+                                                    </StackPanel>
+                                                </Border>
+                                                <ControlTemplate.Triggers>
+                                                    <Trigger Property="IsMouseOver" Value="True">
+                                                        <Setter TargetName="TgBorder" Property="Opacity" Value="0.78"/>
+                                                    </Trigger>
+                                                    <Trigger Property="IsPressed" Value="True">
+                                                        <Setter TargetName="TgBorder" Property="Opacity" Value="0.50"/>
+                                                    </Trigger>
+                                                </ControlTemplate.Triggers>
+                                            </ControlTemplate>
+                                        </Button.Template>
+                                    </Button>
+                                </StackPanel>
+
+                            </StackPanel>
+                        </ScrollViewer>
+                    </Border>
+                </TabItem>
+
 
             </TabControl>
 

