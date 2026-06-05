@@ -33,13 +33,18 @@ internal static class InstalledAppsFeature
                             var name = sub.GetValue("DisplayName")?.ToString() ?? "";
                             if (string.IsNullOrWhiteSpace(name)) continue;
                             if (!seen.Add(name)) continue;
+                            var dispIcon = sub.GetValue("DisplayIcon")?.ToString() ?? "";
+                            // DisplayIcon may be "path.exe,0" — strip the comma index
+                            var iconPath = dispIcon.Contains(',') ? dispIcon[..dispIcon.LastIndexOf(',')] : dispIcon;
+                            iconPath = iconPath.Trim('"');
                             apps.Add(new InstalledAppStub
                             {
                                 Name            = name,
                                 Version         = sub.GetValue("DisplayVersion")?.ToString() ?? "",
                                 Publisher       = sub.GetValue("Publisher")?.ToString() ?? "",
                                 InstallDate     = sub.GetValue("InstallDate")?.ToString() ?? "",
-                                UninstallString = sub.GetValue("UninstallString")?.ToString() ?? ""
+                                UninstallString = sub.GetValue("UninstallString")?.ToString() ?? "",
+                                IconB64         = string.IsNullOrEmpty(iconPath) ? "" : StubIconHelper.ExtractExeIcon(iconPath)
                             });
                         }
                         catch { }

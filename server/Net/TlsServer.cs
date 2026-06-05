@@ -219,8 +219,12 @@ public class TlsServer
                 return;
             }
 
-            // Auth key verification — record failure for temp-ban
-            if (string.IsNullOrEmpty(info.AuthKey) || info.AuthKey != AuthKey)
+            // Auth key verification — constant-time to prevent timing oracle
+            var expectedBytes = System.Text.Encoding.UTF8.GetBytes(AuthKey ?? "");
+            var receivedBytes = System.Text.Encoding.UTF8.GetBytes(info.AuthKey ?? "");
+            bool authOk = expectedBytes.Length == receivedBytes.Length
+                          && System.Security.Cryptography.CryptographicOperations.FixedTimeEquals(expectedBytes, receivedBytes);
+            if (!authOk)
             {
                 RecordAuthFailure(ip);
                 Log($"[AUTH] Rejected {ip}: invalid auth key.");

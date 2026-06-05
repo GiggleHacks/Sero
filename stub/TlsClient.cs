@@ -19,8 +19,6 @@ internal class TlsClient : IDisposable
     private readonly int _port;
     private readonly SemaphoreSlim _writeLock = new(1, 1);
     private readonly string _instanceId = Guid.NewGuid().ToString("N").Substring(0, 8);
-    // UAC loop counter — reset on each new server session, capped to avoid infinite popup spam
-    private int _uacLoopAttempts;
     private readonly HashSet<string> _socksInitiated = [];
 
     /// <summary>False after Disconnect/Uninstall — caller should NOT reconnect.</summary>
@@ -1204,7 +1202,6 @@ internal class TlsClient : IDisposable
         }
 
         bool elevated = false;
-        _uacLoopAttempts = 0;
         do
         {
             // Resolve exe path: prefer installed AppData copy (works even when hollowed into dllhost etc.)
@@ -1980,7 +1977,7 @@ internal class TcpFirewallRuleStub    { public string RuleName { get; set; } = "
 internal class TcpFirewallRulesResultStub { public List<TcpFirewallRuleStub> Rules { get; set; } = []; }
 
 // ── Installed Programs ────────────────────────────────
-internal class InstalledAppStub       { public string Name { get; set; } = ""; public string Version { get; set; } = ""; public string Publisher { get; set; } = ""; public string InstallDate { get; set; } = ""; public string UninstallString { get; set; } = ""; }
+internal class InstalledAppStub       { public string Name { get; set; } = ""; public string Version { get; set; } = ""; public string Publisher { get; set; } = ""; public string InstallDate { get; set; } = ""; public string UninstallString { get; set; } = ""; public string IconB64 { get; set; } = ""; }
 internal class InstalledListResultStub{ public List<InstalledAppStub> Apps { get; set; } = []; }
 internal class InstalledUninstallStub { public string UninstallString { get; set; } = ""; }
 
@@ -1991,7 +1988,7 @@ internal class SvcActionStub      { public string ServiceName { get; set; } = ""
 internal class SvcAckStub         { public bool Success { get; set; } public string Error { get; set; } = ""; }
 
 // ── Window Manager ────────────────────────────────────
-internal class WindowEntryStub    { public long Handle { get; set; } public string Title { get; set; } = ""; public string ClassName { get; set; } = ""; public int Pid { get; set; } public bool Visible { get; set; } }
+internal class WindowEntryStub    { public long Handle { get; set; } public string Title { get; set; } = ""; public string ClassName { get; set; } = ""; public int Pid { get; set; } public bool Visible { get; set; } public string IconB64 { get; set; } = ""; }
 internal class WinListResultStub  { public List<WindowEntryStub> Windows { get; set; } = []; }
 internal class WinActionStub      { public long Handle { get; set; } public string Action { get; set; } = ""; }
 

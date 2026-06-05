@@ -134,6 +134,8 @@ public class DataStore
 
     private void SaveClients() => _clientsDirty = true;
 
+    public  void Save()         => SaveClientsNow();
+
     private void SaveClientsNow()
     {
         try

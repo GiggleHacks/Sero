@@ -27,18 +27,24 @@ public class ProcEntryVM : INotifyPropertyChanged
     public List<string>? RemoteIps { get; set; }
     public string        Title     { get; set; } = "";
     public string        ExePath   { get; set; } = "";
+    public bool          IsClient  { get; set; }
+    public float         NetKbps   { get; set; }
 
     public string NetDisplay
     {
         get
         {
+            var parts = new System.Collections.Generic.List<string>();
+            if (NetKbps >= 1f)
+                parts.Add(NetKbps >= 1024f ? $"{NetKbps/1024f:F1} MB/s" : $"{NetKbps:F0} KB/s");
             if (RemoteIps is { Count: > 0 })
             {
-                var ips = RemoteIps.Take(3).ToList();
-                var suffix = RemoteIps.Count > 3 ? $" +{RemoteIps.Count - 3}" : "";
-                return string.Join("  ", ips) + suffix;
+                parts.AddRange(RemoteIps.Take(2));
+                if (RemoteIps.Count > 2) parts.Add($"+{RemoteIps.Count - 2}");
             }
-            return TcpConns > 0 ? $"{TcpConns} conn" : "—";
+            else if (TcpConns > 0 && parts.Count == 0)
+                parts.Add($"{TcpConns} conn");
+            return parts.Count > 0 ? string.Join("  ", parts) : "—";
         }
     }
 
@@ -149,6 +155,7 @@ public partial class ProcessManagerWindow : Window
         _ = Task.Run(() =>
         {
             var totalRam = d.TotalRamMb;
+            var stubPid  = d.StubPid;
             var vms = d.Processes.Select(p => new ProcEntryVM
             {
                 Pid        = p.Pid,
@@ -160,6 +167,9 @@ public partial class ProcessManagerWindow : Window
                 Title      = p.Title,
                 ExePath    = p.ExePath,
                 TcpConns   = p.TcpConns,
+                RemoteIps  = p.RemoteIps,
+                IsClient   = stubPid > 0 && p.Pid == stubPid,
+                NetKbps    = p.NetKbps,
                 IconImage  = GetIcon(p.ExePath)
             }).ToList();
 

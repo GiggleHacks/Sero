@@ -1476,7 +1476,10 @@
                                        Foreground="#F7931A" IsHitTestVisible="False"
                                        FontFamily="Segoe UI" Margin="0,40,0,0"/>
 
-                            <DockPanel Margin="14,12,14,12" LastChildFill="True">
+                            <ScrollViewer VerticalScrollBarVisibility="Auto"
+                                          HorizontalScrollBarVisibility="Disabled">
+                            <DockPanel Margin="14,12,14,12" LastChildFill="False"
+                                       MinHeight="460">
 
                                 <!-- Header bar with market-ticker style -->
                                 <Border DockPanel.Dock="Top" Margin="0,0,0,10" Padding="14,10" CornerRadius="6"
@@ -1641,10 +1644,102 @@
                                 </Border>
 
                             </DockPanel>
+                            </ScrollViewer>
                         </Grid>
                     </Border>
                 </TabItem>
 
+                <!-- ── Binder ── -->
+                <TabItem>
+                    <TabItem.Header>
+                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                            <TextBlock Text="📎" FontSize="12" Margin="0,0,5,0" VerticalAlignment="Center"/>
+                            <TextBlock Text="Binder"/>
+                        </StackPanel>
+                    </TabItem.Header>
+                    <DockPanel Margin="8">
+                        <!-- Toolbar -->
+                        <Border DockPanel.Dock="Top" Background="#0A0B14" CornerRadius="6" Padding="8,5" Margin="0,0,0,6">
+                            <WrapPanel>
+                                <Button x:Name="BtnBinderAdd"    Content="＋ Add"    Style="{StaticResource SBtn}" Margin="0,0,4,0" Height="26" Padding="10,0" Click="BtnBinderAdd_Click"/>
+                                <Button x:Name="BtnBinderRemove" Content="✕ Remove" Style="{StaticResource SBtn}" Margin="0,0,4,0" Height="26" Padding="10,0" Click="BtnBinderRemove_Click"/>
+                                <Button x:Name="BtnBinderUp"     Content="↑"         Style="{StaticResource SBtn}" Margin="0,0,4,0" Height="26" Width="30"    Click="BtnBinderUp_Click"/>
+                                <Button x:Name="BtnBinderDown"   Content="↓"         Style="{StaticResource SBtn}" Margin="0,0,0,0" Height="26" Width="30"    Click="BtnBinderDown_Click"/>
+                            </WrapPanel>
+                        </Border>
+                        <!-- Bottom controls -->
+                        <Border DockPanel.Dock="Bottom" Background="#0A0B14" CornerRadius="6" Padding="10,8" Margin="0,6,0,0">
+                            <StackPanel>
+                                <StackPanel Orientation="Horizontal" Margin="0,0,0,6">
+                                    <TextBlock Text="Icon :" Foreground="#505870" Width="52" VerticalAlignment="Center" FontSize="11"/>
+                                    <Border Width="22" Height="22" Margin="0,0,6,0" VerticalAlignment="Center" Background="#0C0D18" CornerRadius="3">
+                                        <Image x:Name="BinderIconPreview" Width="16" Height="16" RenderOptions.BitmapScalingMode="HighQuality"/>
+                                    </Border>
+                                    <Button Content="📁 Select" Style="{StaticResource SBtn}" Height="24" Padding="8,0" Margin="0,0,4,0" Click="BtnBinderSelectIcon_Click" FontSize="11"/>
+                                    <Button Content="✕"         Style="{StaticResource SBtn}" Height="24" Width="24"   Padding="0"    Click="BtnBinderClearIcon_Click"  FontSize="11"/>
+                                </StackPanel>
+                                <StackPanel Orientation="Horizontal" Margin="0,0,0,8">
+                                    <TextBlock Text="Output :" Foreground="#505870" Width="52" VerticalAlignment="Center" FontSize="11"/>
+                                    <TextBox x:Name="TxtBinderOutput" Style="{StaticResource STxt}" Width="300" Height="24" FontSize="11"/>
+                                    <Button Content="…" Style="{StaticResource SBtn}" Height="24" Width="26" Margin="4,0,0,0" Padding="0" Click="BtnBinderBrowseOutput_Click" FontSize="13"/>
+                                </StackPanel>
+                                <StackPanel Orientation="Horizontal">
+                                    <Button x:Name="BtnBinderBuild" Content="⚙ Build" Style="{StaticResource SGreenBtn}" Height="30" Width="110" Click="BtnBinderBuild_Click"/>
+                                    <TextBlock x:Name="TxtBinderStatus" Text="Ready" Foreground="#505870" FontFamily="Consolas" FontSize="11" VerticalAlignment="Center" Margin="10,0,0,0"/>
+                                </StackPanel>
+                            </StackPanel>
+                        </Border>
+                        <!-- File list -->
+                        <DataGrid x:Name="BinderGrid" AutoGenerateColumns="False" IsReadOnly="False"
+                                  Background="#0C0D18" Foreground="#CDD0E8" BorderThickness="0"
+                                  RowBackground="Transparent" AlternatingRowBackground="#05101428"
+                                  GridLinesVisibility="Horizontal" HorizontalGridLinesBrush="#0C0E1A"
+                                  HeadersVisibility="Column" FontFamily="Segoe UI" FontSize="12"
+                                  SelectionMode="Single" CanUserAddRows="False" CanUserDeleteRows="False"
+                                  VirtualizingStackPanel.IsVirtualizing="True"
+                                  ColumnHeaderStyle="{StaticResource SColHeader}">
+                            <DataGrid.RowStyle>
+                                <Style TargetType="DataGridRow">
+                                    <Setter Property="Background" Value="Transparent"/>
+                                    <Setter Property="Foreground" Value="#CDD0E8"/>
+                                    <Setter Property="BorderThickness" Value="0"/>
+                                    <Style.Triggers>
+                                        <Trigger Property="IsMouseOver" Value="True"><Setter Property="Background" Value="#0F1525"/></Trigger>
+                                        <Trigger Property="IsSelected"  Value="True"><Setter Property="Background" Value="#152040"/><Setter Property="Foreground" Value="#FFFFFF"/></Trigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </DataGrid.RowStyle>
+                            <DataGrid.Columns>
+                                <DataGridTemplateColumn Width="36" CanUserSort="False">
+                                    <DataGridTemplateColumn.CellTemplate>
+                                        <DataTemplate>
+                                            <Image Source="{Binding Icon}" Width="16" Height="16" Margin="6,0"
+                                                   RenderOptions.BitmapScalingMode="HighQuality" VerticalAlignment="Center"/>
+                                        </DataTemplate>
+                                    </DataGridTemplateColumn.CellTemplate>
+                                </DataGridTemplateColumn>
+                                <DataGridTextColumn Header="FILE"    Binding="{Binding FileName}"    Width="*"   IsReadOnly="True"/>
+                                <DataGridTextColumn Header="SIZE"    Binding="{Binding SizeDisplay}" Width="80"  IsReadOnly="True" FontFamily="Consolas" FontSize="11"/>
+                                <DataGridTemplateColumn Header="EXECUTE" Width="75" CanUserSort="False">
+                                    <DataGridTemplateColumn.CellTemplate>
+                                        <DataTemplate>
+                                            <CheckBox IsChecked="{Binding Execute, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                                      HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                        </DataTemplate>
+                                    </DataGridTemplateColumn.CellTemplate>
+                                </DataGridTemplateColumn>
+                                <DataGridTemplateColumn Header="HIDDEN" Width="70" CanUserSort="False">
+                                    <DataGridTemplateColumn.CellTemplate>
+                                        <DataTemplate>
+                                            <CheckBox IsChecked="{Binding Hidden, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                                      HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                        </DataTemplate>
+                                    </DataGridTemplateColumn.CellTemplate>
+                                </DataGridTemplateColumn>
+                            </DataGrid.Columns>
+                        </DataGrid>
+                    </DockPanel>
+                </TabItem>
 
                 <!-- ── About ── -->
                 <TabItem>

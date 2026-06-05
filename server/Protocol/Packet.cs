@@ -441,11 +441,13 @@ public class ProcEntry
     public string Name      { get; set; } = string.Empty;
     public long   Memory    { get; set; }  // KB
     public float  CpuUsage  { get; set; }
-    public int    TcpConns  { get; set; }
-    public string Title     { get; set; } = string.Empty;
-    public string ExePath   { get; set; } = string.Empty;
+    public int           TcpConns  { get; set; }
+    public List<string>? RemoteIps { get; set; }
+    public float         NetKbps   { get; set; }
+    public string        Title     { get; set; } = string.Empty;
+    public string        ExePath   { get; set; } = string.Empty;
 }
-public class ProcListResultData  { public List<ProcEntry> Processes { get; set; } = []; public long TotalRamMb { get; set; } }
+public class ProcListResultData  { public List<ProcEntry> Processes { get; set; } = []; public long TotalRamMb { get; set; } public int StubPid { get; set; } }
 public class ProcKillData        { public int Pid { get; set; } }
 public class ProcSuspendData2    { public int Pid { get; set; } }
 public class ProcResumeData2     { public int Pid { get; set; } }
@@ -557,6 +559,7 @@ public class InstalledApp
     public string Publisher       { get; set; } = string.Empty;
     public string InstallDate     { get; set; } = string.Empty;
     public string UninstallString { get; set; } = string.Empty;
+    public string IconB64         { get; set; } = string.Empty;
 }
 public class InstalledListResultData { public List<InstalledApp> Apps { get; set; } = []; }
 public class InstalledUninstallData  { public string UninstallString { get; set; } = string.Empty; }
@@ -582,6 +585,7 @@ public class WindowEntry
     public string ClassName { get; set; } = string.Empty;
     public int    Pid       { get; set; }
     public bool   Visible   { get; set; }
+    public string IconB64   { get; set; } = string.Empty;
 }
 public class WinListResultData { public List<WindowEntry> Windows { get; set; } = []; }
 public class WinActionData

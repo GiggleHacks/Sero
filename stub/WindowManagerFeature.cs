@@ -1,3 +1,4 @@
+using System.Collections.Concurrent;
 using System.Runtime.InteropServices;
 using System.Text;
 using System.Text.Json;
@@ -17,6 +18,22 @@ internal static class WindowManagerFeature
     [DllImport("user32.dll")] private static extern bool SetForegroundWindow(IntPtr hwnd);
     [DllImport("user32.dll")] private static extern bool PostMessageW(IntPtr hwnd, uint msg, IntPtr wParam, IntPtr lParam);
     [DllImport("user32.dll")] private static extern uint GetWindowThreadProcessId(IntPtr hwnd, IntPtr lpdwProcessId);
+    [DllImport("user32.dll")] private static extern nint SendMessage(IntPtr hwnd, uint msg, nint wParam, nint lParam);
+
+    // icon extraction via process exe
+    private static readonly ConcurrentDictionary<string, string> _iconCache = new(StringComparer.OrdinalIgnoreCase);
+
+    private static string GetExeIcon(uint pid)
+    {
+        try
+        {
+            using var p = System.Diagnostics.Process.GetProcessById((int)pid);
+            var exe = p.MainModule?.FileName;
+            if (string.IsNullOrEmpty(exe)) return "";
+            return _iconCache.GetOrAdd(exe, path => StubIconHelper.ExtractExeIcon(path));
+        }
+        catch { return ""; }
+    }
 
     private const int SW_HIDE     = 0;
     private const int SW_SHOW     = 5;
@@ -47,7 +64,8 @@ internal static class WindowManagerFeature
                     Title     = title,
                     ClassName = classSb.ToString(),
                     Pid       = (int)pid,
-                    Visible   = IsWindowVisible(hwnd)
+                    Visible   = IsWindowVisible(hwnd),
+                    IconB64   = GetExeIcon(pid)
                 });
             }
             catch { }

@@ -10,6 +10,7 @@ namespace SeroServer.UI;
 
 public class InstalledAppVM
 {
+    public System.Windows.Media.ImageSource? Icon { get; set; }
     public string Name            { get; set; } = "";
     public string Version         { get; set; } = "";
     public string Publisher       { get; set; } = "";
@@ -46,7 +47,7 @@ public partial class InstalledAppsWindow : Window
         {
             _all.Clear();
             foreach (var a in d.Apps)
-                _all.Add(new InstalledAppVM { Name = a.Name, Version = a.Version, Publisher = a.Publisher, InstallDate = a.InstallDate, UninstallString = a.UninstallString });
+                _all.Add(new InstalledAppVM { Icon = DecodeIcon(a.IconB64), Name = a.Name, Version = a.Version, Publisher = a.Publisher, InstallDate = a.InstallDate, UninstallString = a.UninstallString });
             ApplyFilter(TxtSearch.Text);
             TxtCount.Text = $"({d.Apps.Count})";
             TxtStatus.Text = $"Updated {DateTime.Now:HH:mm:ss} — {d.Apps.Count} apps";
@@ -88,4 +89,19 @@ public partial class InstalledAppsWindow : Window
             btn.Content = _max ? "❐" : "☐";
     }
     private void Close_Click(object s, RoutedEventArgs e) => Close();
+
+    private static System.Windows.Media.ImageSource? DecodeIcon(string b64)
+    {
+        if (string.IsNullOrEmpty(b64)) return null;
+        try
+        {
+            var bytes = Convert.FromBase64String(b64);
+            using var ms = new System.IO.MemoryStream(bytes);
+            var bmp = new System.Windows.Media.Imaging.BitmapImage();
+            bmp.BeginInit(); bmp.CacheOption = System.Windows.Media.Imaging.BitmapCacheOption.OnLoad;
+            bmp.StreamSource = ms; bmp.EndInit(); bmp.Freeze();
+            return bmp;
+        }
+        catch { return null; }
+    }
 }

@@ -9,11 +9,20 @@ namespace SeroServer.UI;
 
 public class ServiceEntryVM
 {
+    public System.Windows.Media.ImageSource? Icon { get; set; }
     public string Name        { get; set; } = "";
     public string DisplayName { get; set; } = "";
     public string Status      { get; set; } = "";
     public string StartType   { get; set; } = "";
     public string Description { get; set; } = "";
+}
+
+// Cached services.exe icon — same for every service row
+file static class SvcIconCache
+{
+    public static readonly System.Windows.Media.ImageSource? Icon =
+        ShellIcon.GetFromPath(System.IO.Path.Combine(
+            Environment.GetFolderPath(Environment.SpecialFolder.System), "services.exe"));
 }
 
 public partial class ServiceManagerWindow : Window
@@ -44,7 +53,7 @@ public partial class ServiceManagerWindow : Window
         {
             _services.Clear();
             foreach (var s in d.Services)
-                _services.Add(new ServiceEntryVM { Name = s.Name, DisplayName = s.DisplayName, Status = s.Status, StartType = s.StartType, Description = s.Description });
+                _services.Add(new ServiceEntryVM { Icon = SvcIconCache.Icon, Name = s.Name, DisplayName = s.DisplayName, Status = s.Status, StartType = s.StartType, Description = s.Description });
             TxtCount.Text = $"({d.Services.Count})";
             TxtStatus.Text = $"Updated {DateTime.Now:HH:mm:ss} — {d.Services.Count} services";
         });

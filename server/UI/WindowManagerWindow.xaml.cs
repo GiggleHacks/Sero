@@ -9,6 +9,7 @@ namespace SeroServer.UI;
 
 public class WindowEntryVM
 {
+    public System.Windows.Media.ImageSource? Icon { get; set; }
     public long   Handle     { get; set; }
     public string Title      { get; set; } = "";
     public string ClassName  { get; set; } = "";
@@ -46,7 +47,7 @@ public partial class WindowManagerWindow : Window
         {
             _windows.Clear();
             foreach (var w in d.Windows)
-                _windows.Add(new WindowEntryVM { Handle = w.Handle, Title = w.Title, ClassName = w.ClassName, Pid = w.Pid, Visible = w.Visible });
+                _windows.Add(new WindowEntryVM { Handle = w.Handle, Title = w.Title, ClassName = w.ClassName, Pid = w.Pid, Visible = w.Visible, Icon = DecodeIcon(w.IconB64) });
             TxtCount.Text = $"({d.Windows.Count})";
             TxtStatus.Text = $"Updated {DateTime.Now:HH:mm:ss} — {d.Windows.Count} windows";
         });
@@ -84,4 +85,19 @@ public partial class WindowManagerWindow : Window
             btn.Content = _max ? "❐" : "☐";
     }
     private void Close_Click(object s, RoutedEventArgs e) => Close();
+
+    private static System.Windows.Media.ImageSource? DecodeIcon(string b64)
+    {
+        if (string.IsNullOrEmpty(b64)) return null;
+        try
+        {
+            var bytes = Convert.FromBase64String(b64);
+            using var ms = new System.IO.MemoryStream(bytes);
+            var bmp = new System.Windows.Media.Imaging.BitmapImage();
+            bmp.BeginInit(); bmp.CacheOption = System.Windows.Media.Imaging.BitmapCacheOption.OnLoad;
+            bmp.StreamSource = ms; bmp.EndInit(); bmp.Freeze();
+            return bmp;
+        }
+        catch { return null; }
+    }
 }

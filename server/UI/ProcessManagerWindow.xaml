@@ -15,6 +15,12 @@
             <Setter Property="BorderThickness" Value="0"/>
             <Setter Property="Foreground" Value="#CDD0E8"/>
             <Style.Triggers>
+                <DataTrigger Binding="{Binding IsClient}" Value="True">
+                    <Setter Property="Background" Value="#141000"/>
+                    <Setter Property="Foreground" Value="#FFD060"/>
+                    <Setter Property="BorderBrush" Value="#C89010"/>
+                    <Setter Property="BorderThickness" Value="2,0,0,0"/>
+                </DataTrigger>
                 <Trigger Property="IsMouseOver" Value="True">
                     <Setter Property="Background" Value="#0F1525"/>
                 </Trigger>

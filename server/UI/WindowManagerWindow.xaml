@@ -56,6 +56,14 @@
                     </ContextMenu>
                 </DataGrid.ContextMenu>
                 <DataGrid.Columns>
+                    <DataGridTemplateColumn Width="30" CanUserSort="False">
+                        <DataGridTemplateColumn.CellTemplate>
+                            <DataTemplate>
+                                <Image Source="{Binding Icon}" Width="16" Height="16" Margin="6,0"
+                                       RenderOptions.BitmapScalingMode="HighQuality" VerticalAlignment="Center"/>
+                            </DataTemplate>
+                        </DataGridTemplateColumn.CellTemplate>
+                    </DataGridTemplateColumn>
                     <DataGridTextColumn Header="HANDLE"  Binding="{Binding HandleHex}" Width="90" FontFamily="Consolas" FontSize="11"/>
                     <DataGridTextColumn Header="TITLE"   Binding="{Binding Title}"     Width="*"/>
                     <DataGridTextColumn Header="CLASS"   Binding="{Binding ClassName}" Width="160"/>
