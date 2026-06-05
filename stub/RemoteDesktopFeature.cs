@@ -154,6 +154,15 @@ internal static class RemoteDesktopFeature
     // Scheduled tick to force a full-frame refresh (clears _prevPixels so next capture is a complete frame)
     private static long _forceRefreshAt;
 
+    // Double pixel buffer — alternate each frame to avoid 8 MB allocation per GDI capture
+    private static byte[]? _pixBuf0, _pixBuf1;
+    private static bool     _pixBufSlot;
+
+    // Cached JPEG encoder params — avoids AllocHGlobal/FreeHGlobal on every block encode
+    private static int   _epLastQuality = -1;
+    private static nint  _epQualityPtr;
+    private static nint  _epParamsPtr;
+
     private static string _lastClip = "";
 
     // ── Public API ────────────────────────────────────────────────────────────
@@ -169,7 +178,8 @@ internal static class RemoteDesktopFeature
         EnsureGdiplus();
         _monitors = EnumMonitors();
 
-        Interlocked.Exchange(ref _pendingRequests, 4); // 4 credits: pipeline frames ahead — ACK now fires before blit so credits cycle faster
+        _pixBufSlot = false;
+        Interlocked.Exchange(ref _pendingRequests, 8); // 8 credits: deeper pipeline — ACK fires before blit so credits cycle fast on LAN
         _running = true;
         _thread = new Thread(CaptureLoop)
         {
@@ -288,10 +298,11 @@ internal static class RemoteDesktopFeature
 
     // ── GDI pixel capture — BitBlt path, used when DXGI is unavailable ────────
 
-    private static byte[]? CaptureGdi(int srcX, int srcY, int srcW, int srcH, int dstW, int dstH)
+    // Fills caller-supplied pixel buffer — avoids 8 MB allocation per frame
+    private static bool CaptureGdi(int srcX, int srcY, int srcW, int srcH, int dstW, int dstH, byte[] pixels)
     {
         nint hdcScreen = GetDC(0);
-        if (hdcScreen == 0) return null;
+        if (hdcScreen == 0) return false;
 
         nint hdcMem = 0, hbm = 0, hbmOld = 0;
         nint hdcScl = 0, hbmScl = 0, hbmSclOld = 0;
@@ -302,7 +313,7 @@ internal static class RemoteDesktopFeature
             hbmOld = SelectObject(hdcMem, hbm);
 
             if (!BitBlt(hdcMem, 0, 0, srcW, srcH, hdcScreen, srcX, srcY, SRCCOPY | CAPTUREBLT))
-                return null;
+                return false;
 
             DrawCursor(hdcMem, srcX, srcY, srcW, srcH, srcW, srcH);
 
@@ -329,11 +340,10 @@ internal static class RemoteDesktopFeature
                 },
                 bmiColors = new uint[4]
             };
-            var pixels = new byte[dstW * 4 * dstH];
             GetDIBits(hdcRead, hbmRead, 0, (uint)dstH, pixels, ref bmi, 0);
-            return pixels;
+            return true;
         }
-        catch { return null; }
+        catch { return false; }
         finally
         {
             if (hbmSclOld != 0) SelectObject(hdcScl, hbmSclOld);
@@ -371,10 +381,11 @@ internal static class RemoteDesktopFeature
         if (pixels == null)
         {
             // GDI BitBlt fallback (always works: RDP sessions, headless, non-BGRA formats)
-            dstW   = Math.Max(1, srcW * scale / 100);
-            dstH   = Math.Max(1, srcH * scale / 100);
-            pixels = CaptureGdi(srcX, srcY, srcW, srcH, dstW, dstH);
-            if (pixels == null) return null;
+            dstW = Math.Max(1, srcW * scale / 100);
+            dstH = Math.Max(1, srcH * scale / 100);
+            // Use alternating pre-allocated buffer — avoids 8 MB GC allocation per frame
+            pixels = AcquireCaptureBuffer(dstW * 4 * dstH);
+            if (!CaptureGdi(srcX, srcY, srcW, srcH, dstW, dstH, pixels)) return null;
         }
 
         // ── Block-level diff vs previous frame ────────────────────────────────
@@ -464,22 +475,19 @@ internal static class RemoteDesktopFeature
         return false;
     }
 
-    // Encode a block region of the frame to JPEG
+    // Encode a block region of the frame to JPEG.
+    // Passes the frame stride directly to GDI+ — no per-block copy needed.
+    // GDI+ reads bh rows of bw pixels, skipping (frameW-bw)*4 bytes at each row end.
     private static byte[]? EncodeBlock(byte[] pixels, int frameW, int frameH,
                                         int bx, int by, int bw, int bh, int quality)
     {
         int srcStride = frameW * 4;
-        int dstStride = bw * 4;
-        var block = new byte[dstStride * bh];
-        for (int y = 0; y < bh; y++)
-            Buffer.BlockCopy(pixels, (by + y) * srcStride + bx * 4, block, y * dstStride, dstStride);
-
         nint gdipBmp = 0;
         unsafe
         {
-            fixed (byte* p = block)
+            fixed (byte* p = &pixels[by * srcStride + bx * 4])
             {
-                if (GdipCreateBitmapFromScan0(bw, bh, dstStride, 0x26200A, (nint)p, out gdipBmp) != 0
+                if (GdipCreateBitmapFromScan0(bw, bh, srcStride, 0x26200A, (nint)p, out gdipBmp) != 0
                     || gdipBmp == 0) return null;
                 try   { return GdipBitmapToJpeg(gdipBmp, quality); }
                 finally { GdipDisposeImage(gdipBmp); }
@@ -498,19 +506,11 @@ internal static class RemoteDesktopFeature
         if (pStream == 0) return null;
         try
         {
-            // Build encoder parameters
-            long qual   = Math.Clamp(quality, 1, 100);
-            nint qPtr   = Marshal.AllocHGlobal(sizeof(long));
-            Marshal.WriteInt64(qPtr, qual);
-            var ep      = new EncoderParam { Guid = EncQuality, Count = 1, Type = 4, Value = qPtr };
-            var eps     = new EncoderParams { Count = 1, Param = ep };
-            nint epsPtr = Marshal.AllocHGlobal(Marshal.SizeOf<EncoderParams>());
-            Marshal.StructureToPtr(eps, epsPtr, false);
+            // Use cached encoder params — avoids AllocHGlobal/FreeHGlobal on every block
+            EnsureEncoderParams(quality);
 
             var clsid = JpegClsid;
-            int status = GdipSaveImageToStream(bmp, pStream, ref clsid, epsPtr);
-            Marshal.FreeHGlobal(qPtr);
-            Marshal.FreeHGlobal(epsPtr);
+            int status = GdipSaveImageToStream(bmp, pStream, ref clsid, _epParamsPtr);
             if (status != 0) return null;
 
             // IStream vtable: [0]=QI [1]=AddRef [2]=Release [3]=Read [4]=Write [5]=Seek
@@ -624,6 +624,31 @@ internal static class RemoteDesktopFeature
         if (list.Count == 0)
             list.Add(new MonInfo("Primary", 0, 0, GetSystemMetrics(0), GetSystemMetrics(1)));
         return [.. list];
+    }
+
+    // Alternates between two reusable pixel buffers so GDI captures never allocate
+    private static byte[] AcquireCaptureBuffer(int size)
+    {
+        _pixBufSlot = !_pixBufSlot;
+        ref byte[]? slot = ref _pixBufSlot ? ref _pixBuf1 : ref _pixBuf0;
+        if (slot == null || slot.Length < size) slot = new byte[size];
+        return slot;
+    }
+
+    // Keeps a single allocated encoder-params block, reallocated only when quality changes
+    private static void EnsureEncoderParams(int quality)
+    {
+        if (_epLastQuality == quality) return;
+        if (_epQualityPtr != 0) { Marshal.FreeHGlobal(_epQualityPtr); _epQualityPtr = 0; }
+        if (_epParamsPtr  != 0) { Marshal.FreeHGlobal(_epParamsPtr);  _epParamsPtr  = 0; }
+        long q = Math.Clamp(quality, 1, 100);
+        _epQualityPtr = Marshal.AllocHGlobal(sizeof(long));
+        Marshal.WriteInt64(_epQualityPtr, q);
+        var ep  = new EncoderParam  { Guid = EncQuality, Count = 1, Type = 4, Value = _epQualityPtr };
+        var eps = new EncoderParams { Count = 1, Param = ep };
+        _epParamsPtr = Marshal.AllocHGlobal(Marshal.SizeOf<EncoderParams>());
+        Marshal.StructureToPtr(eps, _epParamsPtr, false);
+        _epLastQuality = quality;
     }
 
     private static void EnsureGdiplus()
