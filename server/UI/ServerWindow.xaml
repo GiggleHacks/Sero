@@ -661,7 +661,7 @@
                                             <MenuItem Header="Remote Desktop"      Click="RemoteDesktop_Click">       <MenuItem.Icon><TextBlock Text="&#x1F5A5;" FontSize="11" Foreground="#89b4fa"/></MenuItem.Icon></MenuItem>
                                             <MenuItem Header="Webcam"              Click="RemoteWebcam_Click">        <MenuItem.Icon><Grid Width="15" Height="15"><TextBlock Text="📷" FontSize="11" HorizontalAlignment="Center" VerticalAlignment="Center" Foreground="#89dceb"/><Image x:Name="CamMenuIcon" Width="15" Height="15" RenderOptions.BitmapScalingMode="HighQuality"/></Grid></MenuItem.Icon></MenuItem>
                                             <MenuItem Header="HVNC"                Click="Hvnc_Click">                <MenuItem.Icon><TextBlock Text="&#x1F48E;" FontSize="11" Foreground="#A855F7"/></MenuItem.Icon></MenuItem>
-                                            <MenuItem Header="Microphone"          Click="Microphone_Click">          <MenuItem.Icon><TextBlock Text="&#x1F399;" FontSize="11" Foreground="#f38ba8"/></MenuItem.Icon></MenuItem>
+                                            <MenuItem Header="Microphone"          Click="Microphone_Click">          <MenuItem.Icon><Grid Width="15" Height="15"><TextBlock Text="&#x1F399;" FontSize="11" HorizontalAlignment="Center" VerticalAlignment="Center" Foreground="#f38ba8"/><Image x:Name="MicMenuIcon" Width="15" Height="15" RenderOptions.BitmapScalingMode="HighQuality"/></Grid></MenuItem.Icon></MenuItem>
                                             <MenuItem Header="Keylogger"           Click="Keylogger_Click">           <MenuItem.Icon><TextBlock Text="&#x2328;" FontSize="11" Foreground="#cba6f7"/></MenuItem.Icon></MenuItem>
                                             <Separator/>
                                             <MenuItem Header="Performance Monitor" Click="PerformanceMonitor_Click">  <MenuItem.Icon><TextBlock Text="&#x1F4CA;" FontSize="11" Foreground="#22C55E"/></MenuItem.Icon></MenuItem>
@@ -1435,9 +1435,6 @@
                                             Height="28" Padding="14,0" Margin="6,0,0,0"
                                             IsEnabled="False" Opacity="0.35"/>
                                 </StackPanel>
-                                <TextBlock x:Name="TxtScreenCount" Text="0 clients" Foreground="#404878"
-                                           FontSize="10" FontFamily="Consolas" VerticalAlignment="Center"
-                                           HorizontalAlignment="Right"/>
                             </Grid>
                         </Border>
                         <!-- Tiles -->
