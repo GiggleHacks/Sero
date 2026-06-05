@@ -3740,7 +3740,7 @@ Read-Host 'Press Enter to close'
         var img = new System.Windows.Controls.Image
         {
             Stretch = Stretch.Uniform,
-            Height  = 160,
+            Height  = 200,
             HorizontalAlignment = HorizontalAlignment.Stretch
         };
 
@@ -3760,7 +3760,7 @@ Read-Host 'Press Enter to close'
 
         var border = new System.Windows.Controls.Border
         {
-            Width = 264, Margin = new Thickness(5),
+            Width = 320, Margin = new Thickness(6),
             Background   = new SolidColorBrush(Color.FromRgb(0x07, 0x08, 0x12)),
             BorderBrush  = new SolidColorBrush(Color.FromRgb(0x1A, 0x1E, 0x36)),
             BorderThickness = new Thickness(1),
@@ -3903,6 +3903,18 @@ Read-Host 'Press Enter to close'
 
     private static System.Windows.Media.ImageSource? TryLoadCameraIcon()
     {
+        // Start Menu shortcuts are readable without admin — SHGetFileInfo follows the .lnk to the UWP icon
+        var startMenuDirs = new[]
+        {
+            Environment.GetFolderPath(Environment.SpecialFolder.CommonPrograms),
+            Environment.GetFolderPath(Environment.SpecialFolder.Programs),
+        };
+        foreach (var dir in startMenuDirs)
+        {
+            var lnk = Path.Combine(dir, "Camera.lnk");
+            if (File.Exists(lnk)) { var ico = ShellIcon.GetFromPath(lnk); if (ico != null) return ico; }
+        }
+        // WindowsApps direct (requires admin on most systems)
         try
         {
             var appsDir = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), "WindowsApps");
@@ -3917,8 +3929,7 @@ Read-Host 'Press Enter to close'
             }
         }
         catch { }
-        var imgRes = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.System), "imageres.dll");
-        return ShellIcon.GetFromPath(imgRes);
+        return null;
     }
 
     private void Close_Click(object sender, RoutedEventArgs e)
