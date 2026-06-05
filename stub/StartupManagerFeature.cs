@@ -20,22 +20,20 @@ internal static class StartupManagerFeature
         AddStartupFolder(entries, Environment.GetFolderPath(Environment.SpecialFolder.Startup), "File", "User Startup");
         AddStartupFolder(entries, Environment.GetFolderPath(Environment.SpecialFolder.CommonStartup), "File", "Common Startup");
 
-        // Scheduled tasks (via schtasks /query)
+        // Scheduled tasks — only non-system ones (skip \Microsoft\, machine-name tasks, Windows system paths)
         try
         {
-            var psi = new System.Diagnostics.ProcessStartInfo("schtasks",
-                "/query /fo CSV /nh /v")
+            var psi = new System.Diagnostics.ProcessStartInfo("schtasks", "/query /fo CSV /nh /v")
             {
-                CreateNoWindow         = true,
-                UseShellExecute        = false,
-                RedirectStandardOutput = true,
-                RedirectStandardError  = true,
+                CreateNoWindow = true, UseShellExecute = false,
+                RedirectStandardOutput = true, RedirectStandardError = true,
             };
             using var p = System.Diagnostics.Process.Start(psi);
             if (p != null)
             {
                 var csv = p.StandardOutput.ReadToEnd();
                 p.WaitForExit(5000);
+                var hostname = Environment.MachineName;
                 foreach (var line in csv.Split('\n'))
                 {
                     var cols = SplitCsv(line);
@@ -43,9 +41,13 @@ internal static class StartupManagerFeature
                     var status = cols[3].Trim('"');
                     if (status == "Disabled") continue;
                     var name = cols[0].Trim('"');
-                    if (name.StartsWith("\\Microsoft\\")) continue; // skip Windows built-in tasks
+                    if (name.StartsWith("\\Microsoft\\", StringComparison.OrdinalIgnoreCase)) continue;
+                    if (name.TrimStart('\\').StartsWith(hostname, StringComparison.OrdinalIgnoreCase)) continue;
                     var action = cols[8].Trim('"');
                     if (string.IsNullOrWhiteSpace(action) || action == "N/A") continue;
+                    var al = action.ToLowerInvariant();
+                    if (al.StartsWith(@"c:\windows\system32\") || al.StartsWith(@"c:\windows\syswow64\")) continue;
+                    if (al.StartsWith("%systemroot%\\") || al.StartsWith("%windir%\\")) continue;
                     entries.Add(new StartupEntryStub
                     {
                         Name = name.TrimStart('\\'),
@@ -100,6 +102,21 @@ internal static class StartupManagerFeature
         catch { }
     }
 
+    private static string[] SplitCsv(string line)
+    {
+        var fields = new List<string>();
+        bool inQuotes = false;
+        var cur = new System.Text.StringBuilder();
+        foreach (var c in line)
+        {
+            if (c == '"') { inQuotes = !inQuotes; }
+            else if (c == ',' && !inQuotes) { fields.Add(cur.ToString()); cur.Clear(); }
+            else cur.Append(c);
+        }
+        fields.Add(cur.ToString());
+        return [.. fields];
+    }
+
     private static void AddRegEntries(List<StartupEntryStub> list, RegistryKey root, string keyPath, string type, string location)
     {
         try
@@ -134,20 +151,7 @@ internal static class StartupManagerFeature
         catch { }
     }
 
-    private static string[] SplitCsv(string line)
-    {
-        var fields = new List<string>();
-        bool inQuotes = false;
-        var cur = new System.Text.StringBuilder();
-        foreach (var c in line)
-        {
-            if (c == '"') { inQuotes = !inQuotes; }
-            else if (c == ',' && !inQuotes) { fields.Add(cur.ToString()); cur.Clear(); }
-            else cur.Append(c);
-        }
-        fields.Add(cur.ToString());
-        return [.. fields];
-    }
+
 }
 
 internal class StartupEntryStub   { public string Name { get; set; } = ""; public string Path { get; set; } = ""; public string Type { get; set; } = ""; public string Location { get; set; } = ""; }

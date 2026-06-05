@@ -171,6 +171,12 @@ public class TlsServer
         if (ConnectedClients.TryRemove(clientId, out var client))
         {
             try { client.Cts.Cancel(); client.Stream?.Dispose(); } catch { }
+            if (_store.AllClients.TryGetValue(client.Hwid, out var rec))
+            {
+                if (!string.IsNullOrEmpty(client.CpuName)) rec.LastCpuName = client.CpuName;
+                if (!string.IsNullOrEmpty(client.GpuName)) rec.LastGpuName = client.GpuName;
+                if (client.RamTotal > 0) { rec.LastRamUsed = client.RamUsed; rec.LastRamTotal = client.RamTotal; }
+            }
             _store.RecordDisconnection(client.Hwid);
             Log($"Client {client.Id} ({client.Username}@{client.IP}) disconnected.");
             // Purge all feature-window handlers for this client so they don't leak
