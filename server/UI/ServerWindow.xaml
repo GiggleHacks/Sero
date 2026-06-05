@@ -1396,25 +1396,13 @@
                                 BorderBrush="#1A1C2E" BorderThickness="0,0,0,1">
                             <DockPanel LastChildFill="False">
                                 <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                                    <Button x:Name="BtnScreenStart" Content="▶  START ALL"
+                                    <Button x:Name="BtnScreenStart" Content="▶  START"
                                             Click="ScreenStart_Click" Style="{StaticResource SGreenBtn}"
                                             Height="28" Padding="14,0"/>
-                                    <Button x:Name="BtnScreenStop" Content="■  STOP ALL"
+                                    <Button x:Name="BtnScreenStop" Content="■  STOP"
                                             Click="ScreenStop_Click" Style="{StaticResource SRedBtn}"
                                             Height="28" Padding="14,0" Margin="6,0,0,0"
                                             IsEnabled="False" Opacity="0.35"/>
-                                    <Rectangle Width="1" Height="16" Margin="14,0" Fill="#1E2038"/>
-                                    <TextBlock Text="INTERVAL" Foreground="#404878" FontSize="9"
-                                               FontWeight="SemiBold" FontFamily="Segoe UI"
-                                               VerticalAlignment="Center" Margin="0,0,8,0"/>
-                                    <Slider x:Name="SldScreenInterval" Minimum="1" Maximum="15" Value="3"
-                                            Width="80" VerticalAlignment="Center"/>
-                                    <Border Margin="6,0,0,0" Padding="5,1" CornerRadius="3"
-                                            Background="#0A0C18" BorderBrush="#1E2038" BorderThickness="1">
-                                        <TextBlock x:Name="TxtScreenInterval" Text="3s"
-                                                   Foreground="#8090C0" FontSize="10"
-                                                   FontFamily="Segoe UI Mono" Width="22" TextAlignment="Center"/>
-                                    </Border>
                                 </StackPanel>
                                 <TextBlock x:Name="TxtScreenCount" DockPanel.Dock="Right"
                                            Text="0 clients" Foreground="#404878"

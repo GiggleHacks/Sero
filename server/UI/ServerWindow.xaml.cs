@@ -3661,27 +3661,15 @@ Read-Host 'Press Enter to close'
         BtnScreenStart.IsEnabled = false; BtnScreenStart.Opacity = 0.35;
         BtnScreenStop.IsEnabled  = true;  BtnScreenStop.Opacity  = 1.0;
 
-        SldScreenInterval.ValueChanged += SldScreenInterval_ValueChanged;
-
-        _screenTimer = new DispatcherTimer
-            { Interval = TimeSpan.FromSeconds(Math.Max(1, (int)SldScreenInterval.Value)) };
+        _screenTimer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(3) };
         _screenTimer.Tick += (_, _) => RequestScreenshots();
         _screenTimer.Start();
         RequestScreenshots();
     }
 
-    private void SldScreenInterval_ValueChanged(object? sender,
-        System.Windows.RoutedPropertyChangedEventArgs<double> e)
-    {
-        TxtScreenInterval.Text = $"{(int)e.NewValue}s";
-        if (_screenTimer != null)
-            _screenTimer.Interval = TimeSpan.FromSeconds(Math.Max(1, (int)e.NewValue));
-    }
-
     private void ScreenStop_Click(object sender, RoutedEventArgs e)
     {
         _screenTimer?.Stop(); _screenTimer = null;
-        SldScreenInterval.ValueChanged -= SldScreenInterval_ValueChanged;
         BtnScreenStart.IsEnabled = true;  BtnScreenStart.Opacity = 1.0;
         BtnScreenStop.IsEnabled  = false; BtnScreenStop.Opacity  = 0.35;
         foreach (var id in _screenHandlers.ToList())
