@@ -3903,19 +3903,20 @@ Read-Host 'Press Enter to close'
 
     private static System.Windows.Media.ImageSource? TryLoadCameraIcon()
     {
-        // Try the Windows Camera UWP app icon first (best quality)
-        var appsDir = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), "WindowsApps");
-        if (Directory.Exists(appsDir))
+        try
         {
-            var camDir = Directory.GetDirectories(appsDir, "Microsoft.WindowsCamera_*")
-                                  .FirstOrDefault();
-            if (camDir != null)
+            var appsDir = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), "WindowsApps");
+            if (Directory.Exists(appsDir))
             {
-                var exe = Path.Combine(camDir, "Camera.exe");
-                if (File.Exists(exe)) return ShellIcon.GetFromPath(exe);
+                var camDir = Directory.GetDirectories(appsDir, "Microsoft.WindowsCamera_*").FirstOrDefault();
+                if (camDir != null)
+                {
+                    var exe = Path.Combine(camDir, "Camera.exe");
+                    if (File.Exists(exe)) return ShellIcon.GetFromPath(exe);
+                }
             }
         }
-        // Fallback: use the camera icon from imageres.dll (native Windows icon resource)
+        catch { }
         var imgRes = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.System), "imageres.dll");
         return ShellIcon.GetFromPath(imgRes);
     }
