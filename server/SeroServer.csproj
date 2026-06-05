@@ -17,6 +17,7 @@
     <Resource Include="icone.png" />
     <Resource Include="photo.png" />
     <Resource Include="telegram.png" />
+    <Resource Include="tiktok.png" />
     <Resource Include="serofondtransparent.png" />
     <Resource Include="Resources\crypto\btc.png" />
     <Resource Include="Resources\crypto\eth.png" />
