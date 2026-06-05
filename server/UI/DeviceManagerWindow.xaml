@@ -46,8 +46,10 @@
                         <Setter Property="Height" Value="24"/>
                         <Style.Triggers>
                             <Trigger Property="IsSelected" Value="True">
-                                <Setter Property="Background" Value="#1A3A6A"/>
-                                <Setter Property="Foreground" Value="#E8F0FF"/>
+                                <Setter Property="Background"      Value="#1C3A70"/>
+                                <Setter Property="Foreground"      Value="#FFFFFF"/>
+                                <Setter Property="BorderBrush"     Value="#4A85F5"/>
+                                <Setter Property="BorderThickness" Value="2,0,0,0"/>
                             </Trigger>
                             <Trigger Property="IsMouseOver" Value="True">
                                 <Setter Property="Background" Value="#141A30"/>
