@@ -1430,7 +1430,7 @@
                                     <Button x:Name="BtnScreenStart" Content="▶  START"
                                             Click="ScreenStart_Click" Style="{StaticResource SGreenBtn}"
                                             Height="28" Padding="14,0"/>
-                                    <Button x:Name="BtnScreenStop" Content="■  STOP"
+                                    <Button x:Name="BtnScreenStop" Content="STOP"
                                             Click="ScreenStop_Click" Style="{StaticResource SRedBtn}"
                                             Height="28" Padding="14,0" Margin="6,0,0,0"
                                             IsEnabled="False" Opacity="0.35"/>
