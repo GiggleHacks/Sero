@@ -3745,10 +3745,11 @@ Read-Host 'Press Enter to close'
         var label = new TextBlock
         {
             Text = client.Id,
-            Foreground = new SolidColorBrush(Color.FromRgb(0x50, 0x58, 0x80)),
-            FontSize = 10, FontFamily = new System.Windows.Media.FontFamily("Consolas"),
-            Margin = new Thickness(6, 3, 6, 4),
-            TextTrimming = System.Windows.TextTrimming.CharacterEllipsis
+            Foreground = new SolidColorBrush(Color.FromRgb(0xB8, 0xC0, 0xD8)),
+            FontSize = 12, FontFamily = new System.Windows.Media.FontFamily("Consolas"),
+            Margin = new Thickness(6, 4, 6, 5),
+            TextTrimming = System.Windows.TextTrimming.None,
+            TextWrapping = System.Windows.TextWrapping.NoWrap
         };
 
         var dp = new System.Windows.Controls.DockPanel();
