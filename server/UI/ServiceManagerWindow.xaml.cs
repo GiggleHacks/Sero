@@ -83,6 +83,9 @@ public partial class ServiceManagerWindow : Window
 
         TxtSearch.TextChanged += (_, _) => _view?.Refresh();
 
+        _autoRefresh = new DispatcherTimer { Interval = TimeSpan.FromSeconds(1) };
+        _autoRefresh.Tick += AutoRefreshTick;
+
         _server.RegisterHandler(clientId, PacketType.SvcListResult, OnList);
         _server.RegisterHandler(clientId, PacketType.SvcAck,        OnAck);
         Closed += (_, _) =>
@@ -92,8 +95,6 @@ public partial class ServiceManagerWindow : Window
             _server.UnregisterHandler(clientId, PacketType.SvcAck);
         };
 
-        _autoRefresh = new DispatcherTimer { Interval = TimeSpan.FromSeconds(1) };
-        _autoRefresh.Tick += AutoRefreshTick;
         _autoRefresh.Start();
 
         Refresh();
