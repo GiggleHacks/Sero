@@ -178,26 +178,8 @@
                 <Grid Margin="14,0">
                     <!-- Left: product identity -->
                     <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                        <StackPanel Orientation="Vertical" VerticalAlignment="Center">
-                            <TextBlock FontSize="11" FontWeight="SemiBold" FontFamily="Segoe UI">
-                                <TextBlock.Foreground>
-                                    <LinearGradientBrush StartPoint="0,0" EndPoint="1,0">
-                                        <GradientStop Color="#7AAEFF" Offset="0"/>
-                                        <GradientStop Color="#B090FF" Offset="1"/>
-                                    </LinearGradientBrush>
-                                </TextBlock.Foreground>
-                                <Run Text="Hidden Virtual Desktop"/></TextBlock>
-                            <TextBlock x:Name="TxtClientId" Text=""
-                                       FontSize="11" FontFamily="Segoe UI Mono">
-                                <TextBlock.Foreground>
-                                    <LinearGradientBrush StartPoint="0,0" EndPoint="1,0">
-                                        <GradientStop Color="#C0CCD8" Offset="0"/>
-                                        <GradientStop Color="#6A8099" Offset="0.5"/>
-                                        <GradientStop Color="#B0C0D0" Offset="1"/>
-                                    </LinearGradientBrush>
-                                </TextBlock.Foreground>
-                            </TextBlock>
-                        </StackPanel>
+                        <TextBlock FontSize="11" FontWeight="SemiBold" Foreground="#A855F7" Margin="0,0,10,0" VerticalAlignment="Center">&#x1F48E; HVNC</TextBlock>
+                        <TextBlock x:Name="TxtClientId" Text="" FontSize="11" FontFamily="Consolas" Foreground="#8890B8" VerticalAlignment="Center"/>
                         <!-- LIVE badge -->
                         <Border x:Name="LiveBadge" Margin="12,0,0,0" CornerRadius="3"
                                 Background="#0C2016" BorderBrush="#1A6040" BorderThickness="1"

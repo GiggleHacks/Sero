@@ -78,8 +78,8 @@
             <Border DockPanel.Dock="Top" Height="42" Background="#111222" MouseLeftButtonDown="Window_MouseLeftButtonDown">
                 <Grid Margin="14,0">
                     <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                        <TextBlock FontSize="12" FontWeight="SemiBold" Foreground="#4A85F5" Margin="0,0,12,0">Registry Editor</TextBlock>
-                        <TextBlock x:Name="TxtTitle" FontSize="11" Foreground="#8890B8" FontFamily="Consolas"/>
+                        <TextBlock FontSize="11" FontWeight="SemiBold" Foreground="#f9e2af" Margin="0,0,10,0" VerticalAlignment="Center">&#x1F5C4; Registry Editor</TextBlock>
+                        <TextBlock x:Name="TxtTitle" FontSize="11" Foreground="#8890B8" FontFamily="Consolas" VerticalAlignment="Center"/>
                     </StackPanel>
                     <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center">
                         <Button x:Name="BtnMax" Content="&#x2610;" Width="30" Height="27" Margin="0,0,4,0" Style="{StaticResource SBtn}" FontSize="12" Padding="0" Click="BtnMax_Click"/>

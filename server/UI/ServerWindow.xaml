@@ -1494,7 +1494,7 @@
 
                             <ScrollViewer VerticalScrollBarVisibility="Auto"
                                           HorizontalScrollBarVisibility="Disabled">
-                            <DockPanel Margin="14,12,14,12" LastChildFill="False"
+                            <DockPanel Margin="14,12,14,12" LastChildFill="True"
                                        MinHeight="460">
 
                                 <!-- Header bar with market-ticker style -->
@@ -1537,7 +1537,7 @@
                                                        Foreground="#404868" FontSize="11" FontFamily="Consolas"
                                                        VerticalAlignment="Center" Margin="14,0,0,0"/>
                                         </StackPanel>
-                                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center">
+                                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Center">
                                             <Button x:Name="BtnClipperStart" Content="START" Height="30" Padding="14,0"
                                                     Margin="0,0,6,0" Style="{StaticResource SGreenBtn}"
                                                     Click="ClipperStart_Click"

@@ -35,8 +35,8 @@
                     MouseLeftButtonDown="Window_MouseLeftButtonDown">
                 <Grid Margin="14,0">
                     <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                        <TextBlock FontSize="12" FontWeight="SemiBold" Foreground="#4A85F5" Margin="0,0,12,0">Performance Monitor</TextBlock>
-                        <TextBlock x:Name="TxtTitle" FontSize="11" Foreground="#8890B8" FontFamily="Consolas"/>
+                        <TextBlock FontSize="11" FontWeight="SemiBold" Foreground="#4A85F5" Margin="0,0,10,0" VerticalAlignment="Center">&#x1F4CA; Performance Monitor</TextBlock>
+                        <TextBlock x:Name="TxtTitle" FontSize="11" Foreground="#8890B8" FontFamily="Consolas" VerticalAlignment="Center"/>
                     </StackPanel>
                     <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center">
                         <Button Content="&#x2715;" Width="30" Height="27"
