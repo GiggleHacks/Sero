@@ -40,7 +40,7 @@
                 <Grid Margin="14,0">
                     <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
                         <TextBlock Text="♪" FontSize="15" Foreground="#f38ba8" VerticalAlignment="Center" Margin="0,0,8,0"/>
-                        <TextBlock Text="TikTok Bot" FontSize="13" FontWeight="SemiBold" Foreground="#C0CCDD"
+                        <TextBlock Text="TikTok Bot" FontSize="11" FontWeight="SemiBold" Foreground="#C0CCDD"
                                    VerticalAlignment="Center" FontFamily="Segoe UI"/>
                         <Border x:Name="BadgeRunning" Margin="10,0,0,0" CornerRadius="3"
                                 Background="#0A1E10" BorderBrush="#1A5E28" BorderThickness="1"
