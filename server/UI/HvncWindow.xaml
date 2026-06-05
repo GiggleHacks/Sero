@@ -277,20 +277,20 @@
                         <CheckBox x:Name="ChkMouse" IsChecked="True"
                                   Style="{StaticResource PillToggle}" Margin="0,0,4,0"
                                   ToolTip="Mouse input">
-                            <TextBlock Text="&#x1F5B1;" FontSize="13"/>
+                            <TextBlock Text="&#x1F5B1;" FontSize="13" Foreground="#B8C4D4"/>
                         </CheckBox>
                         <!-- Keyboard toggle — icon only -->
                         <CheckBox x:Name="ChkKeyboard" IsChecked="True"
                                   Style="{StaticResource PillToggle}" Margin="0,0,8,0"
                                   ToolTip="Keyboard input">
-                            <TextBlock Text="&#x2395;" FontSize="12"/>
+                            <TextBlock Text="&#x2395;" FontSize="12" Foreground="#B8C4D4"/>
                         </CheckBox>
                         <!-- Clipboard sync toggle — same pill LED as mouse/keyboard -->
                         <CheckBox x:Name="ChkClipboard" IsChecked="False"
                                   Style="{StaticResource PillToggle}" Margin="0,0,8,0"
                                   ToolTip="Clipboard sync — when active, auto-pushes server clipboard to remote desktop"
                                   Checked="ChkClipboard_Checked" Unchecked="ChkClipboard_Unchecked">
-                            <TextBlock Text="&#x2398;" FontSize="13"/>
+                            <TextBlock Text="&#x2398;" FontSize="13" Foreground="#B8C4D4"/>
                         </CheckBox>
                         <Rectangle Width="1" Height="16" Margin="0,0,14,0">
                             <Rectangle.Fill><SolidColorBrush Color="#1E2038"/></Rectangle.Fill>
