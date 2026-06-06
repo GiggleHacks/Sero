@@ -195,7 +195,7 @@
                                       GridLinesVisibility="None" HeadersVisibility="Column"
                                       FontFamily="Consolas" FontSize="11"
                                       CanUserAddRows="False" CanUserResizeRows="False"
-                                      ColumnHeaderHeight="26" MaxHeight="160"
+                                      ColumnHeaderHeight="32" MaxHeight="160"
                                       ColumnHeaderStyle="{StaticResource SColHeader}">
                                 <DataGrid.Columns>
                                     <DataGridTextColumn Header="CLIENT"  Binding="{Binding Label}"       Width="120"/>
