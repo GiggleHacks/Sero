@@ -1686,7 +1686,12 @@
                                     <Button Content="📁 Select" Style="{StaticResource SBtn}" Height="24" Padding="8,0" Margin="0,0,4,0" Click="BtnBinderSelectIcon_Click" FontSize="11"/>
                                     <Button Content="✕"         Style="{StaticResource SBtn}" Height="24" Width="24"   Padding="0"    Click="BtnBinderClearIcon_Click"  FontSize="11"/>
                                 </StackPanel>
-<StackPanel Orientation="Horizontal">
+                                <StackPanel Orientation="Horizontal" Margin="0,0,0,6">
+                                    <CheckBox x:Name="ChkBinderRunOnce" Content="Run Once" Foreground="#8890B8" FontSize="11"
+                                              VerticalAlignment="Center"
+                                              ToolTip="Write each file path to HKCU\RunOnce so it re-runs on next login"/>
+                                </StackPanel>
+                                <StackPanel Orientation="Horizontal">
                                     <Button x:Name="BtnBinderBuild" Content="⚙ Build" Style="{StaticResource SGreenBtn}" Height="30" Width="110" Click="BtnBinderBuild_Click"/>
                                     <TextBlock x:Name="TxtBinderStatus" Text="Ready" Foreground="#505870" FontFamily="Consolas" FontSize="11" VerticalAlignment="Center" Margin="10,0,0,0"/>
                                 </StackPanel>
@@ -1723,22 +1728,6 @@
                                 </DataGridTemplateColumn>
                                 <DataGridTextColumn Header="FILE"    Binding="{Binding FileName}"    Width="*"   IsReadOnly="True"/>
                                 <DataGridTextColumn Header="SIZE"    Binding="{Binding SizeDisplay}" Width="80"  IsReadOnly="True" FontFamily="Consolas" FontSize="11"/>
-                                <DataGridTemplateColumn Header="EXECUTE" Width="75" CanUserSort="False">
-                                    <DataGridTemplateColumn.CellTemplate>
-                                        <DataTemplate>
-                                            <CheckBox IsChecked="{Binding Execute, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
-                                                      HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                                        </DataTemplate>
-                                    </DataGridTemplateColumn.CellTemplate>
-                                </DataGridTemplateColumn>
-                                <DataGridTemplateColumn Header="HIDDEN" Width="70" CanUserSort="False">
-                                    <DataGridTemplateColumn.CellTemplate>
-                                        <DataTemplate>
-                                            <CheckBox IsChecked="{Binding Hidden, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
-                                                      HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                                        </DataTemplate>
-                                    </DataGridTemplateColumn.CellTemplate>
-                                </DataGridTemplateColumn>
                             </DataGrid.Columns>
                         </DataGrid>
                     </DockPanel>

@@ -3884,10 +3884,11 @@ Read-Host 'Press Enter to close'
         BtnBinderBuild.IsEnabled = false;
         TxtBinderStatus.Text = "Compilation…";
 
-        var entries = _binderEntries.ToList();
-        var icon    = _binderIconPath;
-        var result  = await SeroServer.Binder.BinderBuilder.Build(
-            entries, icon, output,
+        var entries  = _binderEntries.ToList();
+        var icon     = _binderIconPath;
+        var runOnce  = ChkBinderRunOnce.IsChecked == true;
+        var result   = await SeroServer.Binder.BinderBuilder.Build(
+            entries, icon, output, runOnce,
             msg => Dispatcher.BeginInvoke(() => TxtBinderStatus.Text = msg));
 
         BtnBinderBuild.IsEnabled = true;

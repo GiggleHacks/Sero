@@ -66,7 +66,7 @@ internal static class StartupManagerFeature
     // Extract the bare exe path from a value like: "C:\app\foo.exe" -args  or  C:\app\foo.exe -args
     private static string ExtractExePath(string raw)
     {
-        raw = raw.Trim();
+        raw = Environment.ExpandEnvironmentVariables(raw.Trim());
         if (raw.StartsWith('"'))
         {
             int e = raw.IndexOf('"', 1);

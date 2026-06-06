@@ -50,7 +50,7 @@
                                 <Setter TargetName="PART_Bg" Property="BorderBrush"     Value="#4A85F5"/>
                                 <Setter TargetName="PART_Bg" Property="BorderThickness" Value="3,1,1,1"/>
                                 <Setter TargetName="PART_Bg" Property="Background"      Value="#0A1530"/>
-                                <Setter Property="Foreground"                            Value="#90C8FF"/>
+                                <Setter Property="Foreground"                            Value="#FFFFFF"/>
                                 <Setter Property="Opacity"                               Value="1"/>
                             </Trigger>
                         </ControlTemplate.Triggers>

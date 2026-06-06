@@ -308,7 +308,7 @@
                                         <DropShadowEffect Color="#000" BlurRadius="10"
                                                           ShadowDepth="2" Opacity="0.5"/>
                                     </Border.Effect>
-                                    <ScrollViewer MaxHeight="200" CanContentScroll="True">
+                                    <ScrollViewer MaxHeight="200" CanContentScroll="False">
                                         <ItemsPresenter/>
                                     </ScrollViewer>
                                 </Border>
