@@ -13,7 +13,7 @@
             <Border DockPanel.Dock="Top" Height="42" Background="#111222" MouseLeftButtonDown="Window_MouseLeftButtonDown">
                 <Grid Margin="14,0">
                     <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                        <TextBlock FontFamily="Segoe MDL2 Assets" FontSize="13" Foreground="#4A85F5" Margin="0,0,6,0" VerticalAlignment="Center" Text="&#xE782;"/>
+                        <TextBlock FontFamily="Segoe UI Emoji" FontSize="13" Margin="0,0,6,0" VerticalAlignment="Center" Text="&#x1FA9F;"/>
                         <TextBlock FontSize="11" FontWeight="SemiBold" Foreground="#4A85F5" Margin="0,0,10,0" VerticalAlignment="Center" Text="Window Manager"/>
                         <TextBlock x:Name="TxtTitle" FontSize="11" Foreground="#8890B8" FontFamily="Consolas" VerticalAlignment="Center"/>
                         <TextBlock x:Name="TxtCount" FontSize="11" Foreground="#3A4860" FontFamily="Consolas" Margin="8,0,0,0"/>
