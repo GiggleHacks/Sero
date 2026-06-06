@@ -482,7 +482,7 @@
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="ContextMenu">
-                        <Border Background="#111222" BorderBrush="#1E2038" BorderThickness="1"
+                        <Border Background="#13142A" BorderBrush="#22253E" BorderThickness="1"
                                 CornerRadius="8" Padding="3">
                             <Border.Effect>
                                 <DropShadowEffect BlurRadius="22" ShadowDepth="6" Opacity="0.7" Color="#000000"/>

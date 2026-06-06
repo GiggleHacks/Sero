@@ -39,7 +39,7 @@
                     MouseLeftButtonDown="Window_MouseLeftButtonDown">
                 <Grid Margin="14,0">
                     <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                        <TextBlock Text="♪" FontSize="15" Foreground="#f38ba8" VerticalAlignment="Center" Margin="0,0,8,0"/>
+                        <Image Source="/tiktok.png" Width="15" Height="15" RenderOptions.BitmapScalingMode="HighQuality" VerticalAlignment="Center" Margin="0,0,8,0"/>
                         <TextBlock Text="TikTok Bot" FontSize="11" FontWeight="SemiBold" Foreground="#C0CCDD"
                                    VerticalAlignment="Center" FontFamily="Segoe UI"/>
                         <Border x:Name="BadgeRunning" Margin="10,0,0,0" CornerRadius="3"

