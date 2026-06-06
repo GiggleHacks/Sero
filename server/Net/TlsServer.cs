@@ -144,12 +144,18 @@ public class TlsServer
     {
         if (ConnectedClients.TryGetValue(clientId, out var client) && client.Stream != null)
         {
-            await client.WriteLock.WaitAsync();
+            // 8s timeout: prevents feature windows from hanging on dead clients
+            // (watchdog detects them in ~12s anyway, this just unblocks senders faster)
+            if (!await client.WriteLock.WaitAsync(TimeSpan.FromSeconds(8)))
+            {
+                DisconnectClient(clientId);
+                return;
+            }
             bool failed = false;
             try
             {
                 // Re-check stream after acquiring lock — client may have disconnected
-                if (client.Stream == null) return;
+                if (client.Stream == null) { client.WriteLock.Release(); return; }
                 await Packet.WriteToStreamAsync(client.Stream, packet);
             }
             catch { failed = true; }
@@ -179,9 +185,10 @@ public class TlsServer
             }
             _store.RecordDisconnection(client.Hwid);
             Log($"Client {client.Id} ({client.Username}@{client.IP}) disconnected.");
-            // Purge all feature-window handlers for this client so they don't leak
-            foreach (var key in _handlers.Keys.Where(k => k.Item1 == clientId).ToList())
-                _handlers.TryRemove(key, out _);
+            // Purge feature-window handlers: try O(1) removes per known PacketType first,
+            // then fall back to full scan only if stragglers remain (avoids O(n) at scale)
+            foreach (PacketType pt in Enum.GetValues<PacketType>())
+                _handlers.TryRemove((clientId, pt), out _);
             ClientDisconnected?.Invoke(client);
         }
     }
