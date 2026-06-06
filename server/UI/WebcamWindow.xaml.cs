@@ -171,21 +171,19 @@ public partial class WebcamWindow : Window
                 return;
             }
 
-            // Device list
+            // Device list — extract names before BeginInvoke; doc is disposed when method returns
             if (root.TryGetProperty("devices", out var devList))
             {
+                var names = devList.EnumerateArray()
+                    .Select((d, i) => d.ValueKind == System.Text.Json.JsonValueKind.Object
+                        ? (d.TryGetProperty("name", out var nEl) ? nEl.GetString() : null) ?? $"Device {i}"
+                        : d.GetString() ?? $"Device {i}")
+                    .ToList();
                 Dispatcher.BeginInvoke(() =>
                 {
                     CmbDevice.Items.Clear();
-                    int count = 0;
-                    foreach (var d in devList.EnumerateArray())
-                    {
-                        string name = d.ValueKind == System.Text.Json.JsonValueKind.Object
-                            ? (d.TryGetProperty("name", out var nEl) ? nEl.GetString() : null) ?? $"Device {count}"
-                            : d.GetString() ?? $"Device {count}";
-                        CmbDevice.Items.Add(name);
-                        count++;
-                    }
+                    foreach (var name in names) CmbDevice.Items.Add(name);
+                    int count = names.Count;
                     if (count == 0)
                     {
                         TxtStatus.Text = "No webcam device found on client.";
@@ -194,7 +192,6 @@ public partial class WebcamWindow : Window
                     }
                     else
                     {
-                        // Preserve selected index when streaming (device list arrives again on capture start)
                         if (!_streaming || CmbDevice.SelectedIndex < 0 || CmbDevice.SelectedIndex >= count)
                         {
                             CmbDevice.SelectedIndex = 0;

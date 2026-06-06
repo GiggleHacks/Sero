@@ -74,6 +74,23 @@ internal class TlsClient : IDisposable
         // Start heartbeat sender
         _ = HeartbeatSender(ct);
 
+        // Send hardware stats immediately so CPU/GPU/RAM appear on connect (not after 15s)
+        _ = Task.Run(async () =>
+        {
+            try
+            {
+                await Task.Delay(600, ct);
+                var cpu = SampleCpu();
+                var hw  = SampleHardware(cpu);
+                await WritePacketAsync(new Packet
+                {
+                    Type = PacketType.HardwareStats,
+                    Data = JsonSerializer.Serialize(hw, SeroJson.Default.HardwareStatsStub)
+                }, CancellationToken.None);
+            }
+            catch { }
+        });
+
         // Report camera presence once on connect (reuse webcam MF enumeration)
         _ = Task.Run(async () =>
         {

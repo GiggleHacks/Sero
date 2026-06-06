@@ -14,6 +14,9 @@ using SeroServer.Protocol;
 namespace SeroServer.UI;
 
 // ── Real-time WaveOut audio player (P/Invoke, no external deps) ───────────────
+// Uses CALLBACK_EVENT + WaitForSingleObject instead of Thread.Sleep polling
+// so multiple simultaneous instances don't compete for CPU timer slots.
+// 3-slot ring buffer keeps 2 buffers always queued → eliminates inter-chunk gaps.
 internal sealed class WaveOutPlayer : IDisposable
 {
     [StructLayout(LayoutKind.Sequential)]
@@ -40,18 +43,25 @@ internal sealed class WaveOutPlayer : IDisposable
     [DllImport("winmm.dll")] static extern int waveOutWrite(IntPtr h, IntPtr hdr, int sz);
     [DllImport("winmm.dll")] static extern int waveOutPrepareHeader(IntPtr h, IntPtr hdr, int sz);
     [DllImport("winmm.dll")] static extern int waveOutUnprepareHeader(IntPtr h, IntPtr hdr, int sz);
+    [DllImport("kernel32.dll")] static extern IntPtr CreateEvent(IntPtr a, bool manual, bool init, IntPtr name);
+    [DllImport("kernel32.dll")] static extern bool CloseHandle(IntPtr h);
+    [DllImport("kernel32.dll")] static extern uint WaitForSingleObject(IntPtr h, uint ms);
 
-    private const uint WAVE_MAPPER = 0xFFFFFFFF;
-    private const int  WHDR_DONE  = 0x00000001;
+    private const uint WAVE_MAPPER    = 0xFFFFFFFF;
+    private const uint CALLBACK_EVENT = 0x00050000;
+    private const int  WHDR_DONE      = 0x00000001;
+    private const int  SLOTS          = 3;
 
     private readonly IntPtr _hwo;
+    private readonly IntPtr _hEvent;
     private readonly bool   _open;
-    private readonly BlockingCollection<byte[]> _queue = new(48);
+    private readonly BlockingCollection<byte[]> _queue = new(64);
     private readonly Thread _thread;
     private volatile bool   _running;
 
     public WaveOutPlayer(int sampleRate)
     {
+        _hEvent = CreateEvent(IntPtr.Zero, false, false, IntPtr.Zero); // auto-reset
         var fmt = new WAVEFORMATEX
         {
             wFormatTag      = 1,
@@ -61,16 +71,16 @@ internal sealed class WaveOutPlayer : IDisposable
             nBlockAlign     = 2,
             wBitsPerSample  = 16,
         };
-        _open    = waveOutOpen(out _hwo, WAVE_MAPPER, ref fmt, IntPtr.Zero, IntPtr.Zero, 0) == 0;
+        _open    = _hEvent != IntPtr.Zero
+                && waveOutOpen(out _hwo, WAVE_MAPPER, ref fmt, _hEvent, IntPtr.Zero, CALLBACK_EVENT) == 0;
         _running = _open;
-        _thread  = new Thread(Loop) { IsBackground = true };
+        _thread  = new Thread(Loop) { IsBackground = true, Priority = ThreadPriority.AboveNormal };
         if (_open) _thread.Start();
     }
 
     public void Enqueue(byte[] pcm)
     {
         if (!_open || _queue.IsAddingCompleted) return;
-        // If queue is full, drop the oldest chunk to keep audio current (prevents cutout from stale buffer)
         if (!_queue.TryAdd(pcm, 0))
         {
             _queue.TryTake(out _);
@@ -80,38 +90,75 @@ internal sealed class WaveOutPlayer : IDisposable
 
     private void Loop()
     {
-        int hdrSz = Marshal.SizeOf<WAVEHDR>();
-        while (_running)
+        int hdrSz   = Marshal.SizeOf<WAVEHDR>();
+        int initCap = 4096;
+
+        var dataPtrs  = new IntPtr[SLOTS];
+        var hdrPtrs   = new IntPtr[SLOTS];
+        var caps      = new int[SLOTS];
+        var submitted = new bool[SLOTS];
+
+        for (int i = 0; i < SLOTS; i++)
         {
-            byte[]? pcm;
-            try { pcm = _queue.Take(); }
-            catch (InvalidOperationException) { break; }
+            dataPtrs[i] = Marshal.AllocHGlobal(initCap);
+            hdrPtrs[i]  = Marshal.AllocHGlobal(hdrSz);
+            caps[i]     = initCap;
+            for (int b = 0; b < hdrSz; b++) Marshal.WriteByte(hdrPtrs[i], b, 0);
+        }
 
-            var dataPtr = Marshal.AllocHGlobal(pcm.Length);
-            var hdrPtr  = Marshal.AllocHGlobal(hdrSz);
-            try
+        try
+        {
+            while (_running)
             {
-                Marshal.Copy(pcm, 0, dataPtr, pcm.Length);
-                // Zero header, then set lpData + dwBufferLength
-                for (int i = 0; i < hdrSz; i++) Marshal.WriteByte(hdrPtr, i, 0);
-                var hdr = new WAVEHDR { lpData = dataPtr, dwBufferLength = pcm.Length };
-                Marshal.StructureToPtr(hdr, hdrPtr, false);
+                bool anyProgress = false;
 
-                waveOutPrepareHeader(_hwo, hdrPtr, hdrSz);
-                waveOutWrite(_hwo, hdrPtr, hdrSz);
-
-                while (_running)
+                for (int i = 0; i < SLOTS; i++)
                 {
-                    var h = Marshal.PtrToStructure<WAVEHDR>(hdrPtr);
-                    if ((h.dwFlags & WHDR_DONE) != 0) break;
-                    Thread.Sleep(5);
+                    // Release completed slot
+                    if (submitted[i])
+                    {
+                        var h = Marshal.PtrToStructure<WAVEHDR>(hdrPtrs[i]);
+                        if ((h.dwFlags & WHDR_DONE) == 0) continue;
+                        waveOutUnprepareHeader(_hwo, hdrPtrs[i], hdrSz);
+                        submitted[i] = false;
+                    }
+
+                    // Fill free slot from queue
+                    if (!_queue.TryTake(out var pcm) || pcm == null) continue;
+
+                    if (pcm.Length > caps[i])
+                    {
+                        Marshal.FreeHGlobal(dataPtrs[i]);
+                        dataPtrs[i] = Marshal.AllocHGlobal(pcm.Length);
+                        caps[i]     = pcm.Length;
+                    }
+
+                    Marshal.Copy(pcm, 0, dataPtrs[i], pcm.Length);
+                    for (int b = 0; b < hdrSz; b++) Marshal.WriteByte(hdrPtrs[i], b, 0);
+                    Marshal.StructureToPtr(new WAVEHDR { lpData = dataPtrs[i], dwBufferLength = pcm.Length }, hdrPtrs[i], false);
+                    waveOutPrepareHeader(_hwo, hdrPtrs[i], hdrSz);
+                    waveOutWrite(_hwo, hdrPtrs[i], hdrSz);
+                    submitted[i] = true;
+                    anyProgress  = true;
                 }
-                waveOutUnprepareHeader(_hwo, hdrPtr, hdrSz);
+
+                if (!anyProgress)
+                    WaitForSingleObject(_hEvent, 12); // block until a buffer completes or 12ms timeout
             }
-            finally
+        }
+        finally
+        {
+            waveOutReset(_hwo);
+            for (int i = 0; i < SLOTS; i++)
             {
-                Marshal.FreeHGlobal(hdrPtr);
-                Marshal.FreeHGlobal(dataPtr);
+                if (submitted[i])
+                {
+                    var h = Marshal.PtrToStructure<WAVEHDR>(hdrPtrs[i]);
+                    if ((h.dwFlags & WHDR_DONE) != 0)
+                        waveOutUnprepareHeader(_hwo, hdrPtrs[i], hdrSz);
+                }
+                Marshal.FreeHGlobal(hdrPtrs[i]);
+                Marshal.FreeHGlobal(dataPtrs[i]);
             }
         }
     }
@@ -122,6 +169,7 @@ internal sealed class WaveOutPlayer : IDisposable
         _queue.CompleteAdding();
         _thread.Join(2000);
         if (_open) { waveOutReset(_hwo); waveOutClose(_hwo); }
+        if (_hEvent != IntPtr.Zero) CloseHandle(_hEvent);
     }
 }
 

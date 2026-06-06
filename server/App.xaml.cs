@@ -15,8 +15,8 @@ public partial class App : Application
     {
         WriteCrashLog(e.Exception);
         e.Handled = true;
-        MessageBox.Show(e.Exception.ToString(), "Crash — voir crash.log", MessageBoxButton.OK, MessageBoxImage.Error);
-        Current.Shutdown(1);
+        var msg = e.Exception?.ToString() ?? "Unknown error";
+        MessageBox.Show(msg, "Crash — voir crash.log", MessageBoxButton.OK, MessageBoxImage.Error);
     }
 
     private static void OnDomainException(object s, UnhandledExceptionEventArgs e)
