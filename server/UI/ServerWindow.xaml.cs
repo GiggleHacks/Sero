@@ -3921,11 +3921,21 @@ Read-Host 'Press Enter to close'
             if (res == 0 || sfi.hIcon == 0) return null;
             try
             {
-                var bmp = System.Windows.Interop.Imaging.CreateBitmapSourceFromHIcon(
-                    sfi.hIcon, System.Windows.Int32Rect.Empty,
-                    System.Windows.Media.Imaging.BitmapSizeOptions.FromEmptyOptions());
-                bmp.Freeze();
-                return bmp;
+                // Render pixels immediately through System.Drawing before destroying HICON.
+                // CreateBitmapSourceFromHIcon is lazy — the HICON must stay alive until pixels
+                // are materialized, so we force a full copy via ToBitmap + BitmapCacheOption.OnLoad.
+                using var drIcon = System.Drawing.Icon.FromHandle(sfi.hIcon);
+                using var drBmp  = drIcon.ToBitmap();
+                using var ms     = new System.IO.MemoryStream();
+                drBmp.Save(ms, System.Drawing.Imaging.ImageFormat.Png);
+                ms.Position = 0;
+                var bi = new System.Windows.Media.Imaging.BitmapImage();
+                bi.BeginInit();
+                bi.CacheOption  = System.Windows.Media.Imaging.BitmapCacheOption.OnLoad;
+                bi.StreamSource = ms;
+                bi.EndInit();
+                bi.Freeze();
+                return bi;
             }
             finally { DestroyIcon(sfi.hIcon); }
         }
