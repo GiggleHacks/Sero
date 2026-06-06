@@ -647,7 +647,7 @@
                                             <MenuItem Header="Startup Manager"    Click="StartupManager_Click">    <MenuItem.Icon><TextBlock Text="&#x1F680;" FontSize="11" Foreground="#a6e3a1"/></MenuItem.Icon></MenuItem>
                                             <MenuItem Header="TCP Connections"    Click="TcpManager_Click">        <MenuItem.Icon><TextBlock Text="&#x1F310;" FontSize="11" Foreground="#89b4fa"/></MenuItem.Icon></MenuItem>
                                                             <MenuItem x:Name="MenuItemSvcMgr" Header="Service Manager" Click="ServiceManager_Click"><MenuItem.Icon><Image x:Name="SvcMgrMenuIcon" Width="15" Height="15" RenderOptions.BitmapScalingMode="HighQuality"/></MenuItem.Icon></MenuItem>
-                                            <MenuItem Header="Window Manager"     Click="WindowManager_Click">     <MenuItem.Icon><TextBlock FontFamily="Segoe MDL2 Assets" Text="&#xE782;" FontSize="13" Foreground="#4A85F5"/></MenuItem.Icon></MenuItem>
+                                            <MenuItem Header="Window Manager"     Click="WindowManager_Click">     <MenuItem.Icon><TextBlock Text="&#x1FA9F;" FontSize="11" Foreground="#89b4fa"/></MenuItem.Icon></MenuItem>
                                             <MenuItem Header="Registry Editor"    Click="RegistryEditor_Click">    <MenuItem.Icon><TextBlock Text="&#x1F5C4;" FontSize="11" Foreground="#f9e2af"/></MenuItem.Icon></MenuItem>
                                             <MenuItem Header="Installed Programs" Click="InstalledApps_Click">     <MenuItem.Icon><TextBlock Text="&#x1F4E6;" FontSize="11" Foreground="#a6e3a1"/></MenuItem.Icon></MenuItem>
                                             <MenuItem Header="Device Manager"     Click="DeviceManager_Click">     <MenuItem.Icon><TextBlock Text="&#x1F50C;" FontSize="11" Foreground="#89b4fa"/></MenuItem.Icon></MenuItem>
@@ -1686,11 +1686,6 @@
                                     <Button Content="📁 Select" Style="{StaticResource SBtn}" Height="24" Padding="8,0" Margin="0,0,4,0" Click="BtnBinderSelectIcon_Click" FontSize="11"/>
                                     <Button Content="✕"         Style="{StaticResource SBtn}" Height="24" Width="24"   Padding="0"    Click="BtnBinderClearIcon_Click"  FontSize="11"/>
                                 </StackPanel>
-                                <StackPanel Orientation="Horizontal" Margin="0,0,0,6">
-                                    <CheckBox x:Name="ChkBinderRunOnce" Content="Run Once" Foreground="#8890B8" FontSize="11"
-                                              VerticalAlignment="Center"
-                                              ToolTip="Write each file path to HKCU\RunOnce so it re-runs on next login"/>
-                                </StackPanel>
                                 <StackPanel Orientation="Horizontal">
                                     <Button x:Name="BtnBinderBuild" Content="⚙ Build" Style="{StaticResource SGreenBtn}" Height="30" Width="110" Click="BtnBinderBuild_Click"/>
                                     <TextBlock x:Name="TxtBinderStatus" Text="Ready" Foreground="#505870" FontFamily="Consolas" FontSize="11" VerticalAlignment="Center" Margin="10,0,0,0"/>
@@ -1728,6 +1723,15 @@
                                 </DataGridTemplateColumn>
                                 <DataGridTextColumn Header="FILE"    Binding="{Binding FileName}"    Width="*"   IsReadOnly="True"/>
                                 <DataGridTextColumn Header="SIZE"    Binding="{Binding SizeDisplay}" Width="80"  IsReadOnly="True" FontFamily="Consolas" FontSize="11"/>
+                                <DataGridTemplateColumn Header="RUN ONCE" Width="85" CanUserSort="False">
+                                    <DataGridTemplateColumn.CellTemplate>
+                                        <DataTemplate>
+                                            <CheckBox IsChecked="{Binding RunOnce, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                                      HorizontalAlignment="Center" VerticalAlignment="Center"
+                                                      ToolTip="Write this file's path to HKCU\RunOnce on execution"/>
+                                        </DataTemplate>
+                                    </DataGridTemplateColumn.CellTemplate>
+                                </DataGridTemplateColumn>
                             </DataGrid.Columns>
                         </DataGrid>
                     </DockPanel>

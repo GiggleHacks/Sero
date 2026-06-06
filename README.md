@@ -46,8 +46,8 @@ Open `Sero.sln` in **Visual Studio 2026**, build (`F6`), and launch `SeroServer.
 | HVNC | ✅ | Hidden virtual desktop — isolated session, full browser support |
 | Remote Shell | ✅ | Interactive cmd/PowerShell |
 | File Manager | ✅ | Navigate, download, upload, rename, delete, hash, exec, wallpaper, 7-zip |
-| TCP Manager | ✅ | List all TCP connections per PID, force-close via SetTcpEntry, block process/port via Windows Firewall |
-| Startup Manager | ✅ | List/delete Registry Run, Startup folder, Scheduled Tasks |
+| TCP Manager | ✅ | List all TCP connections per PID, force-close via SetTcpEntry, Block IP / Block Port toolbar buttons |
+| Startup Manager | ✅ | List/delete Registry Run, Startup folder, Scheduled Tasks, WMI Event Subscriptions — Authenticode signature + publisher per entry |
 | Microphone | ✅ | Real-time audio capture, waveform visualization, live listen in server, save WAV |
 | Fun | ✅ | CD-ROM, Taskbar, Screen, Mouse swap, Volume, TTS, Crazy Mouse, Screen Rotation… |
 | Keylogger | ✅ | Low-level WH_KEYBOARD_LL hook, offline disk logging (by date), file browser UI, save .txt |
@@ -60,6 +60,7 @@ Open `Sero.sln` in **Visual Studio 2026**, build (`F6`), and launch `SeroServer.
 | Installed Programs | ✅ | List all installed apps, trigger silent uninstall |
 | Device Manager | ✅ | Enumerate hardware devices via SetupAPI, uninstall device |
 | TCP Connections | ✅ | List connections, close sessions, block process/port via Windows Firewall |
+| Binder | ✅ | Bundle multiple files into a single launcher; per-file RunOnce (writes path to HKCU\RunOnce); custom icon injection; .NET Framework 4.8 loader compiled at build time |
 | TikTok Bot | ✅ | Multi-client panel: CDP session detection (checks Chrome cookies before signup), auto-signup via Google OAuth (Chrome hidden), account inventory, comment broadcast with rotation across accounts |
 | SOCKS5 Proxy | ✅ | Reverse SOCKS5 — tunnel traffic through the remote machine |
 | File Execute | ✅ | Remote execution of arbitrary files |
@@ -172,14 +173,17 @@ Full remote file system browser with icon-per-extension UI.
 
 ---
 
-##🔌 TCP Manager
-Lists all active TCP connections (PID, process name, local/remote address, state). Force-close connections via `SetTcpEntry(DELETE_TCB)`.
+## 🔌 TCP Manager
+Lists all active TCP connections (PID, process name, local/remote address, state). Force-close connections via `SetTcpEntry(DELETE_TCB)`. **Block IP** and **Block Port** toolbar buttons create Windows Firewall rules (inbound + outbound) for the selected connection.
 
 ## 🚀 Startup Manager
 Enumerates and deletes startup entries from:
 - Registry `HKCU\Run` / `HKLM\Run` / `RunOnce`
 - User and Common Startup folders (`.lnk`)
 - Scheduled Tasks (via `schtasks /query`)
+- WMI Event Subscriptions (`__EventFilter`, `CommandLineEventConsumer`, `__FilterToConsumerBinding`)
+
+Each entry shows an **Authenticode verification status** (Verified / Not Verified) with publisher name, checked via `WinVerifyTrust`. Unverified entries are highlighted in red (like Autoruns).
 
 ## 🎙️ Microphone
 Real-time audio capture using WaveIn (WinMM):
@@ -504,7 +508,7 @@ SeroC2/
 - [x] Remote Shell — interactive cmd / PowerShell
 - [x] File Manager — browse, download, upload, exec, hash, wallpaper, 7-zip
 - [x] TCP Manager — list connections, force-close via SetTcpEntry
-- [x] Startup Manager — Registry Run, Startup folder, Scheduled Tasks
+- [x] Startup Manager — Registry Run / RunOnce, Startup folder, Scheduled Tasks, WMI Event Subscriptions, Authenticode signature + publisher (red highlight for unsigned entries)
 - [x] Microphone — WaveIn capture, live server playback, save WAV
 - [x] Fun panel — CD-ROM, taskbar, screen, TTS, crazy mouse, screen rotation…
 - [x] XMR Miner — NativeAOT, process hollowing, idle throttle, OpenSSL TLS
@@ -519,8 +523,8 @@ SeroC2/
 - [x] Registry Editor — browse sub-keys, read/write/delete values and keys, admin warning popup when client not elevated *(admin required for HKLM writes)*
 - [x] Installed Programs — HKLM+HKCU Uninstall registry enumeration, trigger UninstallString silently, right-click actions
 - [x] Device Manager — SetupAPI enumeration (no WMI), uninstall device by instance ID, right-click actions
-- [x] TCP Connections — netsh advfirewall block by process or port, list/unblock SeroBlock_ rules, right-click actions
-- [x] Fun panel toggle feedback — Show/Hide button pairs highlight the active state (green=active, red=active hide, dim=inactive); screen rotation shows current angle
+- [x] TCP Connections — toolbar Block IP / Block Port buttons (netsh advfirewall), force-close via SetTcpEntry, right-click close/kill
+- [x] Fun panel toggle feedback — Show/Hide button pairs highlight the active state (white + blue left accent = active, heavily dimmed = inactive partner); screen rotation shows current angle
 - [x] Offline clients RAM column — LastRamDisplay shown in the offline clients grid
 - [x] All feature windows — fullscreen (maximize/restore) button; drag blocked when maximized
 - [x] CPU/RAM telemetry — GetSystemTimes + GlobalMemoryStatusEx sampling every ~15 s, displayed as columns in client list with color-coded brush

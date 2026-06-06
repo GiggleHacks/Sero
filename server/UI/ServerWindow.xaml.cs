@@ -3884,11 +3884,10 @@ Read-Host 'Press Enter to close'
         BtnBinderBuild.IsEnabled = false;
         TxtBinderStatus.Text = "Compilation…";
 
-        var entries  = _binderEntries.ToList();
-        var icon     = _binderIconPath;
-        var runOnce  = ChkBinderRunOnce.IsChecked == true;
-        var result   = await SeroServer.Binder.BinderBuilder.Build(
-            entries, icon, output, runOnce,
+        var entries = _binderEntries.ToList();
+        var icon    = _binderIconPath;
+        var result  = await SeroServer.Binder.BinderBuilder.Build(
+            entries, icon, output,
             msg => Dispatcher.BeginInvoke(() => TxtBinderStatus.Text = msg));
 
         BtnBinderBuild.IsEnabled = true;
@@ -3897,17 +3896,38 @@ Read-Host 'Press Enter to close'
             : result;
     }
 
+    [System.Runtime.InteropServices.StructLayout(System.Runtime.InteropServices.LayoutKind.Sequential, CharSet = System.Runtime.InteropServices.CharSet.Unicode)]
+    private struct SHFILEINFO
+    {
+        public nint hIcon;
+        public int  iIcon;
+        public uint dwAttributes;
+        [System.Runtime.InteropServices.MarshalAs(System.Runtime.InteropServices.UnmanagedType.ByValTStr, SizeConst = 260)] public string szDisplayName;
+        [System.Runtime.InteropServices.MarshalAs(System.Runtime.InteropServices.UnmanagedType.ByValTStr, SizeConst = 80)]  public string szTypeName;
+    }
+    [System.Runtime.InteropServices.DllImport("shell32.dll", CharSet = System.Runtime.InteropServices.CharSet.Unicode)]
+    private static extern nint SHGetFileInfo(string pszPath, uint dwFileAttributes, ref SHFILEINFO psfi, uint cbFileInfo, uint uFlags);
+    [System.Runtime.InteropServices.DllImport("user32.dll")]
+    private static extern bool DestroyIcon(nint hIcon);
+
     private static System.Windows.Media.Imaging.BitmapSource? BinderGetIcon(string path)
     {
         try
         {
-            using var icon = System.Drawing.Icon.ExtractAssociatedIcon(path);
-            if (icon == null) return null;
-            var bmp = System.Windows.Interop.Imaging.CreateBitmapSourceFromHIcon(
-                icon.Handle, System.Windows.Int32Rect.Empty,
-                System.Windows.Media.Imaging.BitmapSizeOptions.FromEmptyOptions());
-            bmp.Freeze();
-            return bmp;
+            var sfi = new SHFILEINFO();
+            var res = SHGetFileInfo(path, 0, ref sfi,
+                (uint)System.Runtime.InteropServices.Marshal.SizeOf<SHFILEINFO>(),
+                0x100 | 0x1); // SHGFI_ICON | SHGFI_SMALLICON
+            if (res == 0 || sfi.hIcon == 0) return null;
+            try
+            {
+                var bmp = System.Windows.Interop.Imaging.CreateBitmapSourceFromHIcon(
+                    sfi.hIcon, System.Windows.Int32Rect.Empty,
+                    System.Windows.Media.Imaging.BitmapSizeOptions.FromEmptyOptions());
+                bmp.Freeze();
+                return bmp;
+            }
+            finally { DestroyIcon(sfi.hIcon); }
         }
         catch { return null; }
     }
