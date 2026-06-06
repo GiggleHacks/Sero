@@ -1699,6 +1699,7 @@
                                   GridLinesVisibility="Horizontal" HorizontalGridLinesBrush="#0C0E1A"
                                   HeadersVisibility="Column" FontFamily="Segoe UI" FontSize="12"
                                   SelectionMode="Single" CanUserAddRows="False" CanUserDeleteRows="False"
+                                  CanUserResizeColumns="False"
                                   VirtualizingStackPanel.IsVirtualizing="True"
                                   ColumnHeaderStyle="{StaticResource SColHeader}">
                             <DataGrid.RowStyle>
