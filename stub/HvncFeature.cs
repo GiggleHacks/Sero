@@ -601,13 +601,12 @@ internal static class HvncFeature
 
         if (drawn == 0) return null;
 
-        // Render cursor at the tracked position (_curX/_curY set by SetCursorPos).
-        // GetCursorInfo is unreliable on hidden desktops (flags=0 = hidden); use GetCursor()
-        // instead which returns the current cursor shape set by the focused window on this desktop.
-        nint hCursor = GetCursor();
-        if (hCursor == 0) hCursor = LoadCursor(0, (nint)32512); // IDC_ARROW fallback
-        if (hCursor != 0 && _curX >= 0 && _curY >= 0 && _curX < w && _curY < h)
-            DrawIconEx(_compHdc, _curX, _curY, hCursor, 0, 0, 0, 0, 3 /*DI_NORMAL*/);
+        // Draw a standard arrow cursor at the tracked position.
+        // Using LoadCursor(IDC_ARROW) avoids GetCursor()/GetCursorInfo() returning
+        // unexpected shapes from the capture thread context on a hidden desktop.
+        nint hArrow = LoadCursor(0, (nint)32512); // IDC_ARROW = 32512
+        if (hArrow != 0 && _curX >= 0 && _curY >= 0 && _curX < w && _curY < h)
+            DrawIconEx(_compHdc, _curX, _curY, hArrow, 0, 0, 0, 0, 3 /*DI_NORMAL*/);
 
         // DIBSection is BGRA; GDI+ PixelFormat32bppBGR (0x26200A) matches
         return EncodeJpeg(_compBits, w, h, w * 4);
