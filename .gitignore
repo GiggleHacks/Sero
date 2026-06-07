@@ -25,6 +25,7 @@ mscordbi.dll
 createdump.exe
 
 # ── Third-party tools (place locally, not committed) ──────────────────────────
+tools/
 # xmrig binary: download separately and place in xmrig-release/xmrig.exe
 xmrig-release/
 # xmrig source (large self-contained repo)
@@ -37,6 +38,7 @@ pe-union-master/
 # Replace server/Builder/Crypter.cs with the real implementation locally, then run:
 #   git update-index --assume-unchanged server/Builder/Crypter.cs
 server/Stubs/loader.cpp
+server/Builder/Crypter.cs.bak
 loader/
 crypter/
 *.loader
@@ -81,15 +83,6 @@ query
 # Private build scripts (not for public repo)
 build_private.ps1
 build_private.bat
-# Pulsar reference (local research only)
-"Pulsar Premium 2.1.0/"
-Pulsar*/
-*.tmp
-*.temp
-*.bak
-*.orig
-*.swp
-*~
 
 # ── Large media (demo GIF/PNG committed, large videos not) ────────────────────
 *.mp4

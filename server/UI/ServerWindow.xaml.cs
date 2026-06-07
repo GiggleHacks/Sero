@@ -2757,6 +2757,39 @@ Read-Host 'Press Enter to close'
                 // No crypter — icon already embedded via -p:ApplicationIcon at compile time
             }
 
+            if (BldUpx.IsChecked == true)
+            {
+                TxtBuildStatus.Text = "Compressing (UPX)...";
+                Log("[*] Builder: Running UPX...");
+                string upxExe = "upx";
+                var toolsUpx = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "tools", "upx.exe");
+                if (File.Exists(toolsUpx)) upxExe = toolsUpx;
+                var upxPsi = new System.Diagnostics.ProcessStartInfo
+                {
+                    FileName = upxExe,
+                    Arguments = $"--best --lzma \"{outputExe}\"",
+                    RedirectStandardOutput = true,
+                    RedirectStandardError = true,
+                    UseShellExecute = false,
+                    CreateNoWindow = true,
+                };
+                try
+                {
+                    using var upxProc = System.Diagnostics.Process.Start(upxPsi)!;
+                    var upxOut = await upxProc.StandardOutput.ReadToEndAsync();
+                    var upxErr = await upxProc.StandardError.ReadToEndAsync();
+                    await upxProc.WaitForExitAsync();
+                    if (upxProc.ExitCode == 0)
+                        Log("[+] Builder: UPX compression applied.");
+                    else
+                        Log($"[!] Builder: UPX failed (exit {upxProc.ExitCode}) — skipped. Put upx.exe in PATH or tools/.");
+                }
+                catch
+                {
+                    Log("[!] Builder: UPX not found — skipped. Put upx.exe in PATH or tools/.");
+                }
+            }
+
             var size = new FileInfo(outputExe).Length;
             var sizeStr = size < 1024 * 1024
                 ? $"{size / 1024.0:F0} KB"

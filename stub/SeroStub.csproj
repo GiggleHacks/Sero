@@ -7,9 +7,18 @@
     <Nullable>enable</Nullable>
     <SelfContained>true</SelfContained>
     <RuntimeIdentifier>win-x64</RuntimeIdentifier>
-    <PublishTrimmed>true</PublishTrimmed>
-    <TrimMode>full</TrimMode>
-    <EnableTrimAnalyzer>true</EnableTrimAnalyzer>
+    <PublishAot>true</PublishAot>
+    <IlcOptimizationPreference>Size</IlcOptimizationPreference>
+    <IlcGenerateStackTraceData>false</IlcGenerateStackTraceData>
+    <IlcFoldIdenticalMethodBodies>true</IlcFoldIdenticalMethodBodies>
+    <InvariantGlobalization>true</InvariantGlobalization>
+    <UseSystemResourceKeys>true</UseSystemResourceKeys>
+    <DebuggerSupport>false</DebuggerSupport>
+    <EventSourceSupport>false</EventSourceSupport>
+    <MetadataUpdaterSupport>false</MetadataUpdaterSupport>
+    <HttpActivityPropagationSupport>false</HttpActivityPropagationSupport>
+    <EnableUnsafeBinaryFormatterSerialization>false</EnableUnsafeBinaryFormatterSerialization>
+    <SuppressTrimAnalysisWarnings>true</SuppressTrimAnalysisWarnings>
     <Deterministic>true</Deterministic>
     <SourceRevisionId></SourceRevisionId>
     <ContinuousIntegrationBuild>false</ContinuousIntegrationBuild>
@@ -30,9 +39,4 @@
     <!-- CS0168: catch(Exception ex){} blocks where ex is intentionally unused -->
     <NoWarn>$(NoWarn);CS0162;CS0168;CS0618</NoWarn>
   </PropertyGroup>
-
-  <ItemGroup>
-    <TrimmerRootDescriptor Include="trim-roots.xml" />
-  </ItemGroup>
-
 </Project>
