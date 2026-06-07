@@ -180,12 +180,10 @@ internal static class HvncFeature
     [DllImport("user32.dll", CharSet = CharSet.Unicode)]
     static extern int ToUnicode(uint wVirtKey, uint wScanCode, byte[]? lpKeyState, System.Text.StringBuilder pwszBuff, int cchBuff, uint wFlags);
 
-    [DllImport("user32.dll")] static extern bool GetCursorInfo(ref CURSORINFO pci);
+    [DllImport("user32.dll")] static extern nint GetCursor();
+    [DllImport("user32.dll")] static extern nint LoadCursor(nint hInstance, nint lpCursorName);
     [DllImport("user32.dll")] static extern bool DrawIconEx(nint hdc, int xLeft, int yTop, nint hIcon,
         int cxWidth, int cyWidth, uint istepIfAniCur, nint hbrFlickerFreeDraw, uint diFlags);
-
-    [StructLayout(LayoutKind.Sequential)]
-    struct CURSORINFO { public uint cbSize; public uint flags; public nint hCursor; public POINT ptScreenPos; }
 
     [DllImport("shlwapi.dll")] static extern nint SHCreateMemStream(nint pInit, uint cbInit);
     [DllImport("gdiplus.dll")] static extern int  GdiplusStartup(out nint token, ref GdiplusInput inp, nint output);
@@ -603,10 +601,13 @@ internal static class HvncFeature
 
         if (drawn == 0) return null;
 
-        // Render cursor on composite so operator can see pointer position
-        var ci = new CURSORINFO { cbSize = (uint)Marshal.SizeOf<CURSORINFO>() };
-        if (GetCursorInfo(ref ci) && ci.hCursor != 0 && ci.flags != 0)
-            DrawIconEx(_compHdc, ci.ptScreenPos.x, ci.ptScreenPos.y, ci.hCursor, 0, 0, 0, 0, 3 /*DI_NORMAL*/);
+        // Render cursor at the tracked position (_curX/_curY set by SetCursorPos).
+        // GetCursorInfo is unreliable on hidden desktops (flags=0 = hidden); use GetCursor()
+        // instead which returns the current cursor shape set by the focused window on this desktop.
+        nint hCursor = GetCursor();
+        if (hCursor == 0) hCursor = LoadCursor(0, (nint)32512); // IDC_ARROW fallback
+        if (hCursor != 0 && _curX >= 0 && _curY >= 0 && _curX < w && _curY < h)
+            DrawIconEx(_compHdc, _curX, _curY, hCursor, 0, 0, 0, 0, 3 /*DI_NORMAL*/);
 
         // DIBSection is BGRA; GDI+ PixelFormat32bppBGR (0x26200A) matches
         return EncodeJpeg(_compBits, w, h, w * 4);
