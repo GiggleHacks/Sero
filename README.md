@@ -28,7 +28,7 @@ SeroRAT is a modular C2 framework written in C# featuring a WPF server and a har
 git clone https://github.com/SeroSkiid/SeroC2
 cd SeroC2
 setup.bat          :: installs .NET SDK + VS Build Tools (run as Admin)
-build.bat
+build.bat          :: direct release
 ```
 
 You can also open `Sero.sln` in **Visual Studio 2026**, build (`F6`), and launch `SeroServer.exe`. 
