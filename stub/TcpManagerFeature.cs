@@ -115,68 +115,151 @@ internal static class TcpManagerFeature
         return true;
     }
 
-    // ── Firewall blocking via netsh advfirewall ──────────────────────────────
+    // ── Firewall blocking via COM API (HNetCfg.FwPolicy2) with netsh fallback ──
+
+    // direction: 1 = inbound, 2 = outbound
+    private static bool TryAddRuleCom(string name, int direction, string? remoteIp, string? program, int port)
+    {
+        try
+        {
+            var sf  = System.Reflection.BindingFlags.SetProperty;
+            var gf  = System.Reflection.BindingFlags.GetProperty;
+            var im  = System.Reflection.BindingFlags.InvokeMethod;
+
+            var policyType = Type.GetTypeFromProgID("HNetCfg.FwPolicy2", throwOnError: false);
+            if (policyType == null) return false;
+            var policy = Activator.CreateInstance(policyType);
+            if (policy == null) return false;
+
+            var ruleType = Type.GetTypeFromProgID("HNetCfg.FWRule", throwOnError: false);
+            if (ruleType == null) return false;
+            var rule = Activator.CreateInstance(ruleType);
+            if (rule == null) return false;
+
+            var rt = rule.GetType();
+            rt.InvokeMember("Name",      sf, null, rule, [name]);
+            rt.InvokeMember("Action",    sf, null, rule, [0]);         // NET_FW_ACTION_BLOCK
+            rt.InvokeMember("Enabled",   sf, null, rule, [true]);
+            rt.InvokeMember("Direction", sf, null, rule, [direction]); // 1=IN, 2=OUT
+
+            if (!string.IsNullOrEmpty(remoteIp))
+                rt.InvokeMember("RemoteAddresses", sf, null, rule, [remoteIp]);
+            if (!string.IsNullOrEmpty(program))
+                rt.InvokeMember("ApplicationName", sf, null, rule, [program]);
+            if (port > 0)
+            {
+                rt.InvokeMember("Protocol", sf, null, rule, [6]); // TCP
+                if (direction == 1) rt.InvokeMember("LocalPorts",  sf, null, rule, [port.ToString()]);
+                else                rt.InvokeMember("RemotePorts", sf, null, rule, [port.ToString()]);
+            }
+
+            var rulesCol = policy.GetType().InvokeMember("Rules", gf, null, policy, null)!;
+            rulesCol.GetType().InvokeMember("Add", im, null, rulesCol, [rule]);
+            return true;
+        }
+        catch { return false; }
+    }
+
+    private static bool AddFirewallRule(string name, int direction, string? remoteIp, string? program, int port)
+    {
+        if (TryAddRuleCom(name, direction, remoteIp, program, port)) return true;
+
+        // Fallback: netsh advfirewall
+        try
+        {
+            string dirStr = direction == 1 ? "in" : "out";
+            string args;
+            if (!string.IsNullOrEmpty(remoteIp))
+                args = $"advfirewall firewall add rule name=\"{name}\" dir={dirStr} action=block remoteip={remoteIp} enable=yes";
+            else if (!string.IsNullOrEmpty(program))
+                args = $"advfirewall firewall add rule name=\"{name}\" dir={dirStr} action=block program=\"{program}\" enable=yes";
+            else
+            {
+                string portParam = direction == 1 ? $"localport={port}" : $"remoteport={port}";
+                args = $"advfirewall firewall add rule name=\"{name}\" dir={dirStr} action=block protocol=TCP {portParam} enable=yes";
+            }
+            using var p = System.Diagnostics.Process.Start(
+                new System.Diagnostics.ProcessStartInfo("netsh", args)
+                { CreateNoWindow = true, UseShellExecute = false });
+            p?.WaitForExit(5000);
+            return true;
+        }
+        catch { return false; }
+    }
 
     internal static string BlockIp(string remoteIp, string direction)
     {
         try
         {
-            var ruleName = $"SeroBlock_IP_{remoteIp.Replace('.', '_').Replace(':', '_')}";
-            if (direction is "" or "both" or "in")
-                RunNetsh($"advfirewall firewall add rule name=\"{ruleName}_IN\" dir=in action=block remoteip={remoteIp} enable=yes");
-            if (direction is "" or "both" or "out")
-                RunNetsh($"advfirewall firewall add rule name=\"{ruleName}_OUT\" dir=out action=block remoteip={remoteIp} enable=yes");
-            var result = new TcpFirewallRulesResultStub { Rules = [
-                new TcpFirewallRuleStub { RuleName = ruleName + "_IN",  ProcessName = "", Port = 0, Direction = "in" },
-                new TcpFirewallRuleStub { RuleName = ruleName + "_OUT", ProcessName = "", Port = 0, Direction = "out" }
-            ]};
-            return System.Text.Json.JsonSerializer.Serialize(result, SeroJson.Default.TcpFirewallRulesResultStub);
+            var rn = $"SeroBlock_IP_{remoteIp.Replace('.', '_').Replace(':', '_')}";
+            var added = new List<TcpFirewallRuleStub>();
+            if (direction is "" or "both" or "in"  && AddFirewallRule(rn + "_IN",  1, remoteIp, null, 0))
+                added.Add(new TcpFirewallRuleStub { RuleName = rn + "_IN",  Direction = "in" });
+            if (direction is "" or "both" or "out" && AddFirewallRule(rn + "_OUT", 2, remoteIp, null, 0))
+                added.Add(new TcpFirewallRuleStub { RuleName = rn + "_OUT", Direction = "out" });
+            return JsonSerializer.Serialize(new TcpFirewallRulesResultStub { Rules = added }, SeroJson.Default.TcpFirewallRulesResultStub);
         }
-        catch { return System.Text.Json.JsonSerializer.Serialize(new TcpFirewallRulesResultStub(), SeroJson.Default.TcpFirewallRulesResultStub); }
+        catch { return JsonSerializer.Serialize(new TcpFirewallRulesResultStub(), SeroJson.Default.TcpFirewallRulesResultStub); }
     }
 
     internal static string BlockProcess(string processName, int port, string direction)
     {
         try
         {
-            var rules = new List<string>();
-            var ruleName = $"SeroBlock_{System.IO.Path.GetFileNameWithoutExtension(processName)}_{port}";
+            var added = new List<TcpFirewallRuleStub>();
 
             if (!string.IsNullOrEmpty(processName) && processName != "*")
             {
-                var dir = direction == "in" ? "in" : direction == "out" ? "out" : "";
-                if (dir == "" || dir == "in")
-                    RunNetsh($"advfirewall firewall add rule name=\"{ruleName}_IN\" dir=in action=block program=\"{processName}\" enable=yes");
-                if (dir == "" || dir == "out")
-                    RunNetsh($"advfirewall firewall add rule name=\"{ruleName}_OUT\" dir=out action=block program=\"{processName}\" enable=yes");
-                rules.Add(ruleName + "_IN");
-                rules.Add(ruleName + "_OUT");
+                var rn = $"SeroBlock_{System.IO.Path.GetFileNameWithoutExtension(processName)}";
+                if (direction is "" or "both" or "in"  && AddFirewallRule(rn + "_IN",  1, null, processName, 0))
+                    added.Add(new TcpFirewallRuleStub { RuleName = rn + "_IN",  ProcessName = processName, Direction = "in" });
+                if (direction is "" or "both" or "out" && AddFirewallRule(rn + "_OUT", 2, null, processName, 0))
+                    added.Add(new TcpFirewallRuleStub { RuleName = rn + "_OUT", ProcessName = processName, Direction = "out" });
             }
 
             if (port > 0)
             {
-                var pRuleName = $"SeroBlock_Port{port}";
-                var dir = direction == "in" ? "in" : direction == "out" ? "out" : "";
-                if (dir == "" || dir == "in")
-                    RunNetsh($"advfirewall firewall add rule name=\"{pRuleName}_IN\" dir=in action=block protocol=TCP localport={port} enable=yes");
-                if (dir == "" || dir == "out")
-                    RunNetsh($"advfirewall firewall add rule name=\"{pRuleName}_OUT\" dir=out action=block protocol=TCP remoteport={port} enable=yes");
-                rules.Add(pRuleName + "_IN");
-                rules.Add(pRuleName + "_OUT");
+                var rn = $"SeroBlock_Port{port}";
+                if (direction is "" or "both" or "in"  && AddFirewallRule(rn + "_IN",  1, null, null, port))
+                    added.Add(new TcpFirewallRuleStub { RuleName = rn + "_IN",  Port = port, Direction = "in" });
+                if (direction is "" or "both" or "out" && AddFirewallRule(rn + "_OUT", 2, null, null, port))
+                    added.Add(new TcpFirewallRuleStub { RuleName = rn + "_OUT", Port = port, Direction = "out" });
             }
 
-            var result = new TcpFirewallRulesResultStub { Rules = rules.Select(r => new TcpFirewallRuleStub { RuleName = r, ProcessName = processName, Port = port, Direction = direction }).ToList() };
-            return System.Text.Json.JsonSerializer.Serialize(result, SeroJson.Default.TcpFirewallRulesResultStub);
+            return JsonSerializer.Serialize(new TcpFirewallRulesResultStub { Rules = added }, SeroJson.Default.TcpFirewallRulesResultStub);
         }
-        catch (Exception ex)
-        {
-            return System.Text.Json.JsonSerializer.Serialize(new TcpFirewallRulesResultStub(), SeroJson.Default.TcpFirewallRulesResultStub);
-        }
+        catch { return JsonSerializer.Serialize(new TcpFirewallRulesResultStub(), SeroJson.Default.TcpFirewallRulesResultStub); }
     }
 
     internal static void UnblockRule(string ruleName)
     {
-        try { RunNetsh($"advfirewall firewall delete rule name=\"{ruleName}\""); }
+        try
+        {
+            // Try COM API first
+            var policyType = Type.GetTypeFromProgID("HNetCfg.FwPolicy2", throwOnError: false);
+            if (policyType != null)
+            {
+                var policy = Activator.CreateInstance(policyType);
+                if (policy != null)
+                {
+                    var rulesCol = policy.GetType().InvokeMember("Rules",
+                        System.Reflection.BindingFlags.GetProperty, null, policy, null)!;
+                    rulesCol.GetType().InvokeMember("Remove",
+                        System.Reflection.BindingFlags.InvokeMethod, null, rulesCol, [ruleName]);
+                    return;
+                }
+            }
+        }
+        catch { }
+        // Fallback: netsh
+        try
+        {
+            using var p = System.Diagnostics.Process.Start(
+                new System.Diagnostics.ProcessStartInfo("netsh",
+                    $"advfirewall firewall delete rule name=\"{ruleName}\"")
+                { CreateNoWindow = true, UseShellExecute = false });
+            p?.WaitForExit(5000);
+        }
         catch { }
     }
 
@@ -185,8 +268,44 @@ internal static class TcpManagerFeature
         var rules = new List<TcpFirewallRuleStub>();
         try
         {
-            var output = RunNetshOutput("advfirewall firewall show rule name=all");
-            // Parse output to find SeroBlock_ rules
+            // Try COM API first
+            var policyType = Type.GetTypeFromProgID("HNetCfg.FwPolicy2", throwOnError: false);
+            if (policyType != null)
+            {
+                var gf = System.Reflection.BindingFlags.GetProperty;
+                var policy = Activator.CreateInstance(policyType);
+                if (policy != null)
+                {
+                    var rulesCol = policy.GetType().InvokeMember("Rules", gf, null, policy, null)!;
+                    // INetFwRules is enumerable via GetEnumerator
+                    var enumerator = rulesCol.GetType().InvokeMember("GetEnumerator",
+                        System.Reflection.BindingFlags.InvokeMethod, null, rulesCol, null);
+                    if (enumerator is System.Collections.IEnumerator en)
+                    {
+                        while (en.MoveNext())
+                        {
+                            var r = en.Current;
+                            if (r == null) continue;
+                            var rt = r.GetType();
+                            string? name = rt.InvokeMember("Name", gf, null, r, null) as string;
+                            if (name == null || !name.StartsWith("SeroBlock_")) continue;
+                            int dir = (int)(rt.InvokeMember("Direction", gf, null, r, null) ?? 0);
+                            rules.Add(new TcpFirewallRuleStub { RuleName = name, Direction = dir == 1 ? "in" : "out" });
+                        }
+                    }
+                    return JsonSerializer.Serialize(new TcpFirewallRulesResultStub { Rules = rules }, SeroJson.Default.TcpFirewallRulesResultStub);
+                }
+            }
+        }
+        catch { }
+
+        // Fallback: parse netsh output
+        try
+        {
+            using var p = System.Diagnostics.Process.Start(
+                new System.Diagnostics.ProcessStartInfo("netsh", "advfirewall firewall show rule name=all")
+                { CreateNoWindow = true, UseShellExecute = false, RedirectStandardOutput = true });
+            var output = p?.StandardOutput.ReadToEnd() ?? "";
             string? rName = null;
             foreach (var line in output.Split('\n'))
             {
@@ -205,21 +324,7 @@ internal static class TcpManagerFeature
             }
         }
         catch { }
-        return System.Text.Json.JsonSerializer.Serialize(new TcpFirewallRulesResultStub { Rules = rules }, SeroJson.Default.TcpFirewallRulesResultStub);
-    }
-
-    private static void RunNetsh(string args)
-    {
-        using var p = System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo("netsh", args)
-            { CreateNoWindow = true, UseShellExecute = false });
-        p?.WaitForExit(5000);
-    }
-
-    private static string RunNetshOutput(string args)
-    {
-        using var p = System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo("netsh", args)
-            { CreateNoWindow = true, UseShellExecute = false, RedirectStandardOutput = true });
-        return p?.StandardOutput.ReadToEnd() ?? "";
+        return JsonSerializer.Serialize(new TcpFirewallRulesResultStub { Rules = rules }, SeroJson.Default.TcpFirewallRulesResultStub);
     }
 }
 

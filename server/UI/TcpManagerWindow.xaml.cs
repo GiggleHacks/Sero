@@ -21,9 +21,14 @@ public partial class TcpManagerWindow : Window
         TxtTitle.Text  = clientLabel;
         GridTcp.ItemsSource = _entries;
 
-        _server.RegisterHandler(clientId, PacketType.TcpListResult, OnTcpList);
+        _server.RegisterHandler(clientId, PacketType.TcpListResult,       OnTcpList);
+        _server.RegisterHandler(clientId, PacketType.TcpFirewallRulesResult, OnFirewallResult);
 
-        Closed += (_, _) => _server.UnregisterHandler(clientId, PacketType.TcpListResult);
+        Closed += (_, _) =>
+        {
+            _server.UnregisterHandler(clientId, PacketType.TcpListResult);
+            _server.UnregisterHandler(clientId, PacketType.TcpFirewallRulesResult);
+        };
         Loaded += async (_, _) => { await Task.Delay(Random.Shared.Next(0, 250)); await Refresh(); };
     }
 
@@ -45,6 +50,22 @@ public partial class TcpManagerWindow : Window
                 foreach (var e in data.Entries)
                     _entries.Add(new TcpEntryVM(e.Pid, e.ProcessName, e.LocalAddr, e.RemoteAddr, e.State));
                 TxtStatus.Text = $"{_entries.Count} connection(s) — {DateTime.Now:HH:mm:ss}";
+            });
+        }
+        catch { }
+    }
+
+    private void OnFirewallResult(Packet pkt)
+    {
+        try
+        {
+            var data = JsonConvert.DeserializeObject<TcpFirewallRulesResultData>(pkt.Data);
+            Dispatcher.BeginInvoke(() =>
+            {
+                if (data == null || data.Rules.Count == 0)
+                    TxtStatus.Text = "Firewall: rule failed (check admin privileges / firewall service)";
+                else
+                    TxtStatus.Text = $"Firewall: {data.Rules.Count} rule(s) applied — {string.Join(", ", data.Rules.Select(r => r.RuleName))}";
             });
         }
         catch { }
