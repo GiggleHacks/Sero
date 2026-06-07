@@ -413,11 +413,19 @@ Or open `Sero.sln` in Visual Studio 2022 and press `F6`.
 3. Fill wallet, pool, CPU limits
 4. Click **Build Miner**
 
+**Optional — UPX compression (8 MB → 2.4 MB):**
+
+Download [upx.exe](https://github.com/upx/upx/releases) (Windows x64) and place it either:
+- in your `PATH`, **or**
+- in a `tools/` folder next to `SeroServer.exe`
+
+Then tick **UPX compression** in the Builder before clicking Build. The `tools/` folder is gitignored — the binary stays local.
+
 **Troubleshooting:**
 - `cl.exe` (MSVC) missing → run `setup.bat`
 - `vswhere.exe` not found → add `C:\Program Files (x86)\Microsoft Visual Studio\Installer` to PATH
 - NativeAOT requires `win-x64` RID — do not mix in wasm workloads
-- UPX checkbox: place `upx.exe` in PATH or in a `tools/` folder next to `SeroServer.exe`
+- UPX not found → see above
 
 ---
 
