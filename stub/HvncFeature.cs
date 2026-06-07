@@ -84,6 +84,7 @@ internal static class HvncFeature
     [DllImport("user32.dll")] static extern nint   GetWindow(nint hwnd, uint uCmd);
     [DllImport("user32.dll")] static extern nint   GetAncestor(nint hwnd, uint gaFlags);
     [DllImport("user32.dll")] static extern bool   SetWindowPos(nint hwnd, nint hwndAfter, int x, int y, int cx, int cy, uint flags);
+    [DllImport("user32.dll")] static extern bool   BringWindowToTop(nint hwnd);
     [DllImport("user32.dll")] static extern int    GetWindowLong(nint hwnd, int nIndex);
     [DllImport("user32.dll")] static extern int    SetWindowLong(nint hwnd, int nIndex, int dwNewLong);
     [DllImport("user32.dll")] static extern bool   GetWindowPlacement(nint hwnd, ref WINDOWPLACEMENT lpwndpl);
@@ -318,6 +319,19 @@ internal static class HvncFeature
 
     // Modifier key state — tracked by HandleKey, used by VkToChars
     private static bool _shiftDown, _ctrlDown, _altDown, _capsLock;
+
+    // Taskbar direct-switch buffer — reused to avoid per-click allocation
+    private static readonly List<nint>      _tbBuf     = new(32);
+    private static readonly WndEnumProc     _tbEnumProc = TbEnumProc;
+    private static bool TbEnumProc(nint h, nint _)
+    {
+        if (GetAncestor(h, GA_ROOT) != h) return true; // child window
+        string cls = WinClass(h);
+        if (cls is "Shell_TrayWnd" or "Progman" or "WorkerW" or "UserOOBEWindowClass"
+                or "Windows.UI.Core.CoreWindow" or "#32768") return true;
+        if (IsWindowVisible(h) || IsIconic(h)) _tbBuf.Add(h);
+        return true;
+    }
 
     // ── Public API ────────────────────────────────────────────────────────────
 
@@ -982,49 +996,17 @@ internal static class HvncFeature
                 }
             }
 
-            // Taskbar: route the click to the real input target.
+            // Taskbar: on hidden desktops DWM is inactive, so the Win11 XAML taskbar
+            // doesn't initialise its input host (Windows.UI.Input.InputSite.WindowClass)
+            // and the Win10 fallback (MSTaskListWClass) may also be absent.
+            // Sending WM_LBUTTONDOWN to any shell container window is silently swallowed.
             //
-            // Win11 (with DWM / interactive desktop): app icons live in a XAML island —
-            //   WindowFromPoint returns DesktopWindowContentBridge; we need
-            //   Windows.UI.Input.InputSite.WindowClass inside it.
-            //
-            // Win10 / Win11 on a hidden desktop (no DWM → no XAML): the taskbar falls back
-            //   to the classic layout — app buttons are in MSTaskListWClass.  PostMessage to
-            //   Shell_TrayWnd or any ancestor is silently swallowed; only MSTaskListWClass
-            //   processes WM_LBUTTONDOWN and determines the button hit via cursor position.
-            //
-            // Use SendMessageTimeout (synchronous) — PostMessage can be dropped by the
-            // taskbar's internal message filter on a hidden desktop.
+            // Bypass the taskbar shell entirely: enumerate app windows on the hidden desktop,
+            // map the click X to a proportional slot, and directly restore / bring forward
+            // the corresponding window.  Button-up is ignored (no state needed).
             if (IsTaskbar(root))
             {
-                nint target    = hwnd;
-                string hwndCls = WinClass(hwnd);
-
-                if (hwndCls != "Windows.UI.Input.InputSite.WindowClass" &&
-                    hwndCls != "MSTaskListWClass")
-                {
-                    // Win11 XAML island
-                    nint site = FindInputSite(hwnd);
-                    if (site == 0) site = FindInputSite(root);
-
-                    if (site != 0)
-                    {
-                        target = site;
-                    }
-                    else
-                    {
-                        // Win10 / hidden-desktop fallback: walk the tree for MSTaskListWClass
-                        nint taskList = FindChildByClass(root, "MSTaskListWClass");
-                        if (taskList != 0) target = taskList;
-                    }
-                }
-
-                var cPt2 = new POINT { x = x, y = y };
-                ScreenToClient(target, ref cPt2);
-                nint lp2 = MakeLParam(cPt2.x, cPt2.y);
-                SendMessageTimeout(target, WM_MOUSEMOVE, 0, lp2, SMTO_ABORTIFHUNG, 50, out _);
-                if (down)  SendMessageTimeout(target, WM_LBUTTONDOWN, (nint)MK_LBUTTON, lp2, SMTO_ABORTIFHUNG, 100, out _);
-                if (!down) SendMessageTimeout(target, WM_LBUTTONUP,   0, lp2, SMTO_ABORTIFHUNG, 100, out _);
+                if (down) DirectTaskbarSwitch(x);
                 return;
             }
         }
@@ -1238,6 +1220,29 @@ internal static class HvncFeature
     }
 
     // ── Input helpers ─────────────────────────────────────────────────────────
+
+    // Bypass the taskbar shell and directly restore / bring to front the app window
+    // whose proportional slot matches the click X coordinate.
+    // EnumDesktopWindows returns windows in Z-order (bottom → top) which typically
+    // matches the order of taskbar buttons.
+    private static void DirectTaskbarSwitch(int clickX)
+    {
+        _tbBuf.Clear();
+        EnumDesktopWindows(_hDesktop, _tbEnumProc, 0);
+        if (_tbBuf.Count == 0) return;
+
+        // Map clickX → index.  Win11 default taskbar centers buttons; this proportional
+        // mapping is a good-enough approximation for typical use (1–5 open apps).
+        int idx = Math.Clamp(
+            (int)((float)clickX / Math.Max(1, _canvasW) * _tbBuf.Count),
+            0, _tbBuf.Count - 1);
+
+        nint win = _tbBuf[idx];
+        if (IsIconic(win)) ShowWindow(win, 9 /*SW_RESTORE*/);
+        BringWindowToTop(win);
+        SetActiveWindow(win);
+        SetFocus(win);
+    }
 
     // Returns true if root is a native context menu (#32768) or an app-rendered popup of the
     // same process as prevRoot (e.g. Chrome/Edge dropdown menus, WS_POPUP style).
