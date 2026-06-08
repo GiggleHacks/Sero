@@ -35,11 +35,13 @@ $dotnet = Get-Command dotnet -ErrorAction SilentlyContinue
 $dotnetOk = $false
 
 if ($dotnet) {
-    $ver = & dotnet --version 2>$null
-    if ($ver -match "^10\.") {
-        $dotnetOk = $true
-        Write-OK ".NET SDK $ver already installed"
-    }
+    try {
+        $ver = & dotnet --version 2>$null
+        if ($ver -match "^10\.") {
+            $dotnetOk = $true
+            Write-OK ".NET SDK $ver already installed"
+        }
+    } catch { }
 }
 
 if (-not $dotnetOk) {
