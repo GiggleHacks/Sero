@@ -274,11 +274,11 @@ internal class TlsClient : IDisposable
 
                 // ── Startup Manager ──────────────────────────────────
                 case PacketType.StartupGetList:
-                    _ = WritePacketAsync(new Packet
+                    _ = Task.Run(async () => await WritePacketAsync(new Packet
                     {
                         Type = PacketType.StartupListResult,
                         Data = StartupManagerFeature.GetList()
-                    }, ct);
+                    }, CancellationToken.None));
                     break;
 
                 case PacketType.StartupDelete:
@@ -353,7 +353,10 @@ internal class TlsClient : IDisposable
                 case PacketType.FmHash:
                     var fmHsh = JsonSerializer.Deserialize(packet.Data, SeroJson.Default.FmHashDataStub);
                     if (fmHsh != null)
-                        _ = WritePacketAsync(new Packet { Type = PacketType.FmHashResult, Data = FileManagerFeature.HashFile(fmHsh.Path) }, ct);
+                    {
+                        var fmHshPath = fmHsh.Path;
+                        _ = Task.Run(async () => await WritePacketAsync(new Packet { Type = PacketType.FmHashResult, Data = FileManagerFeature.HashFile(fmHshPath) }, CancellationToken.None));
+                    }
                     break;
 
                 case PacketType.FmShowHide:
