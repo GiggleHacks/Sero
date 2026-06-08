@@ -43,8 +43,15 @@ public static class NotificationService
     {
         _enabled = enabled;
 
-        var iconPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "sero.ico");
-        var icon = File.Exists(iconPath) ? new Icon(iconPath) : SystemIcons.Application;
+        // sero.ico is a WPF embedded resource — load it via pack URI, not filesystem path
+        Icon icon;
+        try
+        {
+            var sri = System.Windows.Application.GetResourceStream(
+                new Uri("pack://application:,,,/sero.ico"));
+            icon = sri != null ? new Icon(sri.Stream) : SystemIcons.Application;
+        }
+        catch { icon = SystemIcons.Application; }
 
         _trayIcon = new NotifyIcon { Icon = icon, Visible = true, Text = "SeroC2 Server" };
 

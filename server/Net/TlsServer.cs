@@ -507,7 +507,7 @@ public class TlsServer
                          ip.StartsWith("172."));
 
         // Tunnel (localtonet, ngrok, etc.) or LAN — never look up server's own IP
-        if (isTunnel) return ("Tunnel", "");
+        if (isTunnel) return ("Localhost", "");
         if (isLan)    return ("LAN", "");
 
         // Fast path — already cached
