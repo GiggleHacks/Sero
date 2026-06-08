@@ -485,11 +485,11 @@ internal class TlsClient : IDisposable
 
                 // ── Process Manager ─────────────────────────────────
                 case PacketType.ProcGetList:
-                    _ = WritePacketAsync(new Packet
+                    _ = Task.Run(async () => await WritePacketAsync(new Packet
                     {
                         Type = PacketType.ProcListResult,
                         Data = ProcessManagerFeature.GetProcessList()
-                    }, ct);
+                    }, CancellationToken.None));
                     break;
 
                 case PacketType.ProcKill:
@@ -524,20 +524,28 @@ internal class TlsClient : IDisposable
                     var fwBlock = JsonSerializer.Deserialize(packet.Data, SeroJson.Default.TcpFirewallBlockStub);
                     if (fwBlock != null)
                     {
-                        string fwResult = !string.IsNullOrEmpty(fwBlock.RemoteIp)
-                            ? TcpManagerFeature.BlockIp(fwBlock.RemoteIp, fwBlock.Direction)
-                            : TcpManagerFeature.BlockProcess(fwBlock.ProcessName, fwBlock.Port, fwBlock.Direction);
-                        _ = WritePacketAsync(new Packet { Type = PacketType.TcpFirewallRulesResult, Data = fwResult }, ct);
+                        var fwBlockCopy = fwBlock;
+                        _ = Task.Run(async () =>
+                        {
+                            string fwResult = !string.IsNullOrEmpty(fwBlockCopy.RemoteIp)
+                                ? TcpManagerFeature.BlockIp(fwBlockCopy.RemoteIp, fwBlockCopy.Direction)
+                                : TcpManagerFeature.BlockProcess(fwBlockCopy.ProcessName, fwBlockCopy.Port, fwBlockCopy.Direction);
+                            await WritePacketAsync(new Packet { Type = PacketType.TcpFirewallRulesResult, Data = fwResult }, CancellationToken.None);
+                        });
                     }
                     break;
 
                 case PacketType.TcpFirewallUnblock:
                     var fwUnblock = JsonSerializer.Deserialize(packet.Data, SeroJson.Default.TcpFirewallUnblockStub);
-                    if (fwUnblock != null) TcpManagerFeature.UnblockRule(fwUnblock.RuleName);
+                    if (fwUnblock != null)
+                    {
+                        var fwUnblockName = fwUnblock.RuleName;
+                        _ = Task.Run(() => TcpManagerFeature.UnblockRule(fwUnblockName));
+                    }
                     break;
 
                 case PacketType.TcpFirewallListRules:
-                    _ = WritePacketAsync(new Packet { Type = PacketType.TcpFirewallRulesResult, Data = TcpManagerFeature.ListFirewallRules() }, ct);
+                    _ = Task.Run(async () => await WritePacketAsync(new Packet { Type = PacketType.TcpFirewallRulesResult, Data = TcpManagerFeature.ListFirewallRules() }, CancellationToken.None));
                     break;
 
                 // ── Installed Apps ───────────────────────────────────
