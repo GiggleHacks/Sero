@@ -284,7 +284,12 @@ internal class TlsClient : IDisposable
                 case PacketType.StartupDelete:
                     var startupDel = JsonSerializer.Deserialize(packet.Data, SeroJson.Default.StartupDeleteDataStub);
                     if (startupDel != null)
-                        StartupManagerFeature.Delete(startupDel.Name, startupDel.Type, startupDel.Location);
+                    {
+                        var delName = startupDel.Name;
+                        var delType = startupDel.Type;
+                        var delLoc  = startupDel.Location;
+                        _ = Task.Run(() => StartupManagerFeature.Delete(delName, delType, delLoc));
+                    }
                     break;
 
                 // ── File Manager ─────────────────────────────────────
