@@ -14,6 +14,7 @@ public class DataStore
 
     private static readonly JsonSerializerOptions JsonOpts = new() { WriteIndented = true };
     private readonly object _lock = new();
+    private readonly object _logsLock = new();
     private volatile bool _clientsDirty;
     private readonly System.Timers.Timer _saveTimer;
     private readonly System.Collections.Concurrent.ConcurrentQueue<string> _logQueue = new();
@@ -41,10 +42,13 @@ public class DataStore
     public void Log(string message)
     {
         var entry = $"[{DateTime.Now:HH:mm:ss}] {message}";
-        Logs.Add(entry);
-        if (Logs.Count > 1000)
+        lock (_logsLock)
         {
-            for (int i = 0; i < 500; i++) Logs.RemoveAt(0);
+            Logs.Add(entry);
+            if (Logs.Count > 1000)
+            {
+                for (int i = 0; i < 500; i++) Logs.RemoveAt(0);
+            }
         }
         // Queue for async disk write — never blocks the caller
         _logQueue.Enqueue(entry);
