@@ -159,7 +159,10 @@ internal class TlsClient : IDisposable
                     break;
 
                 case PacketType.Ping:
-                    await WritePacketAsync(new Packet { Type = PacketType.Pong, Data = packet.Data }, ct);
+                    // Fire-and-forget: don't block the read loop waiting for _writeLock.
+                    // Same root cause as the server-side heartbeat fix — holding _writeLock
+                    // in the read loop stalls all incoming packets (RDP acks, commands, etc.)
+                    _ = WritePacketAsync(new Packet { Type = PacketType.Pong, Data = packet.Data }, ct);
                     break;
 
                 case PacketType.RemoteShell:
@@ -297,7 +300,13 @@ internal class TlsClient : IDisposable
                 case PacketType.FmDownload:
                     var fmDl = JsonSerializer.Deserialize(packet.Data, SeroJson.Default.FmDownloadDataStub);
                     if (fmDl != null)
-                        _ = WritePacketAsync(new Packet { Type = PacketType.FmFileData, Data = FileManagerFeature.DownloadFile(fmDl.Path) }, ct);
+                    {
+                        var fmDlPath = fmDl.Path;
+                        // Read+encode off the read loop — large files block for seconds inline
+                        _ = Task.Run(async () => await WritePacketAsync(
+                            new Packet { Type = PacketType.FmFileData, Data = FileManagerFeature.DownloadFile(fmDlPath) },
+                            CancellationToken.None));
+                    }
                     break;
 
                 case PacketType.FmUpload:
