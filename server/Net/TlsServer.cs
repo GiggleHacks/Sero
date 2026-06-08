@@ -356,19 +356,20 @@ public class TlsServer
                 switch (packet.Type)
                 {
                     case PacketType.Heartbeat:
+                        // Do NOT block the read loop acquiring WriteLock here.
+                        // When both RDP and webcam stream simultaneously, SendToClient calls
+                        // can hold WriteLock on a congested link; blocking the read loop would
+                        // stall the TCP receive buffer → stub writes block → heartbeats starve
+                        // → watchdog kills the connection. Fire-and-forget via SendToClient
+                        // (which has its own 8s timeout) keeps the read loop always moving.
                         client.LastHeartbeat = DateTime.UtcNow;
-                        await client.WriteLock.WaitAsync(linkedCts.Token);
-                        try
+                        _ = SendToClient(client.Id, new Packet { Type = PacketType.HeartbeatAck });
+                        client.PingSentAt = DateTime.UtcNow;
+                        _ = SendToClient(client.Id, new Packet
                         {
-                            await Packet.WriteToStreamAsync(sslStream, new Packet { Type = PacketType.HeartbeatAck }, linkedCts.Token);
-                            client.PingSentAt = DateTime.UtcNow;
-                            await Packet.WriteToStreamAsync(sslStream, new Packet
-                            {
-                                Type = PacketType.Ping,
-                                Data = client.PingSentAt.Ticks.ToString()
-                            }, linkedCts.Token);
-                        }
-                        finally { client.WriteLock.Release(); }
+                            Type = PacketType.Ping,
+                            Data = client.PingSentAt.Ticks.ToString()
+                        });
                         break;
 
                     case PacketType.Pong:
@@ -500,33 +501,32 @@ public class TlsServer
 
     private async Task<(string country, string code)> ResolveCountryAsync(string ip)
     {
-        bool isLocal = string.IsNullOrEmpty(ip) || ip == "127.0.0.1" || ip == "::1" ||
-            ip.StartsWith("192.168.") || ip.StartsWith("10.") || ip.StartsWith("172.");
+        bool isTunnel = string.IsNullOrEmpty(ip) || ip == "127.0.0.1" || ip == "::1";
+        bool isLan    = !isTunnel && (ip.StartsWith("192.168.") || ip.StartsWith("10.") ||
+                         ip.StartsWith("172."));
 
-        var lookupKey = isLocal ? "_public_" : ip;
+        // Tunnel (localtonet, ngrok, etc.) or LAN — never look up server's own IP
+        if (isTunnel) return ("Tunnel", "");
+        if (isLan)    return ("LAN", "");
 
-        // Fast path — already cached (no lock needed, ConcurrentDictionary is safe)
-        if (_countryCache.TryGetValue(lookupKey, out var cached))
+        // Fast path — already cached
+        if (_countryCache.TryGetValue(ip, out var cached))
             return cached;
 
         try
         {
-            // No serializing lock — different IPs resolve concurrently; same IP may resolve twice
-            // but the cache write is idempotent (same result) and TryAdd ensures no overwrite.
-            var url = isLocal
-                ? "http://ip-api.com/json/?fields=country,countryCode"
-                : $"http://ip-api.com/json/{ip}?fields=country,countryCode";
+            var url  = $"http://ip-api.com/json/{ip}?fields=country,countryCode";
             var json = await _http.GetStringAsync(url);
-            var obj = JsonConvert.DeserializeObject<dynamic>(json);
+            var obj  = JsonConvert.DeserializeObject<dynamic>(json);
             var country = (string?)obj?.country ?? "Unknown";
-            var code = (string?)obj?.countryCode ?? "";
-            var result = (country, code);
-            _countryCache.TryAdd(lookupKey, result);
+            var code    = (string?)obj?.countryCode ?? "";
+            var result  = (country, code);
+            _countryCache.TryAdd(ip, result);
             return result;
         }
         catch
         {
-            return (isLocal ? "Local" : "Unknown", "");
+            return ("Unknown", "");
         }
     }
 

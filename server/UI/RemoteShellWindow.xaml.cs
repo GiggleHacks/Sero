@@ -14,6 +14,7 @@ public partial class RemoteShellWindow : Window
     public RemoteShellWindow(TlsServer server, List<ConnectedClient> clients)
     {
         InitializeComponent();
+        WindowResizer.Enable(this);
 
         _server = server;
         _clients = clients;

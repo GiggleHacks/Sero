@@ -43,10 +43,12 @@ public partial class RemoteDesktopWindow : Window
         _server   = server;
         _clientId = clientId;
         InitializeComponent();
+        WindowResizer.Enable(this);
         _uiReady = true;
 
         Title = $"Remote Desktop — {clientId}";
-        SldQuality.ValueChanged += (_, e) => { TxtQuality.Text = $"{(int)e.NewValue}"; _quality = (int)e.NewValue; };
+        SldQuality.Value = UiPrefs.GetInt("RdpQuality", 75);
+        SldQuality.ValueChanged += (_, e) => { TxtQuality.Text = $"{(int)e.NewValue}"; _quality = (int)e.NewValue; UiPrefs.Set("RdpQuality", (int)e.NewValue); };
         SldScale.ValueChanged   += (_, e) => TxtScale.Text   = $"{(int)e.NewValue}%";
 
         // Reclaim keyboard focus on ImgFrame whenever focus leaves it.

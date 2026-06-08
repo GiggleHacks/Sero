@@ -36,13 +36,15 @@
             </Border>
 
             <!-- Log Entries -->
-            <Border Grid.Row="1" Background="#0CFFFFFF" Margin="10,8,10,10" Padding="10"
+            <Border Grid.Row="1" Background="#0CFFFFFF" Margin="10,8,10,10"
                     CornerRadius="8" BorderBrush="#18FFFFFF" BorderThickness="1">
-                <ScrollViewer VerticalScrollBarVisibility="Auto">
-                    <TextBlock x:Name="TxtLog" Foreground="{StaticResource TextBrush}"
-                               FontFamily="Consolas" FontSize="11" TextWrapping="Wrap" />
-                </ScrollViewer>
-            </Border>
+                <TextBox x:Name="TxtLog" Foreground="{StaticResource TextBrush}"
+                         Background="Transparent" BorderThickness="0"
+                         FontFamily="Consolas" FontSize="11" TextWrapping="Wrap"
+                         IsReadOnly="True" IsReadOnlyCaretVisible="True"
+                         VerticalScrollBarVisibility="Auto"
+                         Padding="10" AcceptsReturn="True"
+                         SelectionBrush="#404878" CaretBrush="Transparent"/></Border>
         </Grid>
     </Border>
 </Window>

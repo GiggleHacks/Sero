@@ -26,11 +26,17 @@ public partial class WebcamWindow : Window
         _server   = server;
         _clientId = clientId;
         InitializeComponent();
+        WindowResizer.Enable(this);
 
         TxtClientId.Text = $"[ {clientId} ]";
 
-        SldQuality.ValueChanged += (_, e) => TxtQuality.Text = $"{(int)e.NewValue}";
-        SldFps.ValueChanged     += (_, e) => TxtFpsVal.Text  = $"{(int)e.NewValue}";
+        SldQuality.Value     = UiPrefs.GetInt("WcamQuality", 20);
+        SldFps.Value         = UiPrefs.GetInt("WcamFps", 20);
+        CmbResolution.SelectedIndex = UiPrefs.GetInt("WcamRes", 0);
+
+        SldQuality.ValueChanged += (_, e) => { TxtQuality.Text = $"{(int)e.NewValue}"; UiPrefs.Set("WcamQuality", (int)e.NewValue); };
+        SldFps.ValueChanged     += (_, e) => { TxtFpsVal.Text  = $"{(int)e.NewValue}"; UiPrefs.Set("WcamFps",    (int)e.NewValue); };
+        CmbResolution.SelectionChanged += (_, _) => UiPrefs.Set("WcamRes", CmbResolution.SelectedIndex);
 
         _server.WcamFrameReceived  += OnWcamData;
         _server.ClientDisconnected += OnClientDisconnected;
@@ -84,9 +90,10 @@ public partial class WebcamWindow : Window
             ChkAutoSave.IsEnabled    = streaming;
             ChkAutoSave.Opacity      = streaming ? 1.0 : 0.4;
             if (!streaming) ChkAutoSave.IsChecked = false;
-            SldQuality.IsEnabled = !streaming;
-            SldFps.IsEnabled     = !streaming;
-            CmbDevice.IsEnabled  = !streaming;
+            SldQuality.IsEnabled     = !streaming;
+            SldFps.IsEnabled         = !streaming;
+            CmbDevice.IsEnabled      = !streaming;
+            CmbResolution.IsEnabled  = !streaming;
             TxtStatus.Text       = streaming ? "Streaming..." : "Stopped";
             StatusDot.Fill       = new System.Windows.Media.SolidColorBrush(streaming
                 ? System.Windows.Media.Color.FromRgb(0x22, 0xC5, 0x5E)
@@ -117,6 +124,11 @@ public partial class WebcamWindow : Window
         });
     }
 
+    private static int ResolutionToMaxHeight(int index) => index switch
+    {
+        1 => 720, 2 => 480, 3 => 360, 4 => 240, _ => 0
+    };
+
     private void SendStart()
     {
         int idx = CmbDevice.SelectedIndex;
@@ -130,7 +142,8 @@ public partial class WebcamWindow : Window
             {
                 DeviceIndex = idx,
                 Quality     = (int)SldQuality.Value,
-                Fps         = (int)SldFps.Value
+                Fps         = (int)SldFps.Value,
+                MaxHeight   = ResolutionToMaxHeight(CmbResolution.SelectedIndex)
             })
         });
         SetStreamingState(true);

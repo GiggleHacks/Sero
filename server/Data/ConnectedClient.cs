@@ -63,8 +63,10 @@ public class ConnectedClient : INotifyPropertyChanged
     public string CameraStatus
     {
         get => _cameraStatus;
-        set { if (_cameraStatus != value) { _cameraStatus = value; Notify(); } }
+        set { if (_cameraStatus != value) { _cameraStatus = value; Notify(); Notify(nameof(CameraIcon)); } }
     }
+    public string CameraIcon => _cameraStatus.Equals("Yes", StringComparison.OrdinalIgnoreCase) ? "📷" :
+                                _cameraStatus.Equals("No",  StringComparison.OrdinalIgnoreCase) ? "—"  : "?";
 
     private float _cpuUsage;
     public float CpuUsage

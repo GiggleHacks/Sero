@@ -43,6 +43,7 @@ public partial class HvncWindow : Window
         _server   = server;
         _clientId = clientId;
         InitializeComponent();
+        WindowResizer.Enable(this);
 
         TxtClientId.Text = $"[ {clientId} ]";
 

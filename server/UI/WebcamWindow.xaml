@@ -167,11 +167,11 @@
                         </Rectangle>
                         <TextBlock Text="QUALITY" Foreground="#404878" FontSize="9" FontWeight="SemiBold"
                                    FontFamily="Segoe UI" VerticalAlignment="Center" Margin="0,0,8,0"/>
-                        <Slider x:Name="SldQuality" Minimum="20" Maximum="95" Value="75" Width="72"
+                        <Slider x:Name="SldQuality" Minimum="20" Maximum="95" Value="20" Width="72"
                                 Style="{StaticResource SlimSlider}"/>
                         <Border Margin="6,0,0,0" Padding="5,1" CornerRadius="3"
                                 Background="#0A0C18" BorderBrush="#1E2038" BorderThickness="1">
-                            <TextBlock x:Name="TxtQuality" Text="75" Foreground="#8090C0"
+                            <TextBlock x:Name="TxtQuality" Text="20" Foreground="#8090C0"
                                        FontSize="10" FontFamily="Segoe UI Mono"
                                        Width="18" TextAlignment="Center"/>
                         </Border>
@@ -190,12 +190,25 @@
                         </Border>
                     </StackPanel>
 
-                    <!-- Left: device selector -->
+                    <!-- Left: device selector + resolution -->
                     <StackPanel DockPanel.Dock="Left" Orientation="Horizontal" VerticalAlignment="Center">
                         <TextBlock Text="DEVICE" Foreground="#404878" FontSize="9" FontWeight="SemiBold"
                                    FontFamily="Segoe UI" VerticalAlignment="Center" Margin="0,0,8,0"/>
-                        <ComboBox x:Name="CmbDevice" Width="185" Height="26"
+                        <ComboBox x:Name="CmbDevice" Width="160" Height="26"
                                   Style="{StaticResource SCombo}"/>
+                        <Rectangle Width="1" Height="16" Margin="12,0">
+                            <Rectangle.Fill><SolidColorBrush Color="#1E2038"/></Rectangle.Fill>
+                        </Rectangle>
+                        <TextBlock Text="RES" Foreground="#404878" FontSize="9" FontWeight="SemiBold"
+                                   FontFamily="Segoe UI" VerticalAlignment="Center" Margin="0,0,8,0"/>
+                        <ComboBox x:Name="CmbResolution" Width="72" Height="26"
+                                  Style="{StaticResource SCombo}" SelectedIndex="0">
+                            <ComboBoxItem Content="Native"/>
+                            <ComboBoxItem Content="720p"/>
+                            <ComboBoxItem Content="480p"/>
+                            <ComboBoxItem Content="360p"/>
+                            <ComboBoxItem Content="240p"/>
+                        </ComboBox>
                     </StackPanel>
 
                 </DockPanel>
