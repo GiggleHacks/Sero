@@ -107,6 +107,33 @@
             </Setter>
         </Style>
 
+        <!-- ── Special key button ───────────────────────────────────── -->
+        <Style x:Key="RdpKeyBtn" TargetType="Button">
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="Pill" CornerRadius="4" Padding="9,3"
+                                Background="#0A0C18" BorderBrush="#1E2038" BorderThickness="1">
+                            <ContentPresenter VerticalAlignment="Center" HorizontalAlignment="Center"
+                                              TextElement.FontSize="10" TextElement.FontWeight="SemiBold"
+                                              TextElement.Foreground="#505878" TextElement.FontFamily="Segoe UI"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Pill" Property="BorderBrush" Value="#2A3460"/>
+                                <Setter TargetName="Pill" Property="Background"  Value="#0D1020"/>
+                            </Trigger>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter TargetName="Pill" Property="Background"  Value="#07101E"/>
+                                <Setter TargetName="Pill" Property="BorderBrush" Value="#3A70D8"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
     </Window.Resources>
 
     <Border x:Name="RootBorder" CornerRadius="8" BorderThickness="1" ClipToBounds="True">
@@ -236,7 +263,7 @@
                                    Foreground="#404878" FontSize="10" FontFamily="Segoe UI"
                                    VerticalAlignment="Center"/>
                     </StackPanel>
-                    <!-- Center: input toggles -->
+                    <!-- Center: input toggles + special keys -->
                     <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Center">
                         <CheckBox x:Name="ChkClicks"    Content="CLICKS"
                                   Style="{StaticResource PillToggle}" Margin="0,0,5,0"/>
@@ -245,7 +272,14 @@
                         <CheckBox x:Name="ChkKeyboard"  Content="KEYBOARD"
                                   Style="{StaticResource PillToggle}" Margin="0,0,5,0"/>
                         <CheckBox x:Name="ChkClipboard" Content="CLIPBOARD"
-                                  Style="{StaticResource PillToggle}"/>
+                                  Style="{StaticResource PillToggle}" Margin="0,0,10,0"/>
+                        <Rectangle Width="1" Height="14" Fill="#1E2038" Margin="0,0,10,0"/>
+                        <Button Content="WIN"     Style="{StaticResource RdpKeyBtn}" Margin="0,0,5,0" Click="BtnWin_Click"/>
+                        <Button Content="WIN+R"   Style="{StaticResource RdpKeyBtn}" Margin="0,0,5,0" Click="BtnWinR_Click"/>
+                        <Button Content="WIN+D"   Style="{StaticResource RdpKeyBtn}" Margin="0,0,5,0" Click="BtnWinD_Click"/>
+                        <Button Content="WIN+E"   Style="{StaticResource RdpKeyBtn}" Margin="0,0,5,0" Click="BtnWinE_Click"/>
+                        <Button Content="ALT+TAB" Style="{StaticResource RdpKeyBtn}" Margin="0,0,5,0" Click="BtnAltTab_Click"/>
+                        <Button Content="PRTSC"   Style="{StaticResource RdpKeyBtn}"                  Click="BtnPrtSc_Click"/>
                     </StackPanel>
                     <!-- Right: resolution + resize grip -->
                     <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center">

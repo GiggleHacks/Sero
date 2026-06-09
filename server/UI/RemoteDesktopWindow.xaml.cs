@@ -497,6 +497,27 @@ public partial class RemoteDesktopWindow : Window
         SendInputPacket(new RdpInputData { T = "kk", VK = KeyInterop.VirtualKeyFromKey(e.Key), Down = false });
     }
 
+    // ── Special keys ──────────────────────────────────────────────────────────
+
+    // Sends a key-down for every key in order, then key-up in reverse order.
+    // VK_LWIN (0x5B) and similar extended keys need Extended=true for SendInput.
+    private void SendKeyCombo(params (int vk, bool ext)[] keys)
+    {
+        if (!_streaming) return;
+        for (int i = 0; i < keys.Length; i++)
+            SendInputPacket(new RdpInputData { T = "kk", VK = keys[i].vk, Down = true,  Extended = keys[i].ext });
+        for (int i = keys.Length - 1; i >= 0; i--)
+            SendInputPacket(new RdpInputData { T = "kk", VK = keys[i].vk, Down = false, Extended = keys[i].ext });
+        ImgFrame.Focus();
+    }
+
+    private void BtnWin_Click   (object s, RoutedEventArgs e) => SendKeyCombo((0x5B, true));
+    private void BtnWinR_Click  (object s, RoutedEventArgs e) => SendKeyCombo((0x5B, true), (0x52, false));
+    private void BtnWinD_Click  (object s, RoutedEventArgs e) => SendKeyCombo((0x5B, true), (0x44, false));
+    private void BtnWinE_Click  (object s, RoutedEventArgs e) => SendKeyCombo((0x5B, true), (0x45, false));
+    private void BtnAltTab_Click(object s, RoutedEventArgs e) => SendKeyCombo((0x12, false), (0x09, false));
+    private void BtnPrtSc_Click (object s, RoutedEventArgs e) => SendKeyCombo((0x2C, false));
+
     private void Img_Loaded(object s, RoutedEventArgs e) => ImgFrame.Focus();
     private void Close_Click(object s, RoutedEventArgs e)  => Close();
     private void TitleBar_Drag(object s, MouseButtonEventArgs e)
