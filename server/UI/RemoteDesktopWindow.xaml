@@ -238,7 +238,9 @@
                     </StackPanel>
                     <!-- Center: input toggles -->
                     <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Center">
-                        <CheckBox x:Name="ChkMouse"     Content="MOUSE"
+                        <CheckBox x:Name="ChkClicks"    Content="CLICKS"
+                                  Style="{StaticResource PillToggle}" Margin="0,0,5,0"/>
+                        <CheckBox x:Name="ChkCursor"    Content="CURSOR"
                                   Style="{StaticResource PillToggle}" Margin="0,0,5,0"/>
                         <CheckBox x:Name="ChkKeyboard"  Content="KEYBOARD"
                                   Style="{StaticResource PillToggle}" Margin="0,0,5,0"/>

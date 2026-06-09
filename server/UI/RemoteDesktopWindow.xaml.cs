@@ -56,7 +56,8 @@ public partial class RemoteDesktopWindow : Window
         // breaks MouseMove routing on the Focusable Image element.
         Activated       += (_, _) => { if (_streaming) ImgFrame.Focus(); };
         SizeChanged     += (_, _) => { if (_streaming) ImgFrame.Focus(); };
-        ChkMouse.Checked    += (_, _) => { if (_streaming) ImgFrame.Focus(); };
+        ChkClicks.Checked   += (_, _) => { if (_streaming) ImgFrame.Focus(); };
+        ChkCursor.Checked   += (_, _) => { if (_streaming) ImgFrame.Focus(); };
         ChkKeyboard.Checked += (_, _) => { if (_streaming) ImgFrame.Focus(); };
 
         // Use O(1) per-client handler instead of broadcast event — critical for 100+ open windows
@@ -143,7 +144,7 @@ public partial class RemoteDesktopWindow : Window
             Fps       = 0,
             Scale     = (int)SldScale.Value,
             Monitor   = CmbMonitor.SelectedIndex >= 0 ? CmbMonitor.SelectedIndex : 0,
-            Mouse     = ChkMouse.IsChecked == true,
+            Mouse     = ChkClicks.IsChecked == true || ChkCursor.IsChecked == true,
             Keyboard  = ChkKeyboard.IsChecked == true,
             Clipboard = ChkClipboard.IsChecked == true,
         });
@@ -425,7 +426,7 @@ public partial class RemoteDesktopWindow : Window
 
     private void Img_MouseMove(object s, MouseEventArgs e)
     {
-        if (ChkMouse.IsChecked != true || !_streaming) return;
+        if (ChkCursor.IsChecked != true || !_streaming) return;
         var local = e.GetPosition(ImgFrame);
         var p = ToRemote(local);
         TxtStatus.Text = $"Mouse → remote ({(int)p.X},{(int)p.Y})  img {(int)ImgFrame.ActualWidth}×{(int)ImgFrame.ActualHeight}";
@@ -435,7 +436,7 @@ public partial class RemoteDesktopWindow : Window
     private void Img_MouseDown(object s, MouseButtonEventArgs e)
     {
         ImgFrame.Focus();
-        if (ChkMouse.IsChecked != true || !_streaming) return;
+        if (ChkClicks.IsChecked != true || !_streaming) return;
         var p = ToRemote(e.GetPosition(ImgFrame));
         int btn = e.ChangedButton == MouseButton.Left ? 0 : e.ChangedButton == MouseButton.Right ? 1 : 2;
         SendInputPacket(new RdpInputData { T = "mc", X = (int)p.X, Y = (int)p.Y, Button = btn, Down = true });
@@ -443,7 +444,7 @@ public partial class RemoteDesktopWindow : Window
 
     private void Img_MouseUp(object s, MouseButtonEventArgs e)
     {
-        if (ChkMouse.IsChecked != true || !_streaming) return;
+        if (ChkClicks.IsChecked != true || !_streaming) return;
         var p = ToRemote(e.GetPosition(ImgFrame));
         int btn = e.ChangedButton == MouseButton.Left ? 0 : e.ChangedButton == MouseButton.Right ? 1 : 2;
         SendInputPacket(new RdpInputData { T = "mc", X = (int)p.X, Y = (int)p.Y, Button = btn, Down = false });
@@ -451,7 +452,7 @@ public partial class RemoteDesktopWindow : Window
 
     private void Img_MouseWheel(object s, MouseWheelEventArgs e)
     {
-        if (ChkMouse.IsChecked != true || !_streaming) return;
+        if (ChkClicks.IsChecked != true || !_streaming) return;
         SendInputPacket(new RdpInputData { T = "mw", WheelDelta = e.Delta });
     }
 
