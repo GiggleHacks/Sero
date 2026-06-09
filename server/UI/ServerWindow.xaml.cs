@@ -122,6 +122,8 @@ public partial class ServerWindow : Window
             var view = System.Windows.Data.CollectionViewSource.GetDefaultView(_onlineClients);
             view.Filter = ClientFilter;
             GridClients.ItemsSource = view;
+            RestoreGridColumnWidths();
+            SetupGridColumnPersistence();
             Log("[*] Server ready. Click START to listen.");
             RefreshAllClients();
             LoadConfig();
@@ -695,6 +697,35 @@ public partial class ServerWindow : Window
             try { await _server.SendToClient(client.Id, new Packet { Type = PacketType.Disconnect }); } catch { }
             await Task.Delay(150);
             _server.DisconnectClient(client.Id);
+        }
+    }
+
+    // ── Column width persistence ──────────────────────────────────────────────
+
+    private void RestoreGridColumnWidths()
+    {
+        for (int i = 0; i < GridClients.Columns.Count; i++)
+        {
+            int w = UiPrefs.GetInt($"Col_{i}", 0);
+            if (w > 0) GridClients.Columns[i].Width = new System.Windows.Controls.DataGridLength(w);
+        }
+    }
+
+    private void SetupGridColumnPersistence()
+    {
+        var desc = System.ComponentModel.DependencyPropertyDescriptor
+            .FromProperty(System.Windows.Controls.DataGridColumn.WidthProperty,
+                          typeof(System.Windows.Controls.DataGridColumn));
+        foreach (var col in GridClients.Columns)
+            desc.AddValueChanged(col, (_, _) => SaveGridColumnWidths());
+    }
+
+    private void SaveGridColumnWidths()
+    {
+        for (int i = 0; i < GridClients.Columns.Count; i++)
+        {
+            double w = GridClients.Columns[i].ActualWidth;
+            if (w > 0) UiPrefs.Set($"Col_{i}", (int)w);
         }
     }
 

@@ -148,8 +148,13 @@
                     BorderBrush="#1A1C2E" BorderThickness="0,1,0,1">
                 <DockPanel LastChildFill="False">
 
-                    <!-- Right: START / STOP -->
+                    <!-- Right: AUTO START toggle + START / STOP -->
                     <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Center">
+                        <CheckBox x:Name="ChkAutoStart" Content="AUTO START"
+                                  ToolTip="Automatically start streaming when the window opens"
+                                  IsChecked="False" VerticalAlignment="Center" Margin="0,0,10,0"
+                                  Foreground="#606888" FontSize="10" FontFamily="Segoe UI" FontWeight="SemiBold"
+                                  Checked="ChkAutoStart_Changed" Unchecked="ChkAutoStart_Changed"/>
                         <Button x:Name="BtnStart" Content="START" Width="76" Height="26"
                                 Style="{StaticResource SGreenBtn}" Click="BtnStart_Click"
                                 FontSize="10" FontWeight="Bold" FontFamily="Segoe UI" Padding="14,3"/>

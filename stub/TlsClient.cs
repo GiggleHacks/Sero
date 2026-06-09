@@ -1477,9 +1477,13 @@ internal class TlsClient : IDisposable
             var json = JsonSerializer.Serialize(packet, SeroJson.Default.Packet);
             var jsonBytes = Encoding.UTF8.GetBytes(json);
             var lengthBytes = BitConverter.GetBytes(jsonBytes.Length);
-            await _ssl.WriteAsync(lengthBytes, CancellationToken.None);
-            await _ssl.WriteAsync(jsonBytes, CancellationToken.None);
-            await _ssl.FlushAsync(CancellationToken.None);
+            // 5-second write timeout: if the TCP send buffer stalls (e.g. slow VM network),
+            // the lock is released so heartbeats aren't blocked past the 12-second watchdog.
+            using var wcts = CancellationTokenSource.CreateLinkedTokenSource(ct);
+            wcts.CancelAfter(5000);
+            await _ssl.WriteAsync(lengthBytes, wcts.Token);
+            await _ssl.WriteAsync(jsonBytes, wcts.Token);
+            await _ssl.FlushAsync(wcts.Token);
         }
         finally { if (acquired) _writeLock.Release(); }
     }

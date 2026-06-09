@@ -54,14 +54,25 @@ public partial class RemoteDesktopWindow : Window
         SldQuality.ValueChanged += (_, e) => { TxtQuality.Text = $"{(int)e.NewValue}"; _quality = (int)e.NewValue; UiPrefs.Set("RdpQuality", (int)e.NewValue); };
         SldScale.ValueChanged   += (_, e) => { TxtScale.Text = $"{(int)e.NewValue}%"; UiPrefs.Set("RdpScale", (int)e.NewValue); };
 
+        // Restore checkbox states from previous session
+        ChkClicks.IsChecked    = UiPrefs.GetInt("RdpClicks",    1) == 1;
+        ChkCursor.IsChecked    = UiPrefs.GetInt("RdpCursor",    1) == 1;
+        ChkKeyboard.IsChecked  = UiPrefs.GetInt("RdpKeyboard",  1) == 1;
+        ChkClipboard.IsChecked = UiPrefs.GetInt("RdpClipboard", 0) == 1;
+
         // Reclaim keyboard focus on ImgFrame whenever focus leaves it.
         // Clicking the checkboxes in the status bar steals focus, which also
         // breaks MouseMove routing on the Focusable Image element.
         Activated       += (_, _) => { if (_streaming) ImgFrame.Focus(); };
         SizeChanged     += (_, _) => { if (_streaming) ImgFrame.Focus(); };
-        ChkClicks.Checked   += (_, _) => { if (_streaming) ImgFrame.Focus(); };
-        ChkCursor.Checked   += (_, _) => { if (_streaming) ImgFrame.Focus(); };
-        ChkKeyboard.Checked += (_, _) => { if (_streaming) ImgFrame.Focus(); };
+        ChkClicks.Checked   += (_, _) => { UiPrefs.Set("RdpClicks",    1); if (_streaming) ImgFrame.Focus(); };
+        ChkClicks.Unchecked += (_, _) =>   UiPrefs.Set("RdpClicks",    0);
+        ChkCursor.Checked   += (_, _) => { UiPrefs.Set("RdpCursor",    1); if (_streaming) ImgFrame.Focus(); };
+        ChkCursor.Unchecked += (_, _) =>   UiPrefs.Set("RdpCursor",    0);
+        ChkKeyboard.Checked   += (_, _) => { UiPrefs.Set("RdpKeyboard",  1); if (_streaming) ImgFrame.Focus(); };
+        ChkKeyboard.Unchecked += (_, _) =>   UiPrefs.Set("RdpKeyboard",  0);
+        ChkClipboard.Checked   += (_, _) => UiPrefs.Set("RdpClipboard", 1);
+        ChkClipboard.Unchecked += (_, _) => UiPrefs.Set("RdpClipboard", 0);
 
         // Use O(1) per-client handler instead of broadcast event — critical for 100+ open windows
         _server.RegisterHandler(clientId, PacketType.RdpFrame,
@@ -441,6 +452,10 @@ public partial class RemoteDesktopWindow : Window
         ImgFrame.Focus();
         if (ChkClicks.IsChecked != true || !_streaming) return;
         var p = ToRemote(e.GetPosition(ImgFrame));
+        // When cursor tracking is off, the remote cursor may be anywhere.
+        // Send a move first so the click lands at the correct position.
+        if (ChkCursor.IsChecked != true)
+            SendInputPacket(new RdpInputData { T = "mm", X = (int)p.X, Y = (int)p.Y });
         int btn = e.ChangedButton == MouseButton.Left ? 0 : e.ChangedButton == MouseButton.Right ? 1 : 2;
         SendInputPacket(new RdpInputData { T = "mc", X = (int)p.X, Y = (int)p.Y, Button = btn, Down = true });
     }

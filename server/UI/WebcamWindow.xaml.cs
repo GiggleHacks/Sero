@@ -35,6 +35,7 @@ public partial class WebcamWindow : Window
         SldFps.Value         = UiPrefs.GetInt("WcamFps", 20);
         TxtFpsVal.Text       = $"{(int)SldFps.Value}";
         CmbResolution.SelectedIndex = UiPrefs.GetInt("WcamRes", 0);
+        ChkAutoStart.IsChecked = UiPrefs.GetInt("WcamAutoStart", 0) == 1;
 
         SldQuality.ValueChanged += (_, e) => { TxtQuality.Text = $"{(int)e.NewValue}"; UiPrefs.Set("WcamQuality", (int)e.NewValue); };
         SldFps.ValueChanged     += (_, e) => { TxtFpsVal.Text  = $"{(int)e.NewValue}"; UiPrefs.Set("WcamFps",    (int)e.NewValue); };
@@ -213,6 +214,8 @@ public partial class WebcamWindow : Window
                             CmbDevice.Text = CmbDevice.Items[0]?.ToString() ?? "";
                         }
                         TxtStatus.Text = $"{count} device(s) — click START.";
+                        if (ChkAutoStart.IsChecked == true && !_streaming)
+                            SendStart();
                     }
                 });
                 return;
@@ -305,6 +308,9 @@ public partial class WebcamWindow : Window
             TxtStatus.Text = "Auto-save OFF";
         }
     }
+
+    private void ChkAutoStart_Changed(object s, RoutedEventArgs e) =>
+        UiPrefs.Set("WcamAutoStart", ChkAutoStart.IsChecked == true ? 1 : 0);
 
     private void BtnStart_Click(object s, RoutedEventArgs e) => SendStart();
     private void BtnStop_Click(object s, RoutedEventArgs e)  => SendStop();

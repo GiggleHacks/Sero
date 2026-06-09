@@ -10,6 +10,7 @@ public static class NotificationService
     private static NotifyIcon? _trayIcon;
     private static MediaPlayer? _player;
     private static bool _enabled;
+    private static long _lastConnectSoundTicks;
 
     private static string S(string file) =>
         Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Sounds", file);
@@ -69,8 +70,16 @@ public static class NotificationService
     public static void NotifyConnected(string clientId, bool isNewHwid = false)
     {
         if (!_enabled) return;
-        PlaySound(isNewHwid ? SndPowerUp : SndConnected);
         ShowBalloon(isNewHwid ? "New Client!" : "Client Connected", clientId, ToolTipIcon.Info);
+        // Debounce: only play a sound if at least 400ms passed since the last connect sound.
+        // Prevents a blast of simultaneous sounds when many clients reconnect at startup.
+        long now  = DateTime.UtcNow.Ticks;
+        long last = Interlocked.Read(ref _lastConnectSoundTicks);
+        if (now - last > TimeSpan.TicksPerMillisecond * 400)
+        {
+            Interlocked.Exchange(ref _lastConnectSoundTicks, now);
+            PlaySound(isNewHwid ? SndPowerUp : SndConnected);
+        }
     }
 
     public static void NotifyDisconnected(string clientId)

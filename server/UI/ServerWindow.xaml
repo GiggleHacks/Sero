@@ -238,6 +238,7 @@
                                     </LinearGradientBrush>
                                 </Run.Foreground>
                             </Run>
+                            <Run Text=" v1.2.1" Foreground="#2A2E48" FontSize="10" FontWeight="Normal"/>
                         </TextBlock>
                     </StackPanel>
 
