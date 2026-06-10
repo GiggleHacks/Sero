@@ -59,6 +59,7 @@ public partial class ServerWindow : Window
     private const int LogMaxLines = 2000;
     private const int LogTrimTo   = 1000;
     private System.Windows.Documents.Paragraph? _logPara;
+    private int _logUnseenCount;   // badge counter — reset when user opens the Logs tab
 
     // Coloured log brushes (frozen = thread-safe, allocated once)
     private static readonly Brush _brushLogError   = MakeBrush(0xEF, 0x44, 0x44);
@@ -3739,6 +3740,20 @@ Read-Host 'Press Enter to close'
         };
         EnsureLogParagraph().Inlines.Add(run);
         TxtLogs.ScrollToEnd();
+
+        // Badge: increment if the Logs tab isn't the currently active tab
+        if (LogsTabItem != null && !LogsTabItem.IsSelected)
+        {
+            _logUnseenCount++;
+            LogBadgeTxt.Text = _logUnseenCount > 999 ? "999+" : $"+{_logUnseenCount}";
+            LogBadge.Visibility = Visibility.Visible;
+        }
+    }
+
+    private void LogsTab_Selected()
+    {
+        _logUnseenCount = 0;
+        LogBadge.Visibility = Visibility.Collapsed;
     }
 
     private System.Windows.Documents.Paragraph EnsureLogParagraph()
@@ -4309,6 +4324,10 @@ Read-Host 'Press Enter to close'
     {
         if (!ReferenceEquals(e.OriginalSource, MainTabControl)) return;
         if (e.AddedItems.Count == 0) return;
+
+        // Clear log badge when user switches to the Logs tab
+        if (e.AddedItems[0] is System.Windows.Controls.TabItem ti && ReferenceEquals(ti, LogsTabItem))
+            LogsTab_Selected();
 
         var presenter = MainTabControl.Template?.FindName("PART_SelectedContentHost", MainTabControl) as ContentPresenter;
         if (presenter == null) return;
