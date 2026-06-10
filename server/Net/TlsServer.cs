@@ -488,9 +488,11 @@ public class TlsServer
             if (client is { PendingUninstall: true })
                 Log($"[+] Client {client.Id} ({client.Username}@{ip}) uninstalled successfully.");
             else if (client != null
+                  && ex is not System.IO.IOException          // normal TCP close — already logged as disconnect
+                  && ex is not ObjectDisposedException        // stream disposed on disconnect
                   && !ex.Message.Contains("decryption operation failed", StringComparison.OrdinalIgnoreCase)
                   && !ex.Message.Contains("authentication failed", StringComparison.OrdinalIgnoreCase))
-                Log($"[!] Client {client.Id} ({ip}) error: {ex.Message}");
+                Log($"[!] Client {client.Id} ({ip}) error: {ex.Message.Replace("\r\n", " ").Replace("\n", " ")}");
         }
         finally
         {

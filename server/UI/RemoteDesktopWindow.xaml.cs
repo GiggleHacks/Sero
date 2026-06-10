@@ -56,11 +56,7 @@ public partial class RemoteDesktopWindow : Window
         SldQuality.ValueChanged += (_, e) => { TxtQuality.Text = $"{(int)e.NewValue}"; _quality = (int)e.NewValue; UiPrefs.Set("RdpQuality", (int)e.NewValue); };
         SldScale.ValueChanged   += (_, e) => { TxtScale.Text = $"{(int)e.NewValue}%"; UiPrefs.Set("RdpScale", (int)e.NewValue); };
 
-        // Restore checkbox states from previous session
-        ChkClicks.IsChecked    = UiPrefs.GetInt("RdpClicks",    1) == 1;
-        ChkCursor.IsChecked    = UiPrefs.GetInt("RdpCursor",    1) == 1;
-        ChkKeyboard.IsChecked  = UiPrefs.GetInt("RdpKeyboard",  1) == 1;
-        ChkClipboard.IsChecked = UiPrefs.GetInt("RdpClipboard", 0) == 1;
+        // Checkboxes always start unchecked — user enables manually each session
 
         // Reclaim keyboard focus on ImgFrame whenever focus leaves it.
         // Clicking the checkboxes in the status bar steals focus, which also

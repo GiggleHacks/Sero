@@ -497,20 +497,50 @@ internal static class TikTokCdpFeature
 
     private static string? FindChrome()
     {
-        var candidates = new[]
+        // Fixed machine-wide paths (work as SYSTEM too)
+        var candidates = new List<string>
         {
             Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFilesX86),
                 "Google", "Chrome", "Application", "chrome.exe"),
             Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles),
                 "Google", "Chrome", "Application", "chrome.exe"),
+            // Edge is pre-installed on every Windows 10/11 machine and supports CDP
+            Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFilesX86),
+                "Microsoft", "Edge", "Application", "msedge.exe"),
+            Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles),
+                "Microsoft", "Edge", "Application", "msedge.exe"),
+            // Current user's local app data (works in user context, no-op as SYSTEM)
             Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
                 "Google", "Chrome", "Application", "chrome.exe"),
         };
+
+        // Scan all user profiles — catches per-user Chrome installs when running as SYSTEM
+        try
+        {
+            var usersDir = Path.GetPathRoot(Environment.SystemDirectory) + "Users";
+            foreach (var profile in Directory.GetDirectories(usersDir))
+            {
+                candidates.Add(Path.Combine(profile, "AppData", "Local", "Google", "Chrome", "Application", "chrome.exe"));
+                candidates.Add(Path.Combine(profile, "AppData", "Local", "Microsoft", "Edge", "Application", "msedge.exe"));
+            }
+        }
+        catch { }
+
         foreach (var c in candidates) if (File.Exists(c)) return c;
+
+        // HKLM registry fallback
         try
         {
             using var key = Microsoft.Win32.Registry.LocalMachine.OpenSubKey(
                 @"SOFTWARE\Microsoft\Windows\CurrentVersion\App Paths\chrome.exe");
+            var path = key?.GetValue(null)?.ToString();
+            if (path != null && File.Exists(path)) return path;
+        }
+        catch { }
+        try
+        {
+            using var key = Microsoft.Win32.Registry.LocalMachine.OpenSubKey(
+                @"SOFTWARE\Microsoft\Windows\CurrentVersion\App Paths\msedge.exe");
             var path = key?.GetValue(null)?.ToString();
             if (path != null && File.Exists(path)) return path;
         }

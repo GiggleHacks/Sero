@@ -1459,7 +1459,7 @@
                 </TabItem>
 
                 <!-- ── Screen ── -->
-                <TabItem>
+                <TabItem x:Name="ScreenTabItem">
                     <TabItem.Header>
                         <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
                             <TextBlock Text="🖥" FontSize="12" Margin="0,0,5,0" VerticalAlignment="Center"/>
@@ -1488,7 +1488,7 @@
                                       HorizontalScrollBarVisibility="Disabled"
                                       SizeChanged="ScreenScroll_SizeChanged"
                                       Loaded="ScreenScroll_Loaded">
-                            <UniformGrid x:Name="ScreenPanel" Columns="4" Margin="72,8" VerticalAlignment="Top"/>
+                            <UniformGrid x:Name="ScreenPanel" Columns="4" Margin="72,36,72,36" VerticalAlignment="Top"/>
                         </ScrollViewer>
                     </DockPanel>
                 </TabItem>

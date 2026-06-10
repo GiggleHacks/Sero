@@ -253,5 +253,6 @@ internal static class TelegramNotifier
             await Task.Delay(wait * 1000);
             throw new HttpRequestException($"Telegram 429 — waited {wait}s");
         }
+        resp.EnsureSuccessStatusCode(); // throw on 4xx/5xx so MarkNotified() is never called on failure
     }
 }

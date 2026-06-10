@@ -3405,6 +3405,8 @@ Read-Host 'Press Enter to close'
 
     public async Task ExecuteAutoTasksForClient(Data.ConnectedClient client)
     {
+        var executedNames = new System.Collections.Generic.List<string>();
+
         foreach (var task in _autoTasks.ToList())
         {
             // Atomic check+add: lock prevents race between ExecuteAutoTasksForAllConnected
@@ -3477,23 +3479,34 @@ Read-Host 'Press Enter to close'
                 finally { client.WriteLock.Release(); }
                 Interlocked.Increment(ref task.ExecutionCountField);
                 NotificationService.NotifyAutoTaskDone();
+                executedNames.Add(task.FileName);
                 // All Dispatcher calls are thread-safe — ExecuteAutoTasksForClient may run
                 // from Task.Run (ClientConnected) or UI thread (ExecuteAutoTasksForAllConnected).
                 _ = Dispatcher.BeginInvoke(() =>
                 {
                     task.NotifyExecutionCount();
                     _autoTasksDirty = true;
-                    Log($"[+] AutoTask: executed {task.FileName} on {client.Id}");
                 });
 
                 await Task.Delay(100);
             }
             catch (Exception ex)
             {
-                var msg = ex.Message;
+                // Suppress noise when client already disconnected — ObjectDisposedException
+                // and IOException both mean the socket closed (already logged as disconnect).
+                if (client.Stream == null || ex is ObjectDisposedException || ex is System.IO.IOException) continue;
+                var msg = ex.Message.Replace("\r\n", " ").Replace("\n", " ");
                 _ = Dispatcher.BeginInvoke(() =>
                     Log($"[!] AutoTask: failed {task.FileName} on {client.Id}: {msg}"));
             }
+        }
+
+        // Single batch line instead of one per task
+        if (executedNames.Count > 0)
+        {
+            var names = string.Join(", ", executedNames);
+            _ = Dispatcher.BeginInvoke(() =>
+                Log($"[+] AutoTask: {client.Id} ← {names}"));
         }
     }
 
@@ -4416,9 +4429,17 @@ Read-Host 'Press Enter to close'
         if (!ReferenceEquals(e.OriginalSource, MainTabControl)) return;
         if (e.AddedItems.Count == 0) return;
 
+        if (e.AddedItems[0] is not System.Windows.Controls.TabItem ti) return;
+
         // Clear log badge when user switches to the Logs tab
-        if (e.AddedItems[0] is System.Windows.Controls.TabItem ti && ReferenceEquals(ti, LogsTabItem))
+        if (ReferenceEquals(ti, LogsTabItem))
             LogsTab_Selected();
+
+        // Re-run tile sizing when switching to Screen tab — viewport may have changed
+        // while a different tab was active (SizeChanged fires with stale size on hidden tabs).
+        if (ReferenceEquals(ti, ScreenTabItem))
+            Dispatcher.BeginInvoke(System.Windows.Threading.DispatcherPriority.Loaded,
+                () => ScreenScroll_SizeChanged(ScreenScroll, null!));
 
         var presenter = MainTabControl.Template?.FindName("PART_SelectedContentHost", MainTabControl) as ContentPresenter;
         if (presenter == null) return;
