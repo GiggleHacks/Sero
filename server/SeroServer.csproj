@@ -45,6 +45,7 @@
   <ItemGroup>
     <PackageReference Include="DiscordRichPresence" Version="1.6.1.70" />
     <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
+    <PackageReference Include="SkiaSharp" Version="3.119.4" />
   </ItemGroup>
 
   <!-- Copy plugin DLLs from server/Plugins/ to output dir after every build.
@@ -53,12 +54,8 @@
     <ItemGroup>
       <_PluginDlls Include="$(MSBuildProjectDirectory)\Plugins\*.dll" />
     </ItemGroup>
-    <MakeDir Directories="$(OutputPath)\Plugins"
-             Condition="'@(_PluginDlls)' != '' And Exists('$(MSBuildProjectDirectory)\Plugins')" />
-    <Copy SourceFiles="@(_PluginDlls)"
-          DestinationFolder="$(OutputPath)\Plugins"
-          SkipUnchangedFiles="true"
-          Condition="'@(_PluginDlls)' != ''" />
+    <MakeDir Directories="$(OutputPath)\Plugins" Condition="'@(_PluginDlls)' != '' And Exists('$(MSBuildProjectDirectory)\Plugins')" />
+    <Copy SourceFiles="@(_PluginDlls)" DestinationFolder="$(OutputPath)\Plugins" SkipUnchangedFiles="true" Condition="'@(_PluginDlls)' != ''" />
   </Target>
 
 </Project>

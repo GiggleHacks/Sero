@@ -5,6 +5,7 @@ using System.Windows;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
+using SkiaSharp;
 using SeroServer.Net;
 using SeroServer.Protocol;
 
@@ -284,13 +285,14 @@ public partial class RemoteDesktopWindow : Window
     {
         try
         {
-            using var ms = new MemoryStream(jpegBytes);
-            var dec  = BitmapDecoder.Create(ms, BitmapCreateOptions.None, BitmapCacheOption.OnLoad);
-            var conv = new FormatConvertedBitmap(dec.Frames[0], PixelFormats.Bgra32, null, 0);
-            int stride = expectedW * 4;
-            var pixels = new byte[stride * expectedH];
-            conv.CopyPixels(pixels, stride, 0);
-            return pixels;
+            using var skBmp = SKBitmap.Decode(jpegBytes);
+            if (skBmp == null) return null;
+            if (skBmp.ColorType != SKColorType.Bgra8888)
+            {
+                using var converted = skBmp.Copy(SKColorType.Bgra8888);
+                return converted?.Bytes;
+            }
+            return skBmp.Bytes;
         }
         catch { return null; }
     }
