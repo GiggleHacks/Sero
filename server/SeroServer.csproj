@@ -48,6 +48,13 @@
     <PackageReference Include="SkiaSharp" Version="3.119.4" />
   </ItemGroup>
 
+  <!-- Ensure xmrig-release/ exists at repo root — gitignored (except .gitkeep),
+       so it won't be present on a fresh clone without this target. -->
+  <Target Name="EnsureXmrigReleaseDir" AfterTargets="Build">
+    <MakeDir Directories="$(MSBuildProjectDirectory)\..\xmrig-release"
+             Condition="!Exists('$(MSBuildProjectDirectory)\..\xmrig-release')" />
+  </Target>
+
   <!-- Copy plugin DLLs from server/Plugins/ to output dir after every build.
        Uses an explicit Target so it works with any Platform (x64, AnyCPU, etc.) -->
   <Target Name="CopyPluginDlls" AfterTargets="Build">

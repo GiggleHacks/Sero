@@ -54,6 +54,17 @@ if (Test-Path $stubSrc) {
 }
 
 
+# Create xmrig-release placeholder (place xmrig.exe here before packaging)
+$xmrigOut = Join-Path $Out "xmrig-release"
+New-Item -ItemType Directory -Path $xmrigOut -Force | Out-Null
+$xmrigSrc = Join-Path $Root "xmrig-release"
+if (Test-Path $xmrigSrc) {
+    Get-ChildItem $xmrigSrc -File | ForEach-Object {
+        Copy-Item $_.FullName $xmrigOut -ErrorAction SilentlyContinue
+    }
+}
+Write-OK "xmrig-release -> dist\xmrig-release\"
+
 # Copy icon
 Get-ChildItem $Root -Filter "*.ico" | ForEach-Object { Copy-Item $_.FullName $Out -ErrorAction SilentlyContinue }
 

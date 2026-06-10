@@ -26,8 +26,8 @@ createdump.exe
 
 # ── Third-party tools (place locally, not committed) ──────────────────────────
 tools/
-# xmrig binary: download separately and place in xmrig-release/xmrig.exe
-xmrig-release/
+# xmrig binaries: download separately and place in xmrig-release/
+xmrig-release/*.exe
 # xmrig source (large self-contained repo)
 xmrig-master/
 pe-union-master/
