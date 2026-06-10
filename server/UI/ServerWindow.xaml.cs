@@ -3945,25 +3945,10 @@ Read-Host 'Press Enter to close'
 
     private void SetScreenFocus(string clientId)
     {
-        // Restore border of previously focused tile
-        if (_focusedScreenId != null && _screenBorders.TryGetValue(_focusedScreenId, out var prev))
-            prev.BorderBrush = new SolidColorBrush(Color.FromRgb(0x1A, 0x1E, 0x36));
-
+        if (_focusedScreenId == clientId) return;
         _focusedScreenId = clientId;
-        ScreenBigPanel.Visibility = Visibility.Visible;
-        ScreenBigLabel.Text = clientId;
-
-        // Highlight focused tile
-        if (_screenBorders.TryGetValue(clientId, out var cur))
-            cur.BorderBrush = new SolidColorBrush(Color.FromRgb(0x5A, 0x45, 0xE5));
-
-        // Show current tile frame immediately in the big panel
-        if (_screenTiles.TryGetValue(clientId, out var img))
-            ScreenBigImage.Source = img.Source;
-
-        // Fast timer — requests only the focused client
         _screenFastTimer?.Stop();
-        _screenFastTimer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(200) };
+        _screenFastTimer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(150) };
         _screenFastTimer.Tick += (_, _) => RequestFocusedScreenshot();
         _screenFastTimer.Start();
         RequestFocusedScreenshot();
@@ -3971,17 +3956,10 @@ Read-Host 'Press Enter to close'
 
     private void ClearScreenFocus()
     {
-        if (_focusedScreenId != null && _screenBorders.TryGetValue(_focusedScreenId, out var border))
-            border.BorderBrush = new SolidColorBrush(Color.FromRgb(0x1A, 0x1E, 0x36));
-
         _focusedScreenId = null;
         _screenFastTimer?.Stop();
         _screenFastTimer = null;
-        ScreenBigPanel.Visibility = Visibility.Collapsed;
-        ScreenBigImage.Source = null;
     }
-
-    private void BtnScreenBigClose_Click(object sender, RoutedEventArgs e) => ClearScreenFocus();
 
     private void RequestFocusedScreenshot()
     {
@@ -4073,69 +4051,70 @@ Read-Host 'Press Enter to close'
         };
 
         // ── Hover / click animation ──────────────────────────────────────────
+        var easeOut = new System.Windows.Media.Animation.QuadraticEase
+            { EasingMode = System.Windows.Media.Animation.EasingMode.EaseOut };
+
+        var capturedId = client.Id;
+
         border.MouseEnter += (_, _) =>
         {
             var st = (System.Windows.Media.ScaleTransform)border.RenderTransform;
             st.BeginAnimation(System.Windows.Media.ScaleTransform.ScaleXProperty,
-                new DoubleAnimation(st.ScaleX, 1.04, TimeSpan.FromMilliseconds(140)));
+                new DoubleAnimation(st.ScaleX, 1.45, TimeSpan.FromMilliseconds(190)) { EasingFunction = easeOut });
             st.BeginAnimation(System.Windows.Media.ScaleTransform.ScaleYProperty,
-                new DoubleAnimation(st.ScaleY, 1.04, TimeSpan.FromMilliseconds(140)));
+                new DoubleAnimation(st.ScaleY, 1.45, TimeSpan.FromMilliseconds(190)) { EasingFunction = easeOut });
             border.BorderBrush = new SolidColorBrush(Color.FromRgb(0x4A, 0x85, 0xF5));
             label.Foreground   = new SolidColorBrush(Color.FromRgb(0xCC, 0xD8, 0xFF));
-        };
-        border.MouseLeave += (_, _) =>
-        {
-            var st = (System.Windows.Media.ScaleTransform)border.RenderTransform;
-            st.BeginAnimation(System.Windows.Media.ScaleTransform.ScaleXProperty,
-                new DoubleAnimation(st.ScaleX, 1.0, TimeSpan.FromMilliseconds(200)));
-            st.BeginAnimation(System.Windows.Media.ScaleTransform.ScaleYProperty,
-                new DoubleAnimation(st.ScaleY, 1.0, TimeSpan.FromMilliseconds(200)));
-            border.BorderBrush = new SolidColorBrush(Color.FromRgb(0x1A, 0x1E, 0x36));
-            label.Foreground   = new SolidColorBrush(Color.FromRgb(0xB8, 0xC0, 0xD8));
-        };
-        border.MouseLeftButtonDown += (_, e) =>
-        {
-            var st = (System.Windows.Media.ScaleTransform)border.RenderTransform;
-            st.BeginAnimation(System.Windows.Media.ScaleTransform.ScaleXProperty,
-                new DoubleAnimation(st.ScaleX, 0.97, TimeSpan.FromMilliseconds(70)));
-            st.BeginAnimation(System.Windows.Media.ScaleTransform.ScaleYProperty,
-                new DoubleAnimation(st.ScaleY, 0.97, TimeSpan.FromMilliseconds(70)));
-        };
-        border.MouseLeftButtonUp += (_, e) =>
-        {
-            var st = (System.Windows.Media.ScaleTransform)border.RenderTransform;
-            st.BeginAnimation(System.Windows.Media.ScaleTransform.ScaleXProperty,
-                new DoubleAnimation(st.ScaleX, 1.04, TimeSpan.FromMilliseconds(100)));
-            st.BeginAnimation(System.Windows.Media.ScaleTransform.ScaleYProperty,
-                new DoubleAnimation(st.ScaleY, 1.04, TimeSpan.FromMilliseconds(100)));
-        };
-
-        // Hover → show big panel for this tile at fast refresh rate
-        // MouseLeave uses a short delay so moving between tiles doesn't flicker the panel closed
-        var capturedId = client.Id;
-        border.MouseEnter += (_, _) =>
-        {
+            System.Windows.Controls.Panel.SetZIndex(border, 10);
+            // Switch to fast refresh for the hovered tile
             _screenFocusCancelCts?.Cancel();
             _screenFocusCancelCts = null;
             SetScreenFocus(capturedId);
         };
         border.MouseLeave += (_, _) =>
         {
+            var st = (System.Windows.Media.ScaleTransform)border.RenderTransform;
+            st.BeginAnimation(System.Windows.Media.ScaleTransform.ScaleXProperty,
+                new DoubleAnimation(st.ScaleX, 1.0, TimeSpan.FromMilliseconds(230)) { EasingFunction = easeOut });
+            st.BeginAnimation(System.Windows.Media.ScaleTransform.ScaleYProperty,
+                new DoubleAnimation(st.ScaleY, 1.0, TimeSpan.FromMilliseconds(230)) { EasingFunction = easeOut });
+            border.BorderBrush = new SolidColorBrush(Color.FromRgb(0x1A, 0x1E, 0x36));
+            label.Foreground   = new SolidColorBrush(Color.FromRgb(0xB8, 0xC0, 0xD8));
+            System.Windows.Controls.Panel.SetZIndex(border, 0);
+            // Short delay before stopping fast refresh so moving between tiles doesn't stutter
             _screenFocusCancelCts?.Cancel();
             var cts = new System.Threading.CancellationTokenSource();
             _screenFocusCancelCts = cts;
-            System.Threading.Tasks.Task.Delay(350, cts.Token).ContinueWith(t =>
+            System.Threading.Tasks.Task.Delay(300, cts.Token).ContinueWith(t =>
             {
                 if (!t.IsCanceled) Dispatcher.BeginInvoke(ClearScreenFocus);
             }, System.Threading.Tasks.TaskScheduler.Default);
         };
         border.MouseLeftButtonDown += (_, e) =>
         {
-            if (e.ClickCount != 2) return;
-            if (_server?.ConnectedClients.ContainsKey(capturedId) != true) return;
-            var win = new RemoteDesktopWindow(_server!, capturedId);
-            win.Owner = this;
-            win.Show();
+            if (e.ClickCount == 2)
+            {
+                if (_server?.ConnectedClients.ContainsKey(capturedId) != true) return;
+                var win = new RemoteDesktopWindow(_server!, capturedId);
+                win.Owner = this;
+                win.Show();
+            }
+            else
+            {
+                var st = (System.Windows.Media.ScaleTransform)border.RenderTransform;
+                st.BeginAnimation(System.Windows.Media.ScaleTransform.ScaleXProperty,
+                    new DoubleAnimation(st.ScaleX, 1.35, TimeSpan.FromMilliseconds(70)));
+                st.BeginAnimation(System.Windows.Media.ScaleTransform.ScaleYProperty,
+                    new DoubleAnimation(st.ScaleY, 1.35, TimeSpan.FromMilliseconds(70)));
+            }
+        };
+        border.MouseLeftButtonUp += (_, e) =>
+        {
+            var st = (System.Windows.Media.ScaleTransform)border.RenderTransform;
+            st.BeginAnimation(System.Windows.Media.ScaleTransform.ScaleXProperty,
+                new DoubleAnimation(st.ScaleX, 1.45, TimeSpan.FromMilliseconds(120)) { EasingFunction = easeOut });
+            st.BeginAnimation(System.Windows.Media.ScaleTransform.ScaleYProperty,
+                new DoubleAnimation(st.ScaleY, 1.45, TimeSpan.FromMilliseconds(120)) { EasingFunction = easeOut });
         };
 
         ScreenPanel.Children.Add(border);
@@ -4178,8 +4157,6 @@ Read-Host 'Press Enter to close'
                     bmp.StreamSource = ms;
                     bmp.EndInit();
                     bmp.Freeze();
-                    if (clientId == _focusedScreenId)
-                        ScreenBigImage.Source = bmp;
                     if (_screenTiles.TryGetValue(clientId, out var img))
                         img.Source = bmp;
                 }
