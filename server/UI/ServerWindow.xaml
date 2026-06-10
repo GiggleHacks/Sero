@@ -1408,11 +1408,21 @@
                         <StackPanel MaxWidth="520" HorizontalAlignment="Center" Margin="32,32,32,32">
                             <TextBlock Text="SERVER LIMITS" Style="{StaticResource SLabel}" />
                             <TextBlock Text="MAX CONNECTED CLIENTS" Style="{StaticResource SFieldLabel}" />
-                            <TextBox x:Name="SettingsMaxClients" Style="{StaticResource STxt}" Text="1000" Width="120" HorizontalAlignment="Left" Margin="0,0,0,6" />
+                            <StackPanel Orientation="Horizontal" Margin="0,0,0,6">
+                                <TextBox x:Name="SettingsMaxClients" Style="{StaticResource STxt}" Text="1000" Width="120" />
+                                <Button Content="APPLY" Height="28" Margin="8,0,0,0" Padding="12,0"
+                                        Style="{StaticResource SGreenBtn}" FontSize="10"
+                                        Click="SettingsApplyMaxClients_Click" />
+                            </StackPanel>
                             <TextBlock Text="Rejects new connections when this limit is reached." Foreground="#606880" FontSize="11" Margin="0,0,0,24" />
 
                             <TextBlock Text="INTEGRATIONS" Style="{StaticResource SLabel}" />
-                            <CheckBox x:Name="SettingsDiscordRPC" Content="Discord Rich Presence" Style="{StaticResource SChk}" Margin="0,0,0,8" />
+                            <StackPanel Orientation="Horizontal" Margin="0,0,0,8" VerticalAlignment="Center">
+                                <CheckBox x:Name="SettingsDiscordRPC" Content="Discord Rich Presence" Style="{StaticResource SChk}" VerticalAlignment="Center" />
+                                <Button Content="APPLY" Height="22" Margin="12,0,0,0" Padding="10,0"
+                                        Style="{StaticResource SGreenBtn}" FontSize="10"
+                                        Click="SettingsApplyDiscordRPC_Click" />
+                            </StackPanel>
                             <CheckBox x:Name="SettingsNotifySound" Content="Sound notifications" Style="{StaticResource SChk}" Margin="0,0,0,24"
                                       Checked="SettingsNotifySound_Changed" Unchecked="SettingsNotifySound_Changed" />
 
@@ -1443,7 +1453,6 @@
                             </StackPanel>
                             <TextBlock x:Name="TxtPortResult" Text="" Foreground="#606880" FontSize="12" Margin="0,4,0,24" />
 
-                            <Button Content="APPLY" Height="32" Width="100" Style="{StaticResource SGreenBtn}" Click="SettingsApply_Click" HorizontalAlignment="Left" />
                         </StackPanel>
                         </ScrollViewer>
                     </Border>

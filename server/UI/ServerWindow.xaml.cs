@@ -3055,7 +3055,7 @@ Read-Host 'Press Enter to close'
         }
     }
 
-    private void SettingsApply_Click(object sender, RoutedEventArgs e)
+    private void SettingsApplyMaxClients_Click(object sender, RoutedEventArgs e)
     {
         if (int.TryParse(SettingsMaxClients.Text, out int max) && max > 0)
         {
@@ -3063,9 +3063,16 @@ Read-Host 'Press Enter to close'
                 _server.MaxConnectedClients = max;
             Log($"[*] Max connected clients set to {max}.");
             TxtStatusBar.Text = $"Settings applied (max clients: {max}).";
+            SaveConfig();
         }
+        else
+        {
+            Log("[!] Invalid max clients value.");
+        }
+    }
 
-        // Discord RPC toggle
+    private void SettingsApplyDiscordRPC_Click(object sender, RoutedEventArgs e)
+    {
         if (SettingsDiscordRPC.IsChecked == true && _discordRpc == null && _server is { IsRunning: true })
         {
             try
@@ -3073,6 +3080,7 @@ Read-Host 'Press Enter to close'
                 _discordRpc = new Net.SeroDiscordRPC();
                 _discordRpc.Start(() => _server?.ConnectedClients.Count ?? 0);
                 Log("[*] Discord RPC enabled.");
+                SaveConfig();
             }
             catch { }
         }
@@ -3081,14 +3089,8 @@ Read-Host 'Press Enter to close'
             _discordRpc.Stop();
             _discordRpc = null;
             Log("[*] Discord RPC disabled. Restart Discord or wait a few seconds for it to clear.");
+            SaveConfig();
         }
-
-        if (!int.TryParse(SettingsMaxClients.Text, out int _check) || _check <= 0)
-        {
-            Log("[!] Invalid max clients value.");
-        }
-
-        SaveConfig();
     }
 
     private void SettingsHideLogo_Changed(object sender, RoutedEventArgs e)
