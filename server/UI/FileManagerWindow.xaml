@@ -355,7 +355,8 @@
                                Visibility="Collapsed"
                                HorizontalAlignment="Stretch" VerticalAlignment="Stretch"/>
                         <MediaElement x:Name="PreviewVideo" Visibility="Collapsed"
-                                      LoadedBehavior="Manual" Stretch="Uniform"
+                                      LoadedBehavior="Manual" UnloadedBehavior="Manual"
+                                      Stretch="Uniform"
                                       MouseLeftButtonUp="PreviewVideo_Click"/>
                         <ScrollViewer x:Name="TextScroll" Visibility="Collapsed"
                                       VerticalScrollBarVisibility="Auto">

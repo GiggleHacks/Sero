@@ -35,12 +35,25 @@ public partial class FileManagerWindow : Window
         _server.RegisterHandler(clientId, PacketType.FmHashResult,  pkt => { _pendingHash?.TrySetResult(pkt.Data); });
         _server.RegisterHandler(clientId, PacketType.FmAck,         pkt => { _pendingAck?.TrySetResult(pkt.Data); });
 
-        // Stop WMF pipeline BEFORE window closes to prevent it from blocking disposal
-        Closing += (_, _) =>
+        // WMF pipeline teardown (Source = null) can block the UI thread for ~1s.
+        // Fix: hide the window immediately so the user sees an instant close, then do
+        // the slow WMF cleanup in a Background-priority dispatch before the real Close().
+        bool _wmfCleanupDone = false;
+        Closing += (s, e) =>
         {
-            PreviewVideo.Stop();
-            PreviewVideo.Source = null;
-            if (_previewTempFile != null) try { System.IO.File.Delete(_previewTempFile); } catch { }
+            if (_wmfCleanupDone) return;
+            e.Cancel = true;
+            _wmfCleanupDone = true;
+            Hide();
+            var tmp = _previewTempFile;
+            _previewTempFile = null;
+            Dispatcher.BeginInvoke(System.Windows.Threading.DispatcherPriority.Background, () =>
+            {
+                PreviewVideo.Stop();
+                PreviewVideo.Source = null;
+                if (tmp != null) try { System.IO.File.Delete(tmp); } catch { }
+                Close();
+            });
         };
         Closed += (_, _) =>
         {
