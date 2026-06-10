@@ -147,6 +147,9 @@ public partial class RemoteDesktopWindow : Window
             TxtStatus.Text       = streaming ? "Streaming..." : "Stopped";
             LiveBadge.Visibility = streaming ? Visibility.Visible : Visibility.Collapsed;
             PnlNoSession.Visibility = streaming ? Visibility.Collapsed : Visibility.Visible;
+            StatusDot.Fill = new SolidColorBrush(streaming
+                ? Color.FromRgb(0x22, 0xC5, 0x5E)
+                : Color.FromRgb(0x25, 0x28, 0x40));
             if (!streaming) TxtFps.Text = "";
         });
     }
@@ -228,10 +231,13 @@ public partial class RemoteDesktopWindow : Window
                         var jpegBytes = Convert.FromBase64String(jEl.GetString() ?? "");
                         var pixels = DecodeJpeg(jpegBytes, w, h);
                         if (pixels != null && !_closed)
+                        {
+                            // ACK early — mirrors block path: stub starts next capture while we blit
+                            if (!_closed) SendAck();
                             _ = Dispatcher.BeginInvoke(() => BlitFullFrame(w, h, pixels, w * 4));
+                        }
                         else
                         {
-                            // Decode failed — still ack so the stub keeps sending frames
                             _renderBusy = false;
                             if (!_closed) SendAck();
                         }
@@ -296,11 +302,10 @@ public partial class RemoteDesktopWindow : Window
             if (_closed) { _renderBusy = false; return; }
             EnsureFrame(w, h);
             _frame!.Lock();
-            _frame.WritePixels(new Int32Rect(0, 0, w, h), pixels, stride, 0);
-            _frame.Unlock();
+            try { _frame.WritePixels(new Int32Rect(0, 0, w, h), pixels, stride, 0); }
+            finally { _frame.Unlock(); }
             UpdateFps();
             _renderBusy = false;
-            SendAck();
         }
         catch { _renderBusy = false; }
     }

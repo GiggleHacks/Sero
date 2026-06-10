@@ -15,10 +15,8 @@ public partial class WebcamWindow : Window
     private readonly TlsServer _server;
     private readonly string _clientId;
     private volatile bool _closed, _streaming;
-    private readonly System.Text.StringBuilder _logBuf = new();
     private int _frameCount;
     private DateTime _fpsTime = DateTime.UtcNow;
-    private BitmapImage? _lastFrame;
     private DateTime _lastAutoSave = DateTime.MinValue;
 
     public WebcamWindow(TlsServer server, string clientId)
@@ -115,8 +113,6 @@ public partial class WebcamWindow : Window
 
     private void SendProbe()
     {
-        _logBuf.Clear();
-        TxtLog.Text = "";
         LogPanel.Visibility = Visibility.Collapsed;
         TxtPlaceholder.Text = "Waiting for device list...";
         TxtPlaceholder.Visibility = Visibility.Visible;
@@ -136,8 +132,6 @@ public partial class WebcamWindow : Window
     {
         int idx = CmbDevice.SelectedIndex;
         if (idx < 0) { TxtStatus.Text = "No device selected."; return; }
-        _logBuf.Clear();
-        TxtLog.Text = "";
         _ = _server.SendToClient(_clientId, new Packet
         {
             Type = PacketType.WcamStart,
@@ -181,7 +175,6 @@ public partial class WebcamWindow : Window
                     TxtStatus.Text = msg;
                     TxtPlaceholder.Text = msg;
                     TxtPlaceholder.Visibility = Visibility.Visible;
-                    LogPanel.Visibility = _logBuf.Length > 0 ? Visibility.Visible : Visibility.Collapsed;
                     SetStreamingState(false);
                 });
                 return;
@@ -249,7 +242,6 @@ public partial class WebcamWindow : Window
     private void ShowFrame(BitmapImage bi)
     {
         if (_closed || !_streaming) return;
-        _lastFrame = bi;
         ImgFrame.Source = bi;
         TxtPlaceholder.Visibility = Visibility.Collapsed;
         _frameCount++;
