@@ -424,7 +424,7 @@ internal static class RemoteDesktopFeature
         _prevW = dstW; _prevH = dstH;
 
         // ── Adaptive encode strategy ──────────────────────────────────────────
-        const int FULLFRAME_THRESHOLD_PCT = 65;
+        const int FULLFRAME_THRESHOLD_PCT = 45;
         bool useFullFrame = firstFrame || changedCount * 100 / totalBlocks >= FULLFRAME_THRESHOLD_PCT;
 
         if (useFullFrame)
