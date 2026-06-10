@@ -1470,6 +1470,34 @@
                                 </StackPanel>
                             </Grid>
                         </Border>
+                        <!-- Big screen panel — visible when a tile is single-clicked -->
+                        <Border x:Name="ScreenBigPanel" DockPanel.Dock="Top"
+                                Visibility="Collapsed"
+                                Background="#07081A" BorderBrush="#20304A" BorderThickness="0,0,0,1"
+                                Padding="8,8,8,6">
+                            <Grid MaxHeight="410">
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="*"/>
+                                    <RowDefinition Height="Auto"/>
+                                </Grid.RowDefinitions>
+                                <Image x:Name="ScreenBigImage" Grid.Row="0"
+                                       Stretch="Uniform" HorizontalAlignment="Center"
+                                       MaxHeight="370"/>
+                                <DockPanel Grid.Row="1" Margin="0,5,0,0">
+                                    <Button x:Name="BtnScreenBigClose" DockPanel.Dock="Right"
+                                            Content="✕" Click="BtnScreenBigClose_Click"
+                                            Width="22" Height="22" Padding="0"
+                                            Background="#1A1E36" Foreground="#8898CC"
+                                            BorderBrush="#2A3050" BorderThickness="1"
+                                            Cursor="Hand" FontSize="11"
+                                            VerticalContentAlignment="Center" HorizontalContentAlignment="Center"/>
+                                    <TextBlock x:Name="ScreenBigLabel"
+                                               Foreground="#8090B8" FontSize="11"
+                                               FontFamily="Consolas" VerticalAlignment="Center"
+                                               TextTrimming="CharacterEllipsis"/>
+                                </DockPanel>
+                            </Grid>
+                        </Border>
                         <!-- Tiles -->
                         <ScrollViewer x:Name="ScreenScroll"
                                       VerticalScrollBarVisibility="Auto"
