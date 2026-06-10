@@ -1519,17 +1519,16 @@ internal class TlsClient : IDisposable
                     continue; // recheck ctrl before next frame
                 }
 
-                // ③ Both empty — wait for either, biased toward ctrl
+                // ③ Both empty — wake immediately when either channel gets data
                 try
                 {
-                    using var cts2 = System.Threading.CancellationTokenSource.CreateLinkedTokenSource(ct);
-                    cts2.CancelAfter(50); // poll frame channel every 50 ms if ctrl is idle
-                    await _ctrlCh.Reader.WaitToReadAsync(cts2.Token);
+                    using var linked = System.Threading.CancellationTokenSource.CreateLinkedTokenSource(ct);
+                    var ctrlWait  = _ctrlCh.Reader.WaitToReadAsync(linked.Token).AsTask();
+                    var frameWait = _frameCh.Reader.WaitToReadAsync(linked.Token).AsTask();
+                    await Task.WhenAny(ctrlWait, frameWait);
+                    linked.Cancel(); // release the other waiter
                 }
-                catch (OperationCanceledException) when (!ct.IsCancellationRequested)
-                {
-                    // 50 ms timeout — loop to check frame channel
-                }
+                catch (OperationCanceledException) when (!ct.IsCancellationRequested) { }
             }
         }
         catch { /* session CT cancelled or SSL error — RunAsync handles reconnect */ }
