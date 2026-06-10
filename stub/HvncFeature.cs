@@ -1975,10 +1975,19 @@ internal static class HvncFeature
                 }
                 foreach (var lk in new[] { "parent.lock", "lock" })
                     try { File.Delete(Path.Combine(hvncProfile, lk)); } catch { }
-                // Drop all server-supplied args — keep only the exe path, then add ours.
-                // Avoids fragile -profile argument parsing with potentially space-containing paths.
-                int ffSpace = cmd.IndexOf(' ');
-                if (ffSpace >= 0) cmd = cmd[..ffSpace];
+                // Drop all server-supplied args — keep only the quoted exe, then add ours.
+                // cmd = '"C:\Program Files\...\firefox.exe" -profile ...' so we must find
+                // the CLOSING quote, not the first space (which would be inside "Program Files").
+                if (cmd.Length > 0 && cmd[0] == '"')
+                {
+                    int closeQ = cmd.IndexOf('"', 1);
+                    if (closeQ >= 0) cmd = cmd[..(closeQ + 1)];
+                }
+                else
+                {
+                    int sp = cmd.IndexOf(' ');
+                    if (sp >= 0) cmd = cmd[..sp];
+                }
                 cmd += $" -profile \"{hvncProfile}\" -no-remote";
             }
             // Repair real Opera / Opera GX profile JSON before launch.
