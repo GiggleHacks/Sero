@@ -238,7 +238,7 @@
                                     </LinearGradientBrush>
                                 </Run.Foreground>
                             </Run>
-                            <Run Text=" v1.2.1" Foreground="#2A2E48" FontSize="10" FontWeight="Normal"/>
+                            <Run Text=" v1.3.0" Foreground="#C8922A" FontSize="10" FontWeight="Normal"/>
                         </TextBlock>
                     </StackPanel>
 
@@ -1395,7 +1395,7 @@
                             <TextBlock Text="Settings"/>
                         </StackPanel>
                     </TabItem.Header>
-                    <Border Margin="8" Padding="32" CornerRadius="8"
+                    <Border Margin="8" CornerRadius="8"
                             Background="#D0111222" BorderThickness="1">
                         <Border.BorderBrush>
                             <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
@@ -1403,7 +1403,9 @@
                                 <GradientStop Color="#121E2038" Offset="1"/>
                             </LinearGradientBrush>
                         </Border.BorderBrush>
-                        <StackPanel MaxWidth="520" HorizontalAlignment="Center">
+                        <ScrollViewer VerticalScrollBarVisibility="Auto"
+                                      HorizontalScrollBarVisibility="Disabled">
+                        <StackPanel MaxWidth="520" HorizontalAlignment="Center" Margin="32,32,32,32">
                             <TextBlock Text="SERVER LIMITS" Style="{StaticResource SLabel}" />
                             <TextBlock Text="MAX CONNECTED CLIENTS" Style="{StaticResource SFieldLabel}" />
                             <TextBox x:Name="SettingsMaxClients" Style="{StaticResource STxt}" Text="1000" Width="120" HorizontalAlignment="Left" Margin="0,0,0,6" />
@@ -1443,6 +1445,7 @@
 
                             <Button Content="APPLY" Height="32" Width="100" Style="{StaticResource SGreenBtn}" Click="SettingsApply_Click" HorizontalAlignment="Left" />
                         </StackPanel>
+                        </ScrollViewer>
                     </Border>
                 </TabItem>
 
