@@ -4148,7 +4148,7 @@ Read-Host 'Press Enter to close'
     private void ScreenScroll_SizeChanged(object sender, SizeChangedEventArgs e)
     {
         var sv = (System.Windows.Controls.ScrollViewer)sender;
-        double avail = sv.ViewportWidth - 8;
+        double avail = sv.ViewportWidth - 8 - 128; // 128 = 2×64px side margin (room for scale animation)
         if (avail <= 0) return;
 
         int cols = Math.Max(2, (int)(avail / 220));
