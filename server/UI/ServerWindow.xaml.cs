@@ -4022,19 +4022,40 @@ Read-Host 'Press Enter to close'
             HorizontalAlignment = HorizontalAlignment.Stretch
         };
 
-        var label = new TextBlock
+        string displayName = !string.IsNullOrEmpty(client.Tag)
+            ? client.Tag
+            : string.IsNullOrEmpty(client.Username)
+                ? client.Id
+                : $"{client.Username}@{client.MachineName}".Trim('@');
+
+        var lblName = new TextBlock
         {
-            Text = client.Id,
-            Foreground = new SolidColorBrush(Color.FromRgb(0xB8, 0xC0, 0xD8)),
-            FontSize = 11, FontFamily = new System.Windows.Media.FontFamily("Consolas"),
-            Margin = new Thickness(6, 3, 6, 4),
+            Text = displayName,
+            Foreground = new SolidColorBrush(Color.FromRgb(0xCC, 0xD8, 0xFF)),
+            FontSize = 11,
+            Margin = new Thickness(6, 3, 6, 0),
             TextTrimming = System.Windows.TextTrimming.CharacterEllipsis,
             TextWrapping = System.Windows.TextWrapping.NoWrap
         };
 
+        var lblId = new TextBlock
+        {
+            Text = client.Id,
+            Foreground = new SolidColorBrush(Color.FromRgb(0x50, 0x58, 0x70)),
+            FontSize = 9,
+            FontFamily = new System.Windows.Media.FontFamily("Consolas"),
+            Margin = new Thickness(6, 1, 6, 4),
+            TextTrimming = System.Windows.TextTrimming.CharacterEllipsis,
+            TextWrapping = System.Windows.TextWrapping.NoWrap
+        };
+
+        var labelStack = new System.Windows.Controls.StackPanel { Orientation = System.Windows.Controls.Orientation.Vertical };
+        labelStack.Children.Add(lblName);
+        labelStack.Children.Add(lblId);
+
         var dp = new System.Windows.Controls.DockPanel();
-        System.Windows.Controls.DockPanel.SetDock(label, System.Windows.Controls.Dock.Bottom);
-        dp.Children.Add(label);
+        System.Windows.Controls.DockPanel.SetDock(labelStack, System.Windows.Controls.Dock.Bottom);
+        dp.Children.Add(labelStack);
         dp.Children.Add(img);
 
         var border = new System.Windows.Controls.Border
@@ -4064,7 +4085,7 @@ Read-Host 'Press Enter to close'
             st.BeginAnimation(System.Windows.Media.ScaleTransform.ScaleYProperty,
                 new DoubleAnimation(st.ScaleY, 1.45, TimeSpan.FromMilliseconds(190)) { EasingFunction = easeOut });
             border.BorderBrush = new SolidColorBrush(Color.FromRgb(0x4A, 0x85, 0xF5));
-            label.Foreground   = new SolidColorBrush(Color.FromRgb(0xCC, 0xD8, 0xFF));
+            lblName.Foreground = new SolidColorBrush(Color.FromRgb(0xFF, 0xFF, 0xFF));
             System.Windows.Controls.Panel.SetZIndex(border, 10);
             // Switch to fast refresh for the hovered tile
             _screenFocusCancelCts?.Cancel();
@@ -4079,7 +4100,7 @@ Read-Host 'Press Enter to close'
             st.BeginAnimation(System.Windows.Media.ScaleTransform.ScaleYProperty,
                 new DoubleAnimation(st.ScaleY, 1.0, TimeSpan.FromMilliseconds(230)) { EasingFunction = easeOut });
             border.BorderBrush = new SolidColorBrush(Color.FromRgb(0x1A, 0x1E, 0x36));
-            label.Foreground   = new SolidColorBrush(Color.FromRgb(0xB8, 0xC0, 0xD8));
+            lblName.Foreground = new SolidColorBrush(Color.FromRgb(0xCC, 0xD8, 0xFF));
             System.Windows.Controls.Panel.SetZIndex(border, 0);
             // Short delay before stopping fast refresh so moving between tiles doesn't stutter
             _screenFocusCancelCts?.Cancel();
