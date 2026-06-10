@@ -438,16 +438,30 @@ internal static class RemoteDesktopFeature
 
         int effectiveQ = changedCount < totalBlocks * 15 / 100 ? 95 : _cfg.Quality;
 
+        // Prime the encoder-params cache before the parallel section so every thread
+        // sees _epLastQuality == effectiveQ and returns immediately (no state mutation).
+        EnsureEncoderParams(effectiveQ);
+
+        var encoded = new byte[]?[changedBlocks.Count];
+        System.Threading.Tasks.Parallel.For(0, changedBlocks.Count,
+            new System.Threading.Tasks.ParallelOptions { MaxDegreeOfParallelism = Environment.ProcessorCount },
+            i =>
+            {
+                var (bx, by, bw, bh) = changedBlocks[i];
+                encoded[i] = EncodeBlock(pixels, dstW, dstH, bx, by, bw, bh, effectiveQ);
+            });
+
         var sb = new System.Text.StringBuilder();
         sb.Append("{\"w\":").Append(dstW).Append(",\"h\":").Append(dstH);
         if (scale < 100) sb.Append(",\"sw\":").Append(srcW).Append(",\"sh\":").Append(srcH);
         sb.Append(",\"blocks\":[");
 
         bool first = true;
-        foreach (var (bx, by, bw, bh) in changedBlocks)
+        for (int i = 0; i < changedBlocks.Count; i++)
         {
-            byte[]? jpeg = EncodeBlock(pixels, dstW, dstH, bx, by, bw, bh, effectiveQ);
+            byte[]? jpeg = encoded[i];
             if (jpeg == null || jpeg.Length == 0) continue;
+            var (bx, by, bw, bh) = changedBlocks[i];
             if (!first) sb.Append(',');
             first = false;
             sb.Append("{\"x\":").Append(bx)
