@@ -1502,7 +1502,7 @@
                             <!-- Badge: shows unseen log count when tab is not focused -->
                             <Border x:Name="LogBadge" Background="#EF4444" CornerRadius="7"
                                     Padding="4,1" Margin="5,0,0,0"
-                                    Visibility="Collapsed" VerticalAlignment="Center">
+                                    Visibility="Hidden" VerticalAlignment="Center">
                                 <TextBlock x:Name="LogBadgeTxt" Text="0" Foreground="White"
                                            FontSize="9" FontWeight="Bold" FontFamily="Segoe UI"/>
                             </Border>

@@ -3756,7 +3756,7 @@ Read-Host 'Press Enter to close'
     private void LogsTab_Selected()
     {
         _logUnseenCount = 0;
-        LogBadge.Visibility = Visibility.Collapsed;
+        LogBadge.Visibility = Visibility.Hidden;
     }
 
     private System.Windows.Documents.Paragraph EnsureLogParagraph()
