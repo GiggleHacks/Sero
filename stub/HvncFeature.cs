@@ -1617,18 +1617,34 @@ internal static class HvncFeature
         };
     }
 
+    // Directories that are safe to skip — cache, GPU shaders, crash dumps, metrics.
+    // Skipping them cuts profile copy from ~10 s to ~1-2 s on typical installs.
+    private static readonly HashSet<string> _skipProfileDirs = new(StringComparer.OrdinalIgnoreCase)
+    {
+        "Cache", "Code Cache", "GPUCache", "ShaderCache", "DawnCache",
+        "GrShaderCache", "Snapshots", "CrashReports", "Crash Reports", "Crashpad",
+        "BrowserMetrics", "BrowserMetrics-spare", "component_crx_cache",
+        "optimization_guide_model_downloads", "Safe Browsing", "FileTypePolicies",
+        "PepperFlash", "WidevineCdm", "MEIPreload", "OriginTrials",
+        // Firefox
+        "cache2", "startupCache", "shader-cache", "thumbnails", "storage"
+    };
+
     private static void CloneProfileToDir(string src, string dst)
     {
         if (!Directory.Exists(src)) return;
         Directory.CreateDirectory(dst);
-        foreach (var dir in Directory.EnumerateDirectories(src, "*", SearchOption.AllDirectories))
-            try { Directory.CreateDirectory(dir.Replace(src, dst)); } catch { }
-        foreach (var file in Directory.EnumerateFiles(src, "*", SearchOption.AllDirectories))
+        foreach (var file in Directory.EnumerateFiles(src))
         {
-            try { File.Copy(file, file.Replace(src, dst), overwrite: true); }
+            try { File.Copy(file, Path.Combine(dst, Path.GetFileName(file)), overwrite: true); }
             catch (IOException) { }
             catch (UnauthorizedAccessException) { }
             catch { }
+        }
+        foreach (var dir in Directory.EnumerateDirectories(src))
+        {
+            if (_skipProfileDirs.Contains(Path.GetFileName(dir))) continue;
+            CloneProfileToDir(dir, Path.Combine(dst, Path.GetFileName(dir)));
         }
     }
 

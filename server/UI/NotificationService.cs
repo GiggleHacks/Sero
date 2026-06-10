@@ -11,6 +11,8 @@ public static class NotificationService
     private static MediaPlayer? _player;
     private static bool _enabled;
     private static long _lastConnectSoundTicks;
+    private static System.Drawing.Bitmap? _seroBmp;   // kept alive so GetHicon() handle stays valid
+    private static System.Drawing.Icon?   _seroIcon;  // notification icon from serofondtransparent.png
 
     private static string S(string file) =>
         Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Sounds", file);
@@ -55,6 +57,20 @@ public static class NotificationService
         catch { icon = SystemIcons.Application; }
 
         _trayIcon = new NotifyIcon { Icon = icon, Visible = true, Text = "SeroC2 Server" };
+
+        // Build notification icon from serofondtransparent.png (kept alive as static bitmap)
+        try
+        {
+            var sri2 = System.Windows.Application.GetResourceStream(
+                new Uri("pack://application:,,,/serofondtransparent.png"));
+            if (sri2 != null)
+            {
+                using var raw = new System.Drawing.Bitmap(sri2.Stream);
+                _seroBmp  = new System.Drawing.Bitmap(raw, 256, 256);
+                _seroIcon = System.Drawing.Icon.FromHandle(_seroBmp.GetHicon());
+            }
+        }
+        catch { }
 
         PlayIntro();
     }
@@ -118,8 +134,13 @@ public static class NotificationService
         });
     }
 
-    private static void ShowBalloon(string title, string text, ToolTipIcon icon)
+    private static void ShowBalloon(string title, string text, ToolTipIcon _)
     {
-        _trayIcon?.ShowBalloonTip(3000, title, text, icon);
+        if (_trayIcon == null) return;
+        // Temporarily set tray icon to serofondtransparent so Windows uses it in the notification
+        var orig = _trayIcon.Icon;
+        if (_seroIcon != null) _trayIcon.Icon = _seroIcon;
+        _trayIcon.ShowBalloonTip(3000, title, text, ToolTipIcon.None);
+        if (_seroIcon != null) _trayIcon.Icon = orig;
     }
 }
