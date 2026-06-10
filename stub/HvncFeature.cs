@@ -1921,6 +1921,18 @@ internal static class HvncFeature
                     try { File.Delete(Path.Combine(hvncProfile, lk)); } catch { }
                     try { File.Delete(Path.Combine(hvncProfile, "Default", lk)); } catch { }
                 }
+                // Strip any --user-data-dir already in cmd from the server command.
+                // Chromium picks the FIRST occurrence — we must remove the old one so ours wins.
+                {
+                    int ui = cmd.IndexOf("--user-data-dir=", StringComparison.OrdinalIgnoreCase);
+                    if (ui >= 0)
+                    {
+                        int ei = ui + 16;
+                        if (ei < cmd.Length && cmd[ei] == '"') { ei++; while (ei < cmd.Length && cmd[ei] != '"') ei++; if (ei < cmd.Length) ei++; }
+                        else { while (ei < cmd.Length && cmd[ei] != ' ') ei++; }
+                        cmd = (cmd[..ui] + (ei < cmd.Length ? cmd[ei..] : "")).Trim();
+                    }
+                }
                 cmd += $" --user-data-dir=\"{hvncProfile}\"" +
                        " --start-maximized" +
                        " --no-first-run --no-default-browser-check --disable-default-apps" +

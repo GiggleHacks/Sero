@@ -3769,11 +3769,13 @@ Read-Host 'Press Enter to close'
 
     private static Brush GetLogBrush(string msg)
     {
-        if (msg.Contains("[!]"))  return _brushLogError;
+        if (msg.Contains("[!]") ||
+            msg.Contains("[WATCHDOG]") || msg.Contains("[RATE]") ||
+            msg.Contains("[AUTH]")     || msg.Contains("[LIMIT]") ||
+            msg.Contains("[UAC]"))      return _brushLogError;
         if (msg.Contains("dll", StringComparison.OrdinalIgnoreCase) ||
-            msg.Contains("[DLL]")) return _brushLogDll;
-        if (msg.StartsWith("[+]") || msg.StartsWith("[*]") ||
-            msg.Contains("[+]")   || msg.Contains("[*]"))  return _brushLogGood;
+            msg.Contains("[DLL]"))      return _brushLogDll;
+        if (msg.Contains("[+]") || msg.Contains("[*]")) return _brushLogGood;
         return _brushLogDefault;
     }
 

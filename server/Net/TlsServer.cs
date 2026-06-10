@@ -102,7 +102,7 @@ public class TlsServer
         _listener.Start();
         IsRunning = true;
 
-        Log($"TLS Server started on port {port}");
+        Log($"[*] TLS Server started on port {port}");
         _ = AcceptLoop(_cts.Token);
 
         _watchdogTimer = new System.Timers.Timer(15_000) { AutoReset = true };
@@ -137,7 +137,7 @@ public class TlsServer
             try { client.Cts.Cancel(); client.Stream?.Close(); } catch { }
         }
         ConnectedClients.Clear();
-        Log("Server stopped.");
+        Log("[*] Server stopped.");
     }
 
     public async Task SendToClient(string clientId, Packet packet)
@@ -185,7 +185,7 @@ public class TlsServer
                 if (client.RamTotal > 0) { rec.LastRamUsed = client.RamUsed; rec.LastRamTotal = client.RamTotal; }
             }
             _store.RecordDisconnection(client.Hwid);
-            Log($"Client {client.Id} ({client.Username}@{client.IP}) disconnected.");
+            Log($"[*] Client {client.Id} ({client.Username}@{client.IP}) disconnected.");
             // Purge feature-window handlers: try O(1) removes per known PacketType first,
             // then fall back to full scan only if stragglers remain (avoids O(n) at scale)
             foreach (PacketType pt in Enum.GetValues<PacketType>())
@@ -206,7 +206,7 @@ public class TlsServer
                 _ = HandleClient(tcp, ct);
             }
             catch (OperationCanceledException) { break; }
-            catch (Exception ex) { Log($"Accept error: {ex.Message}"); }
+            catch (Exception ex) { Log($"[!] Accept error: {ex.Message}"); }
         }
     }
 
@@ -239,7 +239,7 @@ public class TlsServer
             var infoPacket = await Packet.ReadFromStreamAsync(sslStream, serverCt);
             if (infoPacket == null || infoPacket.Type != PacketType.ClientInfo)
             {
-                Log($"Client {ip} sent invalid handshake (expected ClientInfo, got {infoPacket?.Type}).");
+                Log($"[!] Client {ip} sent invalid handshake (expected ClientInfo, got {infoPacket?.Type}).");
                 tcp.Close();
                 return;
             }
@@ -249,7 +249,7 @@ public class TlsServer
             catch { info = null; }
             if (info == null)
             {
-                Log($"Client {ip} sent malformed ClientInfo JSON.");
+                Log($"[!] Client {ip} sent malformed ClientInfo JSON.");
                 tcp.Close();
                 return;
             }
@@ -344,7 +344,7 @@ public class TlsServer
             ConnectedClients[client.Id] = client;
             if (stale != null)
                 DisconnectClient(stale.Id);
-            Log($"Client {client.Id} connected ({info.Username}@{ip}, {client.Country})");
+            Log($"[+] Client {client.Id} connected ({info.Username}@{ip}, {client.Country})");
             ClientConnected?.Invoke(client);
 
             // No per-client watchdog task — _watchdogTimer (15s) handles zombie detection for all clients
@@ -490,7 +490,7 @@ public class TlsServer
             else if (client != null
                   && !ex.Message.Contains("decryption operation failed", StringComparison.OrdinalIgnoreCase)
                   && !ex.Message.Contains("authentication failed", StringComparison.OrdinalIgnoreCase))
-                Log($"Client {client.Id} ({ip}) error: {ex.Message}");
+                Log($"[!] Client {client.Id} ({ip}) error: {ex.Message}");
         }
         finally
         {
