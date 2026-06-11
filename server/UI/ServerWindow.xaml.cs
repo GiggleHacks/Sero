@@ -135,6 +135,8 @@ public partial class ServerWindow : Window
             // Wrap in CollectionView so we can filter without modifying _onlineClients
             var view = System.Windows.Data.CollectionViewSource.GetDefaultView(_onlineClients);
             view.Filter = ClientFilter;
+            view.SortDescriptions.Add(new System.ComponentModel.SortDescription(
+                nameof(Data.ConnectedClient.HasTag), System.ComponentModel.ListSortDirection.Descending));
             GridClients.ItemsSource = view;
             RestoreGridColumnWidths();
             SetupGridColumnPersistence();
@@ -647,7 +649,8 @@ public partial class ServerWindow : Window
         int currentPort = _server?.Port ?? 0;
         var clients = _store.AllClients.Values
             .Where(r => currentPort == 0 || r.LastPort == 0 || r.LastPort == currentPort)
-            .OrderByDescending(r => r.LastSeen);
+            .OrderByDescending(r => r.HasTag)
+            .ThenByDescending(r => r.LastSeen);
         GridAllClients.ItemsSource = null;
         GridAllClients.ItemsSource = new ObservableCollection<ClientRecord>(clients);
         if (TxtAllClientsCount != null)
@@ -1475,7 +1478,7 @@ public partial class ServerWindow : Window
             _store.SetTag(client.Hwid, dlg.TagValue);
         }
 
-        RefreshClients();
+        System.Windows.Data.CollectionViewSource.GetDefaultView(_onlineClients)?.Refresh();
         RefreshAllClients();
         TxtStatusBar.Text = $"Tag set on {clients.Count} client(s).";
     }

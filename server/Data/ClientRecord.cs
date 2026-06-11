@@ -21,7 +21,8 @@ public class ClientRecord
     public string LastRamDisplay => LastRamTotal > 0 ? $"{LastRamUsed}/{LastRamTotal} MB" : "—";
     public bool   LastIsAdmin   { get; set; }
     public int    LastPort { get; set; }
-    public string Tag { get; set; } = string.Empty;
+    public string Tag    { get; set; } = string.Empty;
+    public bool   HasTag => !string.IsNullOrEmpty(Tag);
     public string AssignedId { get; set; } = string.Empty;
     public DateTime FirstSeen { get; set; } = DateTime.UtcNow;
     public DateTime LastSeen { get; set; } = DateTime.UtcNow;

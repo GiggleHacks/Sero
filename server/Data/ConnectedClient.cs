@@ -51,7 +51,8 @@ public class ConnectedClient : INotifyPropertyChanged
     public string Privilege => _isAdmin ? "Admin" : "User";
 
     private string _tag = string.Empty;
-    public string Tag { get => _tag; set { if (_tag != value) { _tag = value; Notify(); } } }
+    public string Tag    { get => _tag; set { if (_tag != value) { _tag = value; Notify(); Notify(nameof(HasTag)); } } }
+    public bool   HasTag => !string.IsNullOrEmpty(_tag);
 
     private string _activeWindow = string.Empty;
     public string ActiveWindow
