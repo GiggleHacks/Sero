@@ -196,6 +196,32 @@
 
             </Grid>
 
+            <!-- ── Screenshot popup overlay (click-to-enlarge) ──── -->
+            <Grid x:Name="ScreenPopupOverlay" Grid.RowSpan="5" Panel.ZIndex="200"
+                  Background="#D0060810" Visibility="Collapsed"
+                  MouseLeftButtonDown="ScreenPopupOverlay_Close">
+                <Border Background="#0C0E1E" CornerRadius="10" BorderThickness="1" BorderBrush="#2A3060"
+                        HorizontalAlignment="Center" VerticalAlignment="Center"
+                        Padding="16" MinWidth="300" MaxWidth="1100"
+                        MouseLeftButtonDown="ScreenPopupOverlay_StopBubble">
+                    <StackPanel>
+                        <Grid Margin="0,0,0,10">
+                            <TextBlock x:Name="ScreenPopupTitle" Foreground="#CCD8FF" FontSize="12"
+                                       FontFamily="Consolas" VerticalAlignment="Center"/>
+                            <Button HorizontalAlignment="Right" Content="✕" Width="22" Height="22"
+                                    Foreground="#606880" Background="Transparent" BorderThickness="0"
+                                    FontSize="12" Cursor="Hand"
+                                    Click="ScreenPopupOverlay_CloseBtn"/>
+                        </Grid>
+                        <Image x:Name="ScreenPopupImage" Stretch="Uniform"
+                               MaxHeight="680" MaxWidth="1068"/>
+                        <TextBlock x:Name="ScreenPopupSub" Foreground="#404878" FontSize="10"
+                                   FontFamily="Consolas" Margin="0,8,0,0"
+                                   HorizontalAlignment="Center"/>
+                    </StackPanel>
+                </Border>
+            </Grid>
+
             <!-- ── Title bar ──────────────────────────────────────── -->
             <Border Grid.Row="0" Background="#C0111222" CornerRadius="10,10,0,0"
                     BorderThickness="0,0,0,1">

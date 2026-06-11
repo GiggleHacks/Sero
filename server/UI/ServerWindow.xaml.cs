@@ -588,7 +588,7 @@ public partial class ServerWindow : Window
             _onlineClients.AddRange(toAdd);
         }
 
-        // Close feature windows for disconnected clients
+        // Close feature windows + remove screen tiles for disconnected clients
         foreach (var id in toClose)
         {
             var prefix = id + ":";
@@ -596,6 +596,19 @@ public partial class ServerWindow : Window
             foreach (var k in keys)
             {
                 try { _featureWindows[k].Close(); } catch { }
+            }
+
+            // Remove screen tile immediately (don't wait for next RequestScreenshots tick)
+            if (_screenBorders.TryGetValue(id, out var tb))
+            {
+                if (id == _focusedScreenId) ClearScreenFocus();
+                ScreenPanel.Children.Remove(tb);
+                _screenBorders.Remove(id);
+                _screenTiles.Remove(id);
+                // Also close popup if it was showing this client's screenshot
+                if (ScreenPopupOverlay.Visibility == Visibility.Visible
+                    && ScreenPopupSub.Text == id)
+                    ScreenPopupOverlay.Visibility = Visibility.Collapsed;
             }
         }
 
@@ -662,6 +675,16 @@ public partial class ServerWindow : Window
             ? $"{(int)uptime.TotalHours}h {uptime.Minutes}m {uptime.Seconds:D2}s"
             : $"{uptime.Minutes}m {uptime.Seconds:D2}s";
     }
+
+    // ── Screenshot popup overlay ──────────────────────────────────────────
+    private void ScreenPopupOverlay_Close(object sender, System.Windows.Input.MouseButtonEventArgs e)
+        => ScreenPopupOverlay.Visibility = Visibility.Collapsed;
+
+    private void ScreenPopupOverlay_CloseBtn(object sender, RoutedEventArgs e)
+        => ScreenPopupOverlay.Visibility = Visibility.Collapsed;
+
+    private void ScreenPopupOverlay_StopBubble(object sender, System.Windows.Input.MouseButtonEventArgs e)
+        => e.Handled = true; // prevent click on the card from dismissing the overlay
 
     private void DashChart_SizeChanged(object sender, SizeChangedEventArgs e) => DrawActivityChart();
 
@@ -4183,49 +4206,33 @@ Read-Host 'Press Enter to close'
 
         var border = new System.Windows.Controls.Border
         {
-            Margin = new Thickness(3),
+            Margin          = new Thickness(3),
             Background      = new SolidColorBrush(Color.FromRgb(0x07, 0x08, 0x12)),
             BorderBrush     = new SolidColorBrush(Color.FromRgb(0x1A, 0x1E, 0x36)),
             BorderThickness = new Thickness(1),
             CornerRadius    = new System.Windows.CornerRadius(5),
             Cursor          = System.Windows.Input.Cursors.Hand,
-            Child = dp,
-            RenderTransformOrigin = new System.Windows.Point(0.5, 0.5),
-            RenderTransform       = new System.Windows.Media.ScaleTransform(1.0, 1.0)
+            Child           = dp,
         };
 
-        // ── Hover / click animation ──────────────────────────────────────────
-        var easeOut = new System.Windows.Media.Animation.QuadraticEase
-            { EasingMode = System.Windows.Media.Animation.EasingMode.EaseOut };
-
-        var capturedId = client.Id;
+        // ── Hover highlight + click-to-popup ────────────────────────────────
+        var capturedId    = client.Id;
+        var capturedClient = client;
 
         border.MouseEnter += (_, _) =>
         {
-            var st = (System.Windows.Media.ScaleTransform)border.RenderTransform;
-            st.BeginAnimation(System.Windows.Media.ScaleTransform.ScaleXProperty,
-                new DoubleAnimation(st.ScaleX, 1.45, TimeSpan.FromMilliseconds(190)) { EasingFunction = easeOut });
-            st.BeginAnimation(System.Windows.Media.ScaleTransform.ScaleYProperty,
-                new DoubleAnimation(st.ScaleY, 1.45, TimeSpan.FromMilliseconds(190)) { EasingFunction = easeOut });
             border.BorderBrush = new SolidColorBrush(Color.FromRgb(0x4A, 0x85, 0xF5));
             lblName.Foreground = new SolidColorBrush(Color.FromRgb(0xFF, 0xFF, 0xFF));
             System.Windows.Controls.Panel.SetZIndex(border, 10);
-            // Switch to fast refresh for the hovered tile
             _screenFocusCancelCts?.Cancel();
             _screenFocusCancelCts = null;
             SetScreenFocus(capturedId);
         };
         border.MouseLeave += (_, _) =>
         {
-            var st = (System.Windows.Media.ScaleTransform)border.RenderTransform;
-            st.BeginAnimation(System.Windows.Media.ScaleTransform.ScaleXProperty,
-                new DoubleAnimation(st.ScaleX, 1.0, TimeSpan.FromMilliseconds(230)) { EasingFunction = easeOut });
-            st.BeginAnimation(System.Windows.Media.ScaleTransform.ScaleYProperty,
-                new DoubleAnimation(st.ScaleY, 1.0, TimeSpan.FromMilliseconds(230)) { EasingFunction = easeOut });
             border.BorderBrush = new SolidColorBrush(Color.FromRgb(0x1A, 0x1E, 0x36));
             lblName.Foreground = new SolidColorBrush(Color.FromRgb(0xCC, 0xD8, 0xFF));
             System.Windows.Controls.Panel.SetZIndex(border, 0);
-            // Short delay before stopping fast refresh so moving between tiles doesn't stutter
             _screenFocusCancelCts?.Cancel();
             var cts = new System.Threading.CancellationTokenSource();
             _screenFocusCancelCts = cts;
@@ -4236,8 +4243,11 @@ Read-Host 'Press Enter to close'
         };
         border.MouseLeftButtonDown += (_, e) =>
         {
+            e.Handled = true;
             if (e.ClickCount == 2)
             {
+                // Double-click → full RDP window
+                ScreenPopupOverlay.Visibility = Visibility.Collapsed;
                 if (_server?.ConnectedClients.ContainsKey(capturedId) != true) return;
                 var win = new RemoteDesktopWindow(_server!, capturedId);
                 win.Owner = this;
@@ -4245,20 +4255,15 @@ Read-Host 'Press Enter to close'
             }
             else
             {
-                var st = (System.Windows.Media.ScaleTransform)border.RenderTransform;
-                st.BeginAnimation(System.Windows.Media.ScaleTransform.ScaleXProperty,
-                    new DoubleAnimation(st.ScaleX, 1.35, TimeSpan.FromMilliseconds(70)));
-                st.BeginAnimation(System.Windows.Media.ScaleTransform.ScaleYProperty,
-                    new DoubleAnimation(st.ScaleY, 1.35, TimeSpan.FromMilliseconds(70)));
+                // Single click → popup overlay with live screenshot
+                if (!_screenTiles.TryGetValue(capturedId, out var tileImg) || tileImg.Source == null) return;
+                ScreenPopupImage.Source = tileImg.Source;
+                var name = !string.IsNullOrEmpty(capturedClient.Tag) ? capturedClient.Tag
+                    : $"{capturedClient.Username}@{capturedClient.MachineName}".Trim('@');
+                ScreenPopupTitle.Text = name;
+                ScreenPopupSub.Text   = capturedId;
+                ScreenPopupOverlay.Visibility = Visibility.Visible;
             }
-        };
-        border.MouseLeftButtonUp += (_, e) =>
-        {
-            var st = (System.Windows.Media.ScaleTransform)border.RenderTransform;
-            st.BeginAnimation(System.Windows.Media.ScaleTransform.ScaleXProperty,
-                new DoubleAnimation(st.ScaleX, 1.45, TimeSpan.FromMilliseconds(120)) { EasingFunction = easeOut });
-            st.BeginAnimation(System.Windows.Media.ScaleTransform.ScaleYProperty,
-                new DoubleAnimation(st.ScaleY, 1.45, TimeSpan.FromMilliseconds(120)) { EasingFunction = easeOut });
         };
 
         ScreenPanel.Children.Add(border);
@@ -4311,6 +4316,10 @@ Read-Host 'Press Enter to close'
                     bmp.Freeze();
                     if (_screenTiles.TryGetValue(clientId, out var img))
                         img.Source = bmp;
+                    // Keep popup live if it's showing this client
+                    if (ScreenPopupOverlay.Visibility == Visibility.Visible
+                        && ScreenPopupSub.Text == clientId)
+                        ScreenPopupImage.Source = bmp;
                 }
                 catch { }
             });
