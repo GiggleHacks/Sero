@@ -121,6 +121,19 @@ internal static class WebcamFeature
     private static volatile byte[]? _sgCbFrame;
     private static volatile int _cbFrameTotal;
 
+    // Vtable/object allocated once at process start, never freed.
+    // DirectShow worker threads may call back after unregistration on some drivers;
+    // keeping these alive permanently prevents use-after-free → AccessViolationException.
+    private static readonly IntPtr s_cbVtbl;
+    private static readonly IntPtr s_cbObj;
+
+    static WebcamFeature()
+    {
+        var (vtbl, obj) = AllocSGCallbackObj();
+        s_cbVtbl = vtbl;
+        s_cbObj  = obj;
+    }
+
     // ── Public API ────────────────────────────────────────────────────────────
 
     // Keywords that identify known virtual/software cameras — filtered out of the Yes/No detection.
@@ -384,7 +397,6 @@ internal static class WebcamFeature
         IntPtr pCapFilt = IntPtr.Zero, pGrabFilt = IntPtr.Zero;
         IntPtr pGrabIF = IntPtr.Zero, pNullRend = IntPtr.Zero;
         IntPtr pMediaCtrl = IntPtr.Zero;
-        IntPtr cbVtbl = IntPtr.Zero, cbObj = IntPtr.Zero;
         try
         {
             var clsid = CLSID_FilterGraph;
@@ -476,14 +488,12 @@ internal static class WebcamFeature
             if (vidW <= 0) vidW = 640;
             if (vidH <= 0) vidH = 480;
 
-            // Register ISampleGrabberCB callback (BufferCB)
+            // Register ISampleGrabberCB callback (BufferCB) — use the permanent static object
             _sgCbFrame = null;
-            unsafe
             {
-                (cbVtbl, cbObj) = AllocSGCallbackObj();
                 var setCbFn = Marshal.GetDelegateForFunctionPointer<SetCallback_Del>(
                     Marshal.ReadIntPtr(Marshal.ReadIntPtr(pGrabIF), 9 * IntPtr.Size));
-                setCbFn(pGrabIF, cbObj, 1); // 1 = BufferCB
+                setCbFn(pGrabIF, s_cbObj, 1); // 1 = BufferCB
             }
 
             // Run graph
@@ -528,9 +538,9 @@ internal static class WebcamFeature
         catch { }
         finally
         {
-            // Unregister callback BEFORE stopping graph — prevents DirectShow worker thread
-            // from calling SgCb_BufferCB after cbVtbl/cbObj are freed (use-after-free crash).
-            if (pGrabIF != IntPtr.Zero && cbObj != IntPtr.Zero)
+            // Unregister callback BEFORE stopping graph — gives DirectShow worker threads
+            // a chance to drain before we release the filter graph COM objects.
+            if (pGrabIF != IntPtr.Zero)
             {
                 try
                 {
@@ -557,8 +567,7 @@ internal static class WebcamFeature
             if (pCapFilt  != IntPtr.Zero) IUnknown_Release(pCapFilt);
             if (pBuilder  != IntPtr.Zero) IUnknown_Release(pBuilder);
             if (pGraph    != IntPtr.Zero) IUnknown_Release(pGraph);
-            if (cbObj  != IntPtr.Zero) Marshal.FreeHGlobal(cbObj);
-            if (cbVtbl != IntPtr.Zero) Marshal.FreeHGlobal(cbVtbl);
+            // s_cbVtbl / s_cbObj are process-lifetime static — never freed here.
         }
     }
 
