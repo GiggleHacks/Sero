@@ -1812,7 +1812,8 @@ public partial class ServerWindow : Window
             // Settings tab
             if (cfg.TryGetValue("MaxClients", out var mc) && !string.IsNullOrEmpty(mc)) SettingsMaxClients.Text = mc;
             if (cfg.TryGetValue("DiscordRPC", out v)) SettingsDiscordRPC.IsChecked = v == "1";
-            if (cfg.TryGetValue("NotifySound", out v)) SettingsNotifySound.IsChecked = v == "1";
+            if (cfg.TryGetValue("NotifySound",  out v)) SettingsNotifySound.IsChecked  = v == "1";
+            if (cfg.TryGetValue("LogsBadge",    out v)) SettingsLogsBadge.IsChecked    = v != "0";
             if (cfg.TryGetValue("HideLogo", out v) && v == "1")
             {
                 SettingsHideLogo.IsChecked = true;
@@ -1874,6 +1875,7 @@ public partial class ServerWindow : Window
                 ["MaxClients"] = SettingsMaxClients.Text.Trim(),
                 ["DiscordRPC"] = SettingsDiscordRPC.IsChecked == true ? "1" : "0",
                 ["NotifySound"] = SettingsNotifySound.IsChecked == true ? "1" : "0",
+                ["LogsBadge"]  = SettingsLogsBadge.IsChecked  == true ? "1" : "0",
                 ["HideLogo"] = SettingsHideLogo.IsChecked == true ? "1" : "0",
                 ["TelegramEnabled"] = BldTelegramEnabled.IsChecked == true ? "1" : "0",
                 ["TelegramToken"] = BldTelegramToken.Text.Trim(),
@@ -3218,6 +3220,17 @@ Read-Host 'Press Enter to close'
         SaveConfig();
     }
 
+    private void SettingsLogsBadge_Changed(object sender, RoutedEventArgs e)
+    {
+        // Hide badge immediately when disabled
+        if (SettingsLogsBadge.IsChecked != true)
+        {
+            _logUnseenCount = 0;
+            LogBadge.Visibility = Visibility.Collapsed;
+        }
+        SaveConfig();
+    }
+
     private void SettingsDevLogs_Changed(object sender, RoutedEventArgs e)
     {
         bool on = SettingsDevLogs.IsChecked == true;
@@ -3868,8 +3881,8 @@ Read-Host 'Press Enter to close'
         EnsureLogParagraph().Inlines.Add(run);
         TxtLogs.ScrollToEnd();
 
-        // Badge: increment if the Logs tab isn't the currently active tab
-        if (LogsTabItem != null && !LogsTabItem.IsSelected)
+        // Badge: increment if the Logs tab isn't active and the user hasn't disabled it
+        if (LogsTabItem != null && !LogsTabItem.IsSelected && SettingsLogsBadge.IsChecked == true)
         {
             _logUnseenCount++;
             LogBadgeTxt.Text = _logUnseenCount > 999 ? "999+" : $"+{_logUnseenCount}";

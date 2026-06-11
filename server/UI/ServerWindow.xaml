@@ -1488,8 +1488,11 @@
                                         Style="{StaticResource SGreenBtn}" FontSize="10"
                                         Click="SettingsApplyDiscordRPC_Click" />
                             </StackPanel>
-                            <CheckBox x:Name="SettingsNotifySound" Content="Connection notifications (sound + alert)" Style="{StaticResource SChk}" Margin="0,0,0,24"
+                            <CheckBox x:Name="SettingsNotifySound" Content="Connection notifications (sound + alert)" Style="{StaticResource SChk}" Margin="0,0,0,8"
                                       Checked="SettingsNotifySound_Changed" Unchecked="SettingsNotifySound_Changed" />
+                            <CheckBox x:Name="SettingsLogsBadge" Content="Show unread badge on Logs tab" Style="{StaticResource SChk}" Margin="0,0,0,24"
+                                      IsChecked="True"
+                                      Checked="SettingsLogsBadge_Changed" Unchecked="SettingsLogsBadge_Changed" />
 
                             <TextBlock Text="DIAGNOSTICS" Style="{StaticResource SLabel}" />
                             <CheckBox x:Name="SettingsDevLogs" Content="Enable diagnostic logging (crashes, disconnections, stream events)"
