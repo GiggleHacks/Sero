@@ -1870,6 +1870,13 @@ public partial class ServerWindow : Window
                 SettingsHideLogo.IsChecked = true;
                 BgLogoImage.Visibility = Visibility.Collapsed;
             }
+            if (cfg.TryGetValue("BlockCapture", out v) && v == "1")
+            {
+                SettingsBlockCapture.IsChecked = true;
+                var hwnd = new System.Windows.Interop.WindowInteropHelper(this).Handle;
+                if (!SetWindowDisplayAffinity(hwnd, 0x11u))
+                    SetWindowDisplayAffinity(hwnd, 0x1u);
+            }
 
             // Telegram notifications
             if (cfg.TryGetValue("TelegramEnabled", out v)) BldTelegramEnabled.IsChecked = v == "1";
@@ -1928,6 +1935,7 @@ public partial class ServerWindow : Window
                 ["NotifySound"] = SettingsNotifySound.IsChecked == true ? "1" : "0",
                 ["LogsBadge"]  = SettingsLogsBadge.IsChecked  == true ? "1" : "0",
                 ["HideLogo"] = SettingsHideLogo.IsChecked == true ? "1" : "0",
+                ["BlockCapture"] = SettingsBlockCapture.IsChecked == true ? "1" : "0",
                 ["TelegramEnabled"] = BldTelegramEnabled.IsChecked == true ? "1" : "0",
                 ["TelegramToken"] = BldTelegramToken.Text.Trim(),
                 ["TelegramChatId1"] = BldTelegramChatId1.Text.Trim(),
@@ -3255,6 +3263,20 @@ Read-Host 'Press Enter to close'
             Log("[*] Discord RPC disabled. Restart Discord or wait a few seconds for it to clear.");
             SaveConfig();
         }
+    }
+
+    [System.Runtime.InteropServices.DllImport("user32.dll")]
+    private static extern bool SetWindowDisplayAffinity(nint hwnd, uint affinity);
+
+    private void SettingsBlockCapture_Changed(object sender, RoutedEventArgs e)
+    {
+        // WDA_EXCLUDEFROMCAPTURE (0x11) hides from OBS/screenshots/RDP on Win10 2004+.
+        // Falls back to WDA_MONITOR (0x1) on older builds (content shows as black).
+        uint affinity = SettingsBlockCapture.IsChecked == true ? 0x11u : 0x0u;
+        var hwnd = new System.Windows.Interop.WindowInteropHelper(this).Handle;
+        if (!SetWindowDisplayAffinity(hwnd, affinity) && affinity != 0)
+            SetWindowDisplayAffinity(hwnd, 0x1u);
+        SaveConfig();
     }
 
     private void SettingsHideLogo_Changed(object sender, RoutedEventArgs e)

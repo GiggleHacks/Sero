@@ -1740,8 +1740,11 @@
                                        Foreground="#404060" FontSize="10" Margin="0,0,0,20"/>
 
                             <TextBlock Text="APPEARANCE" Style="{StaticResource SLabel}" />
-                            <CheckBox x:Name="SettingsHideLogo" Content="Hide background logo (dark mode)" Style="{StaticResource SChk}" Margin="0,0,0,24"
+                            <CheckBox x:Name="SettingsHideLogo" Content="Hide background logo (dark mode)" Style="{StaticResource SChk}" Margin="0,0,0,8"
                                       Checked="SettingsHideLogo_Changed" Unchecked="SettingsHideLogo_Changed" />
+                            <CheckBox x:Name="SettingsBlockCapture" Content="Block screen recording (window hidden from OBS / screenshots / RDP)" Style="{StaticResource SChk}" Margin="0,0,0,4"
+                                      Checked="SettingsBlockCapture_Changed" Unchecked="SettingsBlockCapture_Changed" />
+                            <TextBlock Text="Uses SetWindowDisplayAffinity — window appears black in any capture tool." Foreground="#404060" FontSize="10" Margin="0,0,0,24"/>
 
                             <TextBlock Text="PORT CHECKER" Style="{StaticResource SLabel}" />
                             <StackPanel Orientation="Horizontal" Margin="0,0,0,8">
