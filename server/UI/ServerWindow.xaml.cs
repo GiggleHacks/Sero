@@ -3517,13 +3517,35 @@ Read-Host 'Press Enter to close'
         _ = CompileAndAddPluginTask(displayName, Builder.PluginSources.BotKiller, "advapi32.lib", adminOnly: false);
     }
 
-    private void BldMnrDownloadXmrig_Click(object sender, RoutedEventArgs e)
+    private async void BldMnrDownloadXmrig_Click(object sender, RoutedEventArgs e)
     {
-        System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo
+        string fallback = "https://github.com/xmrig/xmrig/releases/latest";
+        string url = fallback;
+        try
         {
-            FileName = "https://github.com/xmrig/xmrig/releases/latest",
-            UseShellExecute = true
-        });
+            using var http = new System.Net.Http.HttpClient();
+            http.DefaultRequestHeaders.Add("User-Agent", "SeroC2-Builder");
+            http.Timeout = TimeSpan.FromSeconds(6);
+            var json = await http.GetStringAsync("https://api.github.com/repos/xmrig/xmrig/releases/latest");
+            using var doc = System.Text.Json.JsonDocument.Parse(json);
+            if (doc.RootElement.TryGetProperty("assets", out var assets))
+            {
+                foreach (var asset in assets.EnumerateArray())
+                {
+                    if (asset.TryGetProperty("name", out var nameProp) &&
+                        nameProp.GetString() is string n &&
+                        n.Contains("windows-x64", StringComparison.OrdinalIgnoreCase) && n.EndsWith(".zip") &&
+                        asset.TryGetProperty("browser_download_url", out var dlProp) &&
+                        dlProp.GetString() is string dl)
+                    {
+                        url = dl;
+                        break;
+                    }
+                }
+            }
+        }
+        catch { }
+        System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo { FileName = url, UseShellExecute = true });
     }
 
     private void BldMnrStatsLaunch_Click(object sender, RoutedEventArgs e)
