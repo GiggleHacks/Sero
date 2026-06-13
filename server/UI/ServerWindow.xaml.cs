@@ -134,6 +134,16 @@ public partial class ServerWindow : Window
         }
     }
 
+    private bool _autoScrollActivity = true;
+    private void ActivityLogScroll_ScrollChanged(object sender, ScrollChangedEventArgs e)
+    {
+        if (e.ExtentHeightChange == 0 && e.ViewportHeightChange == 0 && e.VerticalChange != 0)
+            _autoScrollActivity = (ActivityLogScroll.VerticalOffset + ActivityLogScroll.ViewportHeight >= ActivityLogScroll.ExtentHeight - 10);
+
+        if (_autoScrollActivity && (e.ExtentHeightChange > 0 || e.ViewportHeightChange > 0))
+            ActivityLogScroll.ScrollToEnd();
+    }
+
     // Coloured log brushes (frozen = thread-safe, allocated once)
     private static readonly Brush _brushLogError      = MakeBrush(0xF8, 0x71, 0x71); // Soft Coral Red
     private static readonly Brush _brushLogSuccess    = MakeBrush(0x4A, 0xDE, 0x80); // Mint Green

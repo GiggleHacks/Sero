@@ -2645,7 +2645,7 @@
                     </Grid>
                     <!-- Bottom row: recent activity feed -->
                     <Border Grid.Row="1" Background="#0A0B10" CornerRadius="3" Padding="2" BorderThickness="1" BorderBrush="#111E2038">
-                        <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+                        <ScrollViewer x:Name="ActivityLogScroll" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" ScrollChanged="ActivityLogScroll_ScrollChanged">
                             <StackPanel x:Name="ActivityFeedPanel" Margin="4"/>
                         </ScrollViewer>
                     </Border>
