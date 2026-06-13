@@ -47,22 +47,22 @@
                       ColumnHeaderStyle="{StaticResource SColHeader}">
                 <DataGrid.ContextMenu>
                     <ContextMenu>
-                        <MenuItem Header="?? Show"      Click="BtnShow_Click"/>
-                        <MenuItem Header="?? Hide"      Click="BtnHide_Click"/>
-                        <MenuItem Header="? Focus"     Click="BtnFocus_Click"/>
-                        <MenuItem Header="? Restore"   Click="BtnRestore_Click"/>
-                        <MenuItem Header="? Minimize"  Click="BtnMinimize_Click"/>
-                        <MenuItem Header="? Maximize"  Click="BtnMaximize_Click2"/>
-                        <MenuItem Header="? Close"     Click="BtnClose_Click2"/>
-                        <MenuItem Header="? Kill"      Click="BtnKill_Click"/>
+                        <MenuItem Header="&#x1F5BC; Show"     Click="BtnShow_Click"/>
+                        <MenuItem Header="&#x1F6AB; Hide"     Click="BtnHide_Click"/>
+                        <MenuItem Header="&#x1F50D; Focus"    Click="BtnFocus_Click"/>
+                        <MenuItem Header="&#x1F4C2; Restore"  Click="BtnRestore_Click"/>
+                        <MenuItem Header="&#x1F4C2; Minimize" Click="BtnMinimize_Click"/>
+                        <MenuItem Header="&#x1F4C2; Maximize" Click="BtnMaximize_Click2"/>
+                        <MenuItem Header="&#x2715; Close"    Click="BtnClose_Click2"/>
+                        <MenuItem Header="&#x2620; Kill"      Click="BtnKill_Click"/>
                         <Separator/>
-                        <MenuItem Header="? Freeze"    Click="BtnFreeze_Click"/>
-                        <MenuItem Header="? Unfreeze"  Click="BtnUnfreeze_Click"/>
+                        <MenuItem Header="&#x2744; Freeze"    Click="BtnFreeze_Click"/>
+                        <MenuItem Header="&#x1F525; Unfreeze" Click="BtnUnfreeze_Click"/>
                         <Separator/>
                         <MenuItem Header="Copy Title"  Click="GridWins_CopyTitle_Click"/>
                         <MenuItem Header="Copy Handle" Click="GridWins_CopyHandle_Click"/>
                         <Separator/>
-                        <MenuItem Header="? Refresh"   Click="BtnRefresh_Click"/>
+                        <MenuItem Header="&#x1F504; Refresh"  Click="BtnRefresh_Click"/>
                     </ContextMenu>
                 </DataGrid.ContextMenu>
                 <DataGrid.Columns>

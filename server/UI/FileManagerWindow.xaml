@@ -69,13 +69,13 @@
                     MouseLeftButtonDown="Window_MouseLeftButtonDown">
                 <Grid Margin="14,0">
                     <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                        <TextBlock FontSize="11" FontWeight="SemiBold" Foreground="#4A85F5" Margin="0,0,10,0">?? File Manager</TextBlock>
+                        <TextBlock FontSize="11" FontWeight="SemiBold" Foreground="#4A85F5" Margin="0,0,10,0">&#x1F4C2; File Manager</TextBlock>
                         <TextBlock x:Name="TxtTitle" FontSize="11" Foreground="#8890B8" FontFamily="Consolas"/>
                     </StackPanel>
                     <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center">
-                        <Button x:Name="BtnMax" Content="?" Width="30" Height="26" Margin="0,0,4,0"
+                        <Button x:Name="BtnMax" Content="&#x25A1;" Width="30" Height="26" Margin="0,0,4,0"
                                 Style="{StaticResource SBtn}" FontSize="13" Padding="0" Click="BtnMax_Click"/>
-                        <Button Content="?" Width="28" Height="26" FontSize="10"
+                        <Button Content="&#x2715;" Width="28" Height="26" FontSize="10"
                                 Style="{StaticResource SRedBtn}" Click="Close_Click" Padding="0"/>
                     </StackPanel>
                 </Grid>
@@ -91,9 +91,9 @@
                         <ColumnDefinition Width="*"/>
                         <ColumnDefinition Width="Auto"/>
                     </Grid.ColumnDefinitions>
-                    <Button Grid.Column="0" Content="? Back" Height="26" Padding="10,0" Margin="0,0,4,0"
+                    <Button Grid.Column="0" Content="&#x25C0; Back" Height="26" Padding="10,0" Margin="0,0,4,0"
                             Style="{StaticResource FmBtn}" Click="Back_Click"/>
-                    <Button Grid.Column="1" Content="?" Height="26" Width="28" Margin="0,0,6,0"
+                    <Button Grid.Column="1" Content="&#x1F504;" Height="26" Width="28" Margin="0,0,6,0"
                             Style="{StaticResource FmBtn}" FontSize="13" Click="Refresh_Click"
                             ToolTip="Refresh current folder"/>
                     <TextBox x:Name="TxtPath" Grid.Column="2" Height="26"
@@ -149,49 +149,49 @@
                             <Button Height="28" Margin="6,1" Style="{StaticResource FmBtn}" HorizontalContentAlignment="Left"
                                     Click="GoToDesktop_Click" Padding="8,0">
                                 <StackPanel Orientation="Horizontal">
-                                    <TextBlock Text="??" FontSize="12" VerticalAlignment="Center" Margin="0,0,8,0"/>
+                                    <TextBlock Text="&#x1F5A5;" FontSize="12" VerticalAlignment="Center" Margin="0,0,8,0"/>
                                     <TextBlock Text="Desktop" FontSize="11" VerticalAlignment="Center"/>
                                 </StackPanel>
                             </Button>
                             <Button Height="28" Margin="6,1" Style="{StaticResource FmBtn}" HorizontalContentAlignment="Left"
                                     Click="GoToUser_Click" Padding="8,0">
                                 <StackPanel Orientation="Horizontal">
-                                    <TextBlock Text="??" FontSize="12" VerticalAlignment="Center" Margin="0,0,8,0"/>
+                                    <TextBlock Text="&#x1F464;" FontSize="12" VerticalAlignment="Center" Margin="0,0,8,0"/>
                                     <TextBlock Text="User" FontSize="11" VerticalAlignment="Center"/>
                                 </StackPanel>
                             </Button>
                             <Button Height="28" Margin="6,1" Style="{StaticResource FmBtn}" HorizontalContentAlignment="Left"
                                     Click="GoToTemp_Click" Padding="8,0">
                                 <StackPanel Orientation="Horizontal">
-                                    <TextBlock Text="??" FontSize="12" VerticalAlignment="Center" Margin="0,0,8,0"/>
+                                    <TextBlock Text="&#x1F4C1;" FontSize="12" VerticalAlignment="Center" Margin="0,0,8,0"/>
                                     <TextBlock Text="Temp" FontSize="11" VerticalAlignment="Center"/>
                                 </StackPanel>
                             </Button>
                             <Button Height="28" Margin="6,1" Style="{StaticResource FmBtn}" HorizontalContentAlignment="Left"
                                     Click="GoToAppData_Click" Padding="8,0">
                                 <StackPanel Orientation="Horizontal">
-                                    <TextBlock Text="?" FontSize="12" VerticalAlignment="Center" Margin="0,0,8,0"/>
+                                    <TextBlock Text="&#x1F4BE;" FontSize="12" VerticalAlignment="Center" Margin="0,0,8,0"/>
                                     <TextBlock Text="AppData" FontSize="11" VerticalAlignment="Center"/>
                                 </StackPanel>
                             </Button>
                             <Button Height="28" Margin="6,1" Style="{StaticResource FmBtn}" HorizontalContentAlignment="Left"
                                     Click="GoToStartup_Click" Padding="8,0">
                                 <StackPanel Orientation="Horizontal">
-                                    <TextBlock Text="??" FontSize="12" VerticalAlignment="Center" Margin="0,0,8,0"/>
+                                    <TextBlock Text="&#x1F680;" FontSize="12" VerticalAlignment="Center" Margin="0,0,8,0"/>
                                     <TextBlock Text="Startup" FontSize="11" VerticalAlignment="Center"/>
                                 </StackPanel>
                             </Button>
                             <Button Height="28" Margin="6,1" Style="{StaticResource FmBtn}" HorizontalContentAlignment="Left"
                                     Click="GoToWindows_Click" Padding="8,0">
                                 <StackPanel Orientation="Horizontal">
-                                    <TextBlock Text="??" FontSize="12" VerticalAlignment="Center" Margin="0,0,8,0"/>
+                                    <TextBlock Text="&#x1FA9F;" FontSize="12" VerticalAlignment="Center" Margin="0,0,8,0"/>
                                     <TextBlock Text="Windows" FontSize="11" VerticalAlignment="Center"/>
                                 </StackPanel>
                             </Button>
                             <Button Height="28" Margin="6,1" Style="{StaticResource FmBtn}" HorizontalContentAlignment="Left"
                                     Click="GoToSystem32_Click" Padding="8,0">
                                 <StackPanel Orientation="Horizontal">
-                                    <TextBlock Text="?" FontSize="12" VerticalAlignment="Center" Margin="0,0,8,0"/>
+                                    <TextBlock Text="&#x2699;" FontSize="12" VerticalAlignment="Center" Margin="0,0,8,0"/>
                                     <TextBlock Text="System32" FontSize="11" VerticalAlignment="Center"/>
                                 </StackPanel>
                             </Button>
@@ -262,7 +262,7 @@
                                    FontSize="10" FontFamily="Consolas" VerticalAlignment="Center"/>
                         <StackPanel x:Name="TransferStrip" Orientation="Horizontal" Visibility="Collapsed"
                                     HorizontalAlignment="Center" VerticalAlignment="Center">
-                            <TextBlock Text="? " Foreground="#89b4fa" FontSize="11" VerticalAlignment="Center"/>
+                            <TextBlock Text="&#x1F504; " Foreground="#89b4fa" FontSize="11" VerticalAlignment="Center"/>
                             <TextBlock x:Name="TxtTransferName" Text="" Foreground="#C0CCDD"
                                        FontSize="10" FontFamily="Consolas" VerticalAlignment="Center"/>
                             <TextBlock x:Name="TxtTransferStatus" Text="" Foreground="#404868"
@@ -305,26 +305,26 @@
                 <DataGrid.ContextMenu>
                     <ContextMenu Background="#0F1020" BorderBrush="#1E2038" BorderThickness="1"
                                  Foreground="#DDE0F0">
-                        <MenuItem Header="?  Refresh"            Click="Refresh_Click">     <MenuItem.Icon><TextBlock Text="?" Foreground="#a6e3a1" FontSize="11"/></MenuItem.Icon></MenuItem>
+                        <MenuItem Header="&#x1F504; Refresh"            Click="Refresh_Click">     <MenuItem.Icon><TextBlock Text="&#x1F504;" Foreground="#a6e3a1" FontSize="11"/></MenuItem.Icon></MenuItem>
                         <Separator Background="#1E2038"/>
-                        <MenuItem Header="?  Execute Normal"     Click="Exec_Normal_Click">  <MenuItem.Icon><TextBlock Text="?" Foreground="#a6e3a1" FontSize="11"/></MenuItem.Icon></MenuItem>
-                        <MenuItem Header="? Execute Hidden"     Click="Exec_Hidden_Click">  <MenuItem.Icon><TextBlock Text="?" Foreground="#89b4fa" FontSize="11"/></MenuItem.Icon></MenuItem>
-                        <MenuItem Header="?? Execute As Admin"   Click="Exec_Admin_Click">   <MenuItem.Icon><TextBlock Text="??" FontSize="11"/></MenuItem.Icon></MenuItem>
+                        <MenuItem Header="&#x25B6; Execute Normal"     Click="Exec_Normal_Click">  <MenuItem.Icon><TextBlock Text="&#x25B6;" Foreground="#a6e3a1" FontSize="11"/></MenuItem.Icon></MenuItem>
+                        <MenuItem Header="&#x25B6; Execute Hidden"     Click="Exec_Hidden_Click">  <MenuItem.Icon><TextBlock Text="&#x25B6;" Foreground="#89b4fa" FontSize="11"/></MenuItem.Icon></MenuItem>
+                        <MenuItem Header="&#x1F6E1; Execute As Admin"   Click="Exec_Admin_Click">   <MenuItem.Icon><TextBlock Text="&#x1F6E1;" FontSize="11"/></MenuItem.Icon></MenuItem>
                         <Separator Background="#1E2038"/>
-                        <MenuItem Header="?  Download"           Click="Download_Click">     <MenuItem.Icon><TextBlock Text="?" Foreground="#89b4fa" FontSize="11"/></MenuItem.Icon></MenuItem>
-                        <MenuItem Header="?  Upload here"        Click="Upload_Click">       <MenuItem.Icon><TextBlock Text="?" Foreground="#a6e3a1" FontSize="11"/></MenuItem.Icon></MenuItem>
-                        <MenuItem Header="?? New Folder"         Click="NewFolder_Click">    <MenuItem.Icon><TextBlock Text="??" FontSize="11"/></MenuItem.Icon></MenuItem>
+                        <MenuItem Header="&#x2B07; Download"           Click="Download_Click">     <MenuItem.Icon><TextBlock Text="&#x2B07;" Foreground="#89b4fa" FontSize="11"/></MenuItem.Icon></MenuItem>
+                        <MenuItem Header="&#x2B06; Upload here"        Click="Upload_Click">       <MenuItem.Icon><TextBlock Text="&#x2B06;" Foreground="#a6e3a1" FontSize="11"/></MenuItem.Icon></MenuItem>
+                        <MenuItem Header="&#x1F4C1; New Folder"         Click="NewFolder_Click">    <MenuItem.Icon><TextBlock Text="&#x1F4C1;" FontSize="11"/></MenuItem.Icon></MenuItem>
                         <Separator Background="#1E2038"/>
-                        <MenuItem Header="?  Rename"             Click="Rename_Click">       <MenuItem.Icon><TextBlock Text="?" Foreground="#f9e2af" FontSize="11"/></MenuItem.Icon></MenuItem>
-                        <MenuItem Header="?? Delete"             Click="Delete_Click">       <MenuItem.Icon><TextBlock Text="??" Foreground="#f38ba8" FontSize="11"/></MenuItem.Icon></MenuItem>
+                        <MenuItem Header="&#x270F; Rename"             Click="Rename_Click">       <MenuItem.Icon><TextBlock Text="&#x270F;" Foreground="#f9e2af" FontSize="11"/></MenuItem.Icon></MenuItem>
+                        <MenuItem Header="&#x1F5D1; Delete"             Click="Delete_Click">       <MenuItem.Icon><TextBlock Text="&#x1F5D1;" Foreground="#f38ba8" FontSize="11"/></MenuItem.Icon></MenuItem>
                         <Separator Background="#1E2038"/>
                         <MenuItem Header="# Hash (SHA-256)"      Click="Hash_Click">         <MenuItem.Icon><TextBlock Text="#" Foreground="#cba6f7" FontSize="11" FontFamily="Consolas"/></MenuItem.Icon></MenuItem>
-                        <MenuItem Header="?? Show / Hide"        Click="ShowHide_Click">     <MenuItem.Icon><TextBlock Text="??" FontSize="11"/></MenuItem.Icon></MenuItem>
-                        <MenuItem Header="? Set Attributes"     Click="SetAttr_Click">      <MenuItem.Icon><TextBlock Text="?" Foreground="#f9e2af" FontSize="11"/></MenuItem.Icon></MenuItem>
-                        <MenuItem Header="?? Set as Wallpaper"   Click="Wallpaper_Click">    <MenuItem.Icon><TextBlock Text="??" FontSize="11"/></MenuItem.Icon></MenuItem>
-                        <MenuItem Header="?? Play Music"         Click="PlayMusic_Click">    <MenuItem.Icon><TextBlock Text="??" FontSize="11"/></MenuItem.Icon></MenuItem>
-                        <MenuItem Header="?? 7-Zip (compress)"  Click="Zip_Click">          <MenuItem.Icon><TextBlock Text="??" FontSize="11"/></MenuItem.Icon></MenuItem>
-                        <MenuItem Header="?? Download from URL" Click="DownloadUrl_Click">  <MenuItem.Icon><TextBlock Text="??" FontSize="11"/></MenuItem.Icon></MenuItem>
+                        <MenuItem Header="&#x1F441; Show / Hide"        Click="ShowHide_Click">     <MenuItem.Icon><TextBlock Text="&#x1F441;" FontSize="11"/></MenuItem.Icon></MenuItem>
+                        <MenuItem Header="&#x2699; Set Attributes"     Click="SetAttr_Click">      <MenuItem.Icon><TextBlock Text="&#x2699;" Foreground="#f9e2af" FontSize="11"/></MenuItem.Icon></MenuItem>
+                        <MenuItem Header="&#x1F5BC; Set as Wallpaper"   Click="Wallpaper_Click">    <MenuItem.Icon><TextBlock Text="&#x1F5BC;" FontSize="11"/></MenuItem.Icon></MenuItem>
+                        <MenuItem Header="&#x1F3B5; Play Music"         Click="PlayMusic_Click">    <MenuItem.Icon><TextBlock Text="&#x1F3B5;" FontSize="11"/></MenuItem.Icon></MenuItem>
+                        <MenuItem Header="&#x1F5DC; 7-Zip (compress)"  Click="Zip_Click">          <MenuItem.Icon><TextBlock Text="&#x1F5DC;" FontSize="11"/></MenuItem.Icon></MenuItem>
+                        <MenuItem Header="&#x1F310; Download from URL" Click="DownloadUrl_Click">  <MenuItem.Icon><TextBlock Text="&#x1F310;" FontSize="11"/></MenuItem.Icon></MenuItem>
                         <Separator Background="#1E2038"/>
                         <MenuItem Header="Copy Name"     Click="GridFiles_CopyName_Click">     <MenuItem.Icon><TextBlock Text="&#x1F4CB;" FontSize="11" Foreground="#89b4fa"/></MenuItem.Icon></MenuItem>
                         <MenuItem Header="Copy Full Path" Click="GridFiles_CopyPath_Click">     <MenuItem.Icon><TextBlock Text="&#x1F4CB;" FontSize="11" Foreground="#89b4fa"/></MenuItem.Icon></MenuItem>
@@ -378,7 +378,7 @@
                         </ScrollViewer>
                         <StackPanel x:Name="PreviewEmpty" VerticalAlignment="Center"
                                     HorizontalAlignment="Center">
-                            <TextBlock Text="??" FontSize="36" Opacity="0.10" HorizontalAlignment="Center"/>
+                            <TextBlock Text="&#x1F4C4;" FontSize="36" Opacity="0.10" HorizontalAlignment="Center"/>
                             <TextBlock x:Name="TxtPreviewInfo" Text="Select a file"
                                        Foreground="#2A3050" FontSize="10" FontFamily="Consolas"
                                        HorizontalAlignment="Center" Margin="0,8,0,0"
