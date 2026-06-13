@@ -554,7 +554,7 @@
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="MenuItem">
-                        <Grid>
+                        <Grid Background="Transparent">
                             <!-- Item row -->
                             <Border x:Name="bd" Background="Transparent" CornerRadius="5" Margin="1,1">
                                 <Grid>
@@ -578,8 +578,8 @@
                             <!-- Sub-menu popup (only rendered when item has children) -->
                             <Popup x:Name="PART_Popup"
                                    IsOpen="{Binding IsSubmenuOpen, RelativeSource={RelativeSource TemplatedParent}}"
-                                   Placement="Right" HorizontalOffset="-2" VerticalOffset="-5"
-                                   AllowsTransparency="True" Focusable="False" PopupAnimation="Fade">
+                                   Placement="Right" HorizontalOffset="0" VerticalOffset="-5"
+                                   AllowsTransparency="True" Focusable="False" PopupAnimation="None">
                                 <Border Background="#111225" BorderBrush="#22253E" BorderThickness="1"
                                         CornerRadius="8" Padding="4" MinWidth="168">
                                     <Border.Effect>
