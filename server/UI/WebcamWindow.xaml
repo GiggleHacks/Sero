@@ -108,7 +108,7 @@
                     <!-- Left: title + client ID + LIVE badge -->
                     <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
                         <TextBlock FontSize="11" FontWeight="SemiBold" Foreground="#89dceb" Margin="0,0,10,0" VerticalAlignment="Center">📷 Remote Webcam</TextBlock>
-                        <TextBlock x:Name="TxtClientId" Text="" FontSize="11" FontFamily="Consolas" Foreground="#8890B8" VerticalAlignment="Center"/>
+                        <TextBlock x:Name="TxtClientId" Text="" FontSize="11" FontFamily="Consolas" Foreground="#8890B8" VerticalAlignment="Center" Cursor="Hand" MouseLeftButtonUp="TxtClientId_MouseLeftButtonUp" ToolTip="Click to copy ID"/>
                         <Border x:Name="LiveBadge" Margin="12,0,0,0" CornerRadius="3"
                                 Background="#0C2016" BorderBrush="#1A6040" BorderThickness="1"
                                 Padding="6,2" Visibility="Collapsed" VerticalAlignment="Center">
@@ -132,9 +132,19 @@
                                 Click="BtnRemoteDesktop_Click" Content="🖥"/>
                         <Border Margin="0,0,12,0" Padding="8,3" CornerRadius="3"
                                 Background="#0A0C18" BorderBrush="#1E2038" BorderThickness="1">
-                            <TextBlock x:Name="TxtFps" Text="— fps" Foreground="#404878"
-                                       FontSize="10" FontFamily="Segoe UI Mono"
-                                       MinWidth="44" TextAlignment="Center"/>
+                            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                <TextBlock x:Name="TxtPing" Text="— ms" Foreground="#404878"
+                                           FontSize="10" FontFamily="Segoe UI Mono"
+                                           MinWidth="38" TextAlignment="Right" Margin="0,0,8,0"/>
+                                <TextBlock x:Name="TxtBandwidth" Text="— Mbps" Foreground="#404878"
+                                           FontSize="10" FontFamily="Segoe UI Mono"
+                                           MinWidth="54" TextAlignment="Right" Margin="0,0,8,0"/>
+                                <TextBlock x:Name="TxtFps" Text="— fps" Foreground="#404878"
+                                           FontSize="10" FontFamily="Segoe UI Mono"
+                                           MinWidth="44" TextAlignment="Right" Margin="0,0,8,0"/>
+                                <TextBlock x:Name="SignalIcon" Text="📶" Foreground="#404878"
+                                           FontSize="12" FontFamily="Segoe UI Emoji" VerticalAlignment="Center"/>
+                            </StackPanel>
                         </Border>
                         <Button x:Name="BtnFullscreen" Content="⛶" Width="28" Height="26" Margin="0,0,4,0"
                                 Background="#0F1020" BorderBrush="#1E2038" BorderThickness="1"

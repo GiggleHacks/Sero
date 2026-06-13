@@ -503,7 +503,10 @@
                                             <Grid.ColumnDefinitions><ColumnDefinition Width="4"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
                                             <Rectangle Grid.Column="0" Fill="#22C55E"/>
                                             <StackPanel Grid.Column="1" Margin="14,15,12,15">
-                                                <TextBlock Text="ONLINE" Foreground="#506070" FontSize="9" FontWeight="SemiBold"/>
+                                                <StackPanel Orientation="Horizontal" Margin="0,0,0,0">
+                                                    <TextBlock Text="&#xE839;" FontFamily="Segoe Fluent Icons, Segoe MDL2 Assets" Foreground="#22C55E" FontSize="11" Margin="0,0,6,0" VerticalAlignment="Center"/>
+                                                    <TextBlock Text="ONLINE" Foreground="#506070" FontSize="9" FontWeight="SemiBold" VerticalAlignment="Center"/>
+                                                </StackPanel>
                                                 <TextBlock x:Name="DashOnline" Text="0" Foreground="#22C55E" FontSize="34" FontWeight="Bold" Margin="0,5,0,0"/>
                                                 <TextBlock Text="connected now" Foreground="#25304A" FontSize="9" Margin="0,3,0,0"/>
                                             </StackPanel>
@@ -516,7 +519,10 @@
                                             <Grid.ColumnDefinitions><ColumnDefinition Width="4"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
                                             <Rectangle Grid.Column="0" Fill="#4A85F5"/>
                                             <StackPanel Grid.Column="1" Margin="14,15,12,15">
-                                                <TextBlock Text="TOTAL SEEN" Foreground="#506070" FontSize="9" FontWeight="SemiBold"/>
+                                                <StackPanel Orientation="Horizontal" Margin="0,0,0,0">
+                                                    <TextBlock Text="&#xE716;" FontFamily="Segoe Fluent Icons, Segoe MDL2 Assets" Foreground="#4A85F5" FontSize="11" Margin="0,0,6,0" VerticalAlignment="Center"/>
+                                                    <TextBlock Text="TOTAL SEEN" Foreground="#506070" FontSize="9" FontWeight="SemiBold" VerticalAlignment="Center"/>
+                                                </StackPanel>
                                                 <TextBlock x:Name="DashTotal" Text="0" Foreground="#4A85F5" FontSize="34" FontWeight="Bold" Margin="0,5,0,0"/>
                                                 <TextBlock Text="unique clients" Foreground="#25304A" FontSize="9" Margin="0,3,0,0"/>
                                             </StackPanel>
@@ -529,7 +535,10 @@
                                             <Grid.ColumnDefinitions><ColumnDefinition Width="4"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
                                             <Rectangle Grid.Column="0" Fill="#F59E0B"/>
                                             <StackPanel Grid.Column="1" Margin="14,15,12,15">
-                                                <TextBlock Text="NEW 24H" Foreground="#506070" FontSize="9" FontWeight="SemiBold"/>
+                                                <StackPanel Orientation="Horizontal" Margin="0,0,0,0">
+                                                    <TextBlock Text="&#xE945;" FontFamily="Segoe Fluent Icons, Segoe MDL2 Assets" Foreground="#F59E0B" FontSize="11" Margin="0,0,6,0" VerticalAlignment="Center"/>
+                                                    <TextBlock Text="NEW 24H" Foreground="#506070" FontSize="9" FontWeight="SemiBold" VerticalAlignment="Center"/>
+                                                </StackPanel>
                                                 <TextBlock x:Name="DashNew24h" Text="0" Foreground="#F59E0B" FontSize="34" FontWeight="Bold" Margin="0,5,0,0"/>
                                                 <TextBlock Text="connections today" Foreground="#25304A" FontSize="9" Margin="0,3,0,0"/>
                                             </StackPanel>
@@ -542,7 +551,10 @@
                                             <Grid.ColumnDefinitions><ColumnDefinition Width="4"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
                                             <Rectangle Grid.Column="0" Fill="#7C5CE8"/>
                                             <StackPanel Grid.Column="1" Margin="14,15,12,15">
-                                                <TextBlock Text="UPTIME" Foreground="#506070" FontSize="9" FontWeight="SemiBold"/>
+                                                <StackPanel Orientation="Horizontal" Margin="0,0,0,0">
+                                                    <TextBlock Text="&#xE121;" FontFamily="Segoe Fluent Icons, Segoe MDL2 Assets" Foreground="#7C5CE8" FontSize="11" Margin="0,0,6,0" VerticalAlignment="Center"/>
+                                                    <TextBlock Text="UPTIME" Foreground="#506070" FontSize="9" FontWeight="SemiBold" VerticalAlignment="Center"/>
+                                                </StackPanel>
                                                 <TextBlock x:Name="DashUptime" Text="--" Foreground="#7C5CE8" FontSize="20" FontWeight="Bold" Margin="0,5,0,0" TextWrapping="Wrap"/>
                                                 <TextBlock Text="server running" Foreground="#25304A" FontSize="9" Margin="0,3,0,0"/>
                                             </StackPanel>
@@ -650,7 +662,10 @@
                                     <Border Grid.Column="0" Background="#0A0D1A" CornerRadius="8" Margin="0,0,9,0"
                                             Padding="14,12" BorderThickness="1" BorderBrush="#1A1E36">
                                         <StackPanel>
-                                            <TextBlock Text="WEBCAM" Foreground="#506070" FontSize="9" FontWeight="SemiBold"/>
+                                            <StackPanel Orientation="Horizontal" Margin="0,0,0,0">
+                                                <TextBlock Text="&#xE114;" FontFamily="Segoe Fluent Icons, Segoe MDL2 Assets" Foreground="#F59E0B" FontSize="11" Margin="0,0,6,0" VerticalAlignment="Center"/>
+                                                <TextBlock Text="WEBCAM" Foreground="#506070" FontSize="9" FontWeight="SemiBold" VerticalAlignment="Center"/>
+                                            </StackPanel>
                                             <TextBlock x:Name="DashWebcam" Text="—" Foreground="#F59E0B" FontSize="22" FontWeight="Bold" Margin="0,5,0,0"/>
                                             <TextBlock Text="w/ camera" Foreground="#25304A" FontSize="9" Margin="0,2,0,0"/>
                                         </StackPanel>
@@ -659,7 +674,10 @@
                                     <Border Grid.Column="1" Background="#0A0D1A" CornerRadius="8" Margin="0,0,9,0"
                                             Padding="14,12" BorderThickness="1" BorderBrush="#1A1E36">
                                         <StackPanel>
-                                            <TextBlock Text="ADMIN" Foreground="#506070" FontSize="9" FontWeight="SemiBold"/>
+                                            <StackPanel Orientation="Horizontal" Margin="0,0,0,0">
+                                                <TextBlock Text="&#xEA18;" FontFamily="Segoe Fluent Icons, Segoe MDL2 Assets" Foreground="#EF4444" FontSize="11" Margin="0,0,6,0" VerticalAlignment="Center"/>
+                                                <TextBlock Text="ADMIN" Foreground="#506070" FontSize="9" FontWeight="SemiBold" VerticalAlignment="Center"/>
+                                            </StackPanel>
                                             <TextBlock x:Name="DashAdmin" Text="—" Foreground="#EF4444" FontSize="22" FontWeight="Bold" Margin="0,5,0,0"/>
                                             <TextBlock Text="elevated" Foreground="#25304A" FontSize="9" Margin="0,2,0,0"/>
                                         </StackPanel>
@@ -668,7 +686,10 @@
                                     <Border Grid.Column="2" Background="#0A0D1A" CornerRadius="8" Margin="0,0,9,0"
                                             Padding="14,12" BorderThickness="1" BorderBrush="#1A1E36">
                                         <StackPanel>
-                                            <TextBlock Text="TAGGED" Foreground="#506070" FontSize="9" FontWeight="SemiBold"/>
+                                            <StackPanel Orientation="Horizontal" Margin="0,0,0,0">
+                                                <TextBlock Text="&#xE8EC;" FontFamily="Segoe Fluent Icons, Segoe MDL2 Assets" Foreground="#C8991A" FontSize="11" Margin="0,0,6,0" VerticalAlignment="Center"/>
+                                                <TextBlock Text="TAGGED" Foreground="#506070" FontSize="9" FontWeight="SemiBold" VerticalAlignment="Center"/>
+                                            </StackPanel>
                                             <TextBlock x:Name="DashTagged" Text="0" Foreground="#C8991A" FontSize="22" FontWeight="Bold" Margin="0,5,0,0"/>
                                             <TextBlock Text="marked clients" Foreground="#25304A" FontSize="9" Margin="0,2,0,0"/>
                                         </StackPanel>
@@ -677,7 +698,10 @@
                                     <Border Grid.Column="3" Background="#0A0D1A" CornerRadius="8"
                                             Padding="14,12" BorderThickness="1" BorderBrush="#1A1E36">
                                         <StackPanel>
-                                            <TextBlock Text="TOP COUNTRY" Foreground="#506070" FontSize="9" FontWeight="SemiBold"/>
+                                            <StackPanel Orientation="Horizontal" Margin="0,0,0,0">
+                                                <TextBlock Text="&#xE12B;" FontFamily="Segoe Fluent Icons, Segoe MDL2 Assets" Foreground="#506070" FontSize="11" Margin="0,0,6,0" VerticalAlignment="Center"/>
+                                                <TextBlock Text="TOP COUNTRY" Foreground="#506070" FontSize="9" FontWeight="SemiBold" VerticalAlignment="Center"/>
+                                            </StackPanel>
                                             <TextBlock x:Name="DashTopCountry" Text="—" Foreground="#DDE0F0" FontSize="16" FontWeight="Bold" Margin="0,5,0,0" TextWrapping="Wrap"/>
                                             <TextBlock Text="by connections" Foreground="#25304A" FontSize="9" Margin="0,2,0,0"/>
                                         </StackPanel>

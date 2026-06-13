@@ -128,6 +128,16 @@ public partial class WebcamWindow : Window
         1 => 720, 2 => 480, 3 => 360, 4 => 240, _ => 0
     };
 
+    private async void TxtClientId_MouseLeftButtonUp(object sender, MouseButtonEventArgs e)
+    {
+        Clipboard.SetText(_clientId);
+        TxtClientId.Text = "Copied!";
+        TxtClientId.Foreground = new SolidColorBrush(Color.FromRgb(0x22, 0xC5, 0x5E));
+        await Task.Delay(1500);
+        TxtClientId.Text = _clientId;
+        TxtClientId.Foreground = new SolidColorBrush(Color.FromRgb(0x88, 0x90, 0xB8));
+    }
+
     private void SendStart()
     {
         int idx = CmbDevice.SelectedIndex;
@@ -223,6 +233,7 @@ public partial class WebcamWindow : Window
             {
                 try
                 {
+                    _bytesReceived += json.Length;
                     var bytes = Convert.FromBase64String(j64);
                     using var ms = new MemoryStream(bytes);
                     var bi = new BitmapImage();
@@ -238,6 +249,10 @@ public partial class WebcamWindow : Window
         }
         catch { }
     }
+    
+    private void SendAck() =>
+        _ = _server.SendToClient(_clientId,
+            new Packet { Type = PacketType.WcamFrameAck, Data = "{}" });
 
     private void ShowFrame(BitmapImage bi)
     {
@@ -251,6 +266,7 @@ public partial class WebcamWindow : Window
             TxtFps.Text = $"{_frameCount} fps";
             _frameCount = 0;
             _fpsTime = now;
+            UpdateMetrics();
         }
 
         // Auto-save: one frame per second while checkbox is checked
@@ -258,6 +274,30 @@ public partial class WebcamWindow : Window
         {
             _lastAutoSave = now;
             SaveFrame(bi);
+        }
+        
+        if (!_closed) SendAck();
+    }
+    
+    private int _bytesReceived;
+    
+    private void UpdateMetrics()
+    {
+        double mbps = (_bytesReceived * 8.0) / 1000000.0;
+        TxtBandwidth.Text = $"{mbps:F1} Mbps";
+        _bytesReceived = 0;
+        
+        if (_server.ConnectedClients.TryGetValue(_clientId, out var client))
+        {
+            int ping = client.PingMs;
+            TxtPing.Text = $"{ping} ms";
+            if (ping < 100) {
+                SignalIcon.Foreground = new SolidColorBrush(Color.FromRgb(0x22, 0xC5, 0x5E));
+            } else if (ping < 250) {
+                SignalIcon.Foreground = new SolidColorBrush(Color.FromRgb(0xF5, 0x9E, 0x0B));
+            } else {
+                SignalIcon.Foreground = new SolidColorBrush(Color.FromRgb(0xEF, 0x44, 0x44));
+            }
         }
     }
 

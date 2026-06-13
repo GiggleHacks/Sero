@@ -58,6 +58,7 @@ public partial class RemoteDesktopWindow : Window
         SldQuality.ValueChanged += (_, e) => { TxtQuality.Text = $"{(int)e.NewValue}"; _quality = (int)e.NewValue; UiPrefs.Set("RdpQuality", (int)e.NewValue); };
         SldScale.ValueChanged   += (_, e) => { TxtScale.Text = $"{(int)e.NewValue}%"; UiPrefs.Set("RdpScale", (int)e.NewValue); };
 
+
         // Checkboxes always start unchecked — user enables manually each session
 
         // Reclaim keyboard focus on ImgFrame whenever focus leaves it.
@@ -119,6 +120,16 @@ public partial class RemoteDesktopWindow : Window
             _ = _server.SendToClient(_clientId,
                 new Packet { Type = PacketType.RdpGetMonitors, Data = "{}" });
         };
+    }
+
+    private async void TxtClientId_MouseLeftButtonUp(object sender, MouseButtonEventArgs e)
+    {
+        Clipboard.SetText(_clientId);
+        TxtClientId.Text = "Copied!";
+        TxtClientId.Foreground = new SolidColorBrush(Color.FromRgb(0x22, 0xC5, 0x5E));
+        await Task.Delay(1500);
+        TxtClientId.Text = _clientId;
+        TxtClientId.Foreground = new SolidColorBrush(Color.FromRgb(0x88, 0x90, 0xB8));
     }
 
     // ── Fullscreen toggle ─────────────────────────────────────────────────────
@@ -220,6 +231,7 @@ public partial class RemoteDesktopWindow : Window
         // its pipeline full — without this the 8 in-flight credits drain and the stream freezes.
         if (_renderBusy) { if (!_closed) SendAck(); return; }
         _renderBusy = true;
+        _bytesReceived += json.Length;
 
         Task.Run(async () =>
         {
@@ -375,6 +387,29 @@ public partial class RemoteDesktopWindow : Window
         {
             TxtFps.Text = $"{_frameCount} fps";
             _frameCount = 0; _fpsTime = now;
+            UpdateMetrics();
+        }
+    }
+    
+    private int _bytesReceived;
+    
+    private void UpdateMetrics()
+    {
+        double mbps = (_bytesReceived * 8.0) / 1000000.0;
+        TxtBandwidth.Text = $"{mbps:F1} Mbps";
+        _bytesReceived = 0;
+        
+        if (_server.ConnectedClients.TryGetValue(_clientId, out var client))
+        {
+            int ping = client.PingMs;
+            TxtPing.Text = $"{ping} ms";
+            if (ping < 100) {
+                SignalIcon.Foreground = new SolidColorBrush(Color.FromRgb(0x22, 0xC5, 0x5E));
+            } else if (ping < 250) {
+                SignalIcon.Foreground = new SolidColorBrush(Color.FromRgb(0xF5, 0x9E, 0x0B));
+            } else {
+                SignalIcon.Foreground = new SolidColorBrush(Color.FromRgb(0xEF, 0x44, 0x44));
+            }
         }
     }
 

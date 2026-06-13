@@ -114,9 +114,12 @@ internal static class WebcamFeature
     // ── State ─────────────────────────────────────────────────────────────────
 
     private static volatile bool _running;
-    private static Thread?       _thread;
-    private static Func<int,string,System.Threading.Tasks.Task>? _send;
+    private static Thread? _thread;
+    private static Func<int, string, System.Threading.Tasks.Task>? _send;
     private static WcamStartDataStub _cfg = new();
+
+    private static int _pendingRequests;
+    private static readonly SemaphoreSlim _frameReqWake = new(0, 100);
 
     private static volatile byte[]? _sgCbFrame;
     private static volatile int _cbFrameTotal;
@@ -165,6 +168,7 @@ internal static class WebcamFeature
         _cfg     = cfg;
         _send    = send;
         _running = true;
+        _pendingRequests = 2; // Allow 2 in-flight frames initially
         _thread  = new Thread(CaptureLoop) { IsBackground = true, Name = "WcamCapture" };
         _thread.SetApartmentState(ApartmentState.STA);
         _thread.Start();
@@ -174,8 +178,16 @@ internal static class WebcamFeature
     {
         _running = false;
         WebcamDShow.Stop();
+        _frameReqWake.Release();
         _thread?.Join(3000);
         _thread = null;
+    }
+
+    public static void SignalAck()
+    {
+        Interlocked.Increment(ref _pendingRequests);
+        if (_frameReqWake.CurrentCount == 0)
+            _frameReqWake.Release();
     }
 
     // ── Capture loop ──────────────────────────────────────────────────────────
@@ -510,6 +522,13 @@ internal static class WebcamFeature
 
             while (_running)
             {
+                if (_pendingRequests <= 0)
+                {
+                    _frameReqWake.Wait(200);
+                    if (!_running) break;
+                    if (_pendingRequests <= 0) continue;
+                }
+                
                 try
                 {
                     Thread.Sleep(Math.Max(intervalMs / 2, 10));
@@ -551,6 +570,8 @@ internal static class WebcamFeature
                     lastSendMs = now;
                     var b64  = RemoteDesktopFeature.ToBase64(jpeg);
                     var json = "{\"w\":" + outW + ",\"h\":" + outH + ",\"j\":\"" + b64 + "\"}";
+                    
+                    Interlocked.Decrement(ref _pendingRequests);
                     _send?.Invoke((int)PacketType.WcamFrame, json)
                          .ContinueWith(_ => { }, System.Threading.Tasks.TaskContinuationOptions.None);
                 }
