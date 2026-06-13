@@ -225,7 +225,6 @@ public partial class ServerWindow : Window
             view.Filter = ClientFilter;
             view.SortDescriptions.Add(new System.ComponentModel.SortDescription(
                 nameof(Data.ConnectedClient.HasTag), System.ComponentModel.ListSortDirection.Descending));
-            view.GroupDescriptions.Add(new System.Windows.Data.PropertyGroupDescription(nameof(Data.ConnectedClient.Country)));
             GridClients.ItemsSource = view;
             LoadColumnVisibility();
             RestoreGridColumnWidths();
@@ -427,8 +426,17 @@ public partial class ServerWindow : Window
         var display = clientId.Length > 8 ? clientId[..8] : clientId;
         var line = $"[{DateTime.Now:HH:mm:ss}]  [{display}]  {data.Type}  {data.Original}  →  {data.Replaced}\n";
         ClipperLog.AppendText(line);
-        ClipperLogScroll.ScrollToEnd();
         ClipperCountTxt.Text = $"  —  {_clipperCount} replacement{(_clipperCount != 1 ? "s" : "")}";
+    }
+
+    private bool _autoScrollClipper = true;
+    private void ClipperLogScroll_ScrollChanged(object sender, ScrollChangedEventArgs e)
+    {
+        if (e.ExtentHeightChange == 0 && e.ViewportHeightChange == 0 && e.VerticalChange != 0)
+            _autoScrollClipper = (ClipperLogScroll.VerticalOffset + ClipperLogScroll.ViewportHeight >= ClipperLogScroll.ExtentHeight - 10);
+
+        if (_autoScrollClipper && (e.ExtentHeightChange > 0 || e.ViewportHeightChange > 0))
+            ClipperLogScroll.ScrollToEnd();
     }
 
     // ── Server-side Telegram notification (global counter) ──────────────────────
@@ -4273,16 +4281,26 @@ Read-Host 'Press Enter to close'
             p.Inlines.Add(trimNote);
         }
 
-        bool isAtBottom = TxtLogs.VerticalOffset + TxtLogs.ViewportHeight >= TxtLogs.ExtentHeight - 10;
-
         var para = EnsureLogParagraph();
         foreach (var (text, brush) in TokenizeLogEntry(msg))
         {
             var run = new System.Windows.Documents.Run(text) { Foreground = brush };
             para.Inlines.Add(run);
         }
+    }
 
-        if (isAtBottom || TxtLogs.ExtentHeight == 0)
+    private bool _autoScrollLogs = true;
+    private void TxtLogs_ScrollChanged(object sender, ScrollChangedEventArgs e)
+    {
+        // If the user scrolled up manually, turn off auto-scroll.
+        if (e.ExtentHeightChange == 0 && e.ViewportHeightChange == 0 && e.VerticalChange != 0)
+        {
+            _autoScrollLogs = (TxtLogs.VerticalOffset + TxtLogs.ViewportHeight >= TxtLogs.ExtentHeight - 10);
+        }
+
+        // If content size increased, or viewport changed (e.g. tab became visible),
+        // and auto-scroll is enabled, force scroll to end.
+        if (_autoScrollLogs && (e.ExtentHeightChange > 0 || e.ViewportHeightChange > 0))
         {
             TxtLogs.ScrollToEnd();
         }
