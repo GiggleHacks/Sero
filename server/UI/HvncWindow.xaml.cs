@@ -1,4 +1,5 @@
 using System.IO;
+using System.Linq;
 using System.Windows;
 using System.Windows.Controls.Primitives;
 using System.Windows.Input;
@@ -446,6 +447,16 @@ public partial class HvncWindow : Window
     private void BtnStart_Click(object s, RoutedEventArgs e) => SendStart();
     private void BtnStop_Click(object s, RoutedEventArgs e)  => SendStop();
     private void Close_Click(object s, RoutedEventArgs e)    => Close();
+
+    private void BtnMenu_Click(object sender, RoutedEventArgs e)
+    {
+        var mainWindow = Application.Current.Windows.OfType<ServerWindow>().FirstOrDefault();
+        if (mainWindow == null) return;
+        var menu = FeatureContextMenu.Build(_server, _clientId, mainWindow, "HvncWindow");
+        menu.PlacementTarget = (UIElement)sender;
+        menu.Placement = System.Windows.Controls.Primitives.PlacementMode.Bottom;
+        menu.IsOpen = true;
+    }
 
     private void TitleBar_Drag(object s, MouseButtonEventArgs e)
     {

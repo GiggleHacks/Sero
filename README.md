@@ -1,6 +1,6 @@
 # SeroRAT
 
-![Version](https://img.shields.io/badge/version-1.6.5-orange.svg)
+![Version](https://img.shields.io/badge/version-1.6.6-orange.svg)
 ![License](https://img.shields.io/badge/license-MIT-blue.svg)
 ![Platform](https://img.shields.io/badge/platform-Windows-lightgrey.svg)
 ![Server .NET](https://img.shields.io/badge/server-.NET%2010-purple.svg)

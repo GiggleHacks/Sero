@@ -1,4 +1,5 @@
 using System.IO;
+using System.Linq;
 using System.Runtime.InteropServices;
 using System.Text.Json;
 using System.Windows;
@@ -156,6 +157,18 @@ public partial class RemoteDesktopWindow : Window
             RootBorder.CornerRadius = new CornerRadius(0); // no rounded corners when fullscreen
             BtnFullscreen.Content = "❐";
         }
+    }
+
+    // ── Hamburger menu ───────────────────────────────────────────────────────
+
+    private void BtnMenu_Click(object sender, RoutedEventArgs e)
+    {
+        var mainWindow = Application.Current.Windows.OfType<ServerWindow>().FirstOrDefault();
+        if (mainWindow == null) return;
+        var menu = FeatureContextMenu.Build(_server, _clientId, mainWindow, "RemoteDesktopWindow");
+        menu.PlacementTarget = (UIElement)sender;
+        menu.Placement = System.Windows.Controls.Primitives.PlacementMode.Bottom;
+        menu.IsOpen = true;
     }
 
     // ── Button state ──────────────────────────────────────────────────────────

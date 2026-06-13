@@ -18,6 +18,8 @@ public partial class ServerWindow : Window
 {
     private readonly DataStore _store = new();
     private TlsServer? _server;
+    internal TlsServer? Server => _server;
+    internal DataStore Store => _store;
     private DateTime _serverStartedAt;
     private readonly DispatcherTimer _dashTimer;
     private readonly DispatcherTimer _uptimeTimer;

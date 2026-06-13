@@ -198,6 +198,10 @@
                             <TextBlock x:Name="TxtFps" Text="— fps" Foreground="#404878"
                                        FontSize="10" FontFamily="Segoe UI Mono" MinWidth="44" TextAlignment="Center"/>
                         </Border>
+                        <Button x:Name="BtnMenu" Content="☰" Width="28" Height="26" Margin="0,0,4,0"
+                                Background="#0F1020" BorderBrush="#1E2038" BorderThickness="1"
+                                Foreground="#606880" FontSize="14" Cursor="Hand" Padding="0"
+                                ToolTip="Actions" Click="BtnMenu_Click"/>
                         <Button x:Name="BtnFullscreen" Content="⛶" Width="28" Height="26" Margin="0,0,4,0"
                                 Style="{StaticResource IconBtn}" FontSize="13" Padding="0"
                                 Click="BtnFullscreen_Click"/>
