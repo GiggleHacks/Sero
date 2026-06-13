@@ -145,6 +145,8 @@
                         <MenuItem Header="⊘ Disable" Click="BtnDisable_Click"/>
                         <MenuItem Header="✖ Delete"  Click="BtnDelete_Click"/>
                         <Separator/>
+                        <MenuItem Header="Copy Name" Click="GridServices_CopyName_Click"/>
+                        <Separator/>
                         <MenuItem Header="⟳ Refresh" Click="BtnRefresh_Click"/>
                     </ContextMenu>
                 </DataGrid.ContextMenu>

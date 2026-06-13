@@ -188,6 +188,9 @@
                     <ContextMenu>
                         <MenuItem Header="⛔  Close Connection" Click="CloseConn_Click"/>
                         <MenuItem Header="💀  Kill Process"      Click="KillProc_Click"/>
+                        <Separator/>
+                        <MenuItem Header="Copy Local Address"   Click="GridTcp_CopyLocal_Click"/>
+                        <MenuItem Header="Copy Remote Address"  Click="GridTcp_CopyRemote_Click"/>
                     </ContextMenu>
                 </DataGrid.ContextMenu>
                 <DataGrid.Columns>

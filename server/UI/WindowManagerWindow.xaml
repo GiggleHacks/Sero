@@ -59,6 +59,9 @@
                         <MenuItem Header="? Freeze"    Click="BtnFreeze_Click"/>
                         <MenuItem Header="? Unfreeze"  Click="BtnUnfreeze_Click"/>
                         <Separator/>
+                        <MenuItem Header="Copy Title"  Click="GridWins_CopyTitle_Click"/>
+                        <MenuItem Header="Copy Handle" Click="GridWins_CopyHandle_Click"/>
+                        <Separator/>
                         <MenuItem Header="? Refresh"   Click="BtnRefresh_Click"/>
                     </ContextMenu>
                 </DataGrid.ContextMenu>

@@ -77,6 +77,10 @@ public partial class TcpManagerWindow : Window
     {
         var sel = GridTcp.SelectedItems.Cast<TcpEntryVM>().ToList();
         if (sel.Count == 0) return;
+        string confirmMsg = sel.Count == 1
+            ? $"Close TCP connection {sel[0].RemoteAddr} ({sel[0].ProcessName})?"
+            : $"Close {sel.Count} TCP connections?";
+        if (MessageBox.Show(confirmMsg, "Confirm", MessageBoxButton.YesNo, MessageBoxImage.Warning) != MessageBoxResult.Yes) return;
         foreach (var row in sel)
         {
             var data = JsonConvert.SerializeObject(new TcpCloseData { LocalAddr = row.LocalAddr, RemoteAddr = row.RemoteAddr });
@@ -198,6 +202,18 @@ public partial class TcpManagerWindow : Window
     {
         Width  = Math.Max(MinWidth,  Width  + e.HorizontalChange);
         Height = Math.Max(MinHeight, Height + e.VerticalChange);
+    }
+
+    private void GridTcp_CopyLocal_Click(object s, RoutedEventArgs e)
+    {
+        if (GridTcp.SelectedItem is TcpEntryVM vm)
+            try { System.Windows.Clipboard.SetText(vm.LocalAddr); TxtStatus.Text = $"Copied: {vm.LocalAddr}"; } catch { }
+    }
+
+    private void GridTcp_CopyRemote_Click(object s, RoutedEventArgs e)
+    {
+        if (GridTcp.SelectedItem is TcpEntryVM vm)
+            try { System.Windows.Clipboard.SetText(vm.RemoteAddr); TxtStatus.Text = $"Copied: {vm.RemoteAddr}"; } catch { }
     }
 
     private void Close_Click(object s, RoutedEventArgs e) => Close();

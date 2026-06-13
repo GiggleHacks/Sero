@@ -168,6 +168,10 @@
                         <MenuItem Header="Suspend"         Click="BtnSuspend_Click"/>
                         <MenuItem Header="Resume"          Click="BtnResume_Click"/>
                         <Separator/>
+                        <MenuItem Header="Copy PID"        Click="GridProcs_CopyPid_Click"/>
+                        <MenuItem Header="Copy Name"       Click="GridProcs_CopyName_Click"/>
+                        <MenuItem Header="Copy Path"       Click="GridProcs_CopyPath_Click"/>
+                        <Separator/>
                         <MenuItem Header="Refresh"         Click="BtnRefresh_Click"/>
                     </ContextMenu>
                 </DataGrid.ContextMenu>

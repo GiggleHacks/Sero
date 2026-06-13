@@ -116,6 +116,13 @@ public partial class KeyloggerWindow : Window
 
     private void BtnRefresh_Click(object s, RoutedEventArgs e) => RequestFileList();
 
+    private void ListFiles_CopyName_Click(object s, RoutedEventArgs e)
+    {
+        if (ListFiles.SelectedItem is not LogFileVM vm) return;
+        try { System.Windows.Clipboard.SetText(vm.Filename); } catch { }
+        TxtStatus.Text = $"Copied: {vm.Filename}";
+    }
+
     private async void ListFiles_SelectionChanged(object s, System.Windows.Controls.SelectionChangedEventArgs e)
     {
         if (ListFiles.SelectedItem is not LogFileVM vm) return;

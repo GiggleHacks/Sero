@@ -370,6 +370,10 @@ public partial class ProcessManagerWindow : Window
     {
         var sel = GridProcs.SelectedItems.Cast<ProcEntryVM>().ToList();
         if (sel.Count == 0) return;
+        string msg = sel.Count == 1
+            ? $"Kill process '{sel[0].Name}' (PID {sel[0].Pid})?\nThe process will be terminated immediately."
+            : $"Kill {sel.Count} processes?";
+        if (MessageBox.Show(msg, "Confirm", MessageBoxButton.YesNo, MessageBoxImage.Warning) != MessageBoxResult.Yes) return;
         foreach (var vm in sel)
             _ = _server.SendToClient(_clientId, new Packet { Type = PacketType.ProcKill, Data = JsonConvert.SerializeObject(new ProcKillData { Pid = vm.Pid }) });
         TxtStatus.Text = sel.Count == 1 ? $"Kill → PID {sel[0].Pid} ({sel[0].Name})" : $"Kill → {sel.Count} processes";
@@ -406,6 +410,24 @@ public partial class ProcessManagerWindow : Window
     {
         if (e.LeftButton == System.Windows.Input.MouseButtonState.Pressed && WindowState != WindowState.Maximized)
             DragMove();
+    }
+
+    private void GridProcs_CopyPid_Click(object s, RoutedEventArgs e)
+    {
+        if (GridProcs.SelectedItem is ProcEntryVM vm)
+            try { System.Windows.Clipboard.SetText(vm.Pid.ToString()); TxtStatus.Text = $"Copied PID: {vm.Pid}"; } catch { }
+    }
+
+    private void GridProcs_CopyName_Click(object s, RoutedEventArgs e)
+    {
+        if (GridProcs.SelectedItem is ProcEntryVM vm)
+            try { System.Windows.Clipboard.SetText(vm.Name); TxtStatus.Text = $"Copied: {vm.Name}"; } catch { }
+    }
+
+    private void GridProcs_CopyPath_Click(object s, RoutedEventArgs e)
+    {
+        if (GridProcs.SelectedItem is ProcEntryVM vm && !string.IsNullOrEmpty(vm.ExePath))
+            try { System.Windows.Clipboard.SetText(vm.ExePath); TxtStatus.Text = $"Copied path: {vm.ExePath}"; } catch { }
     }
 
     private void ResizeGrip_DragDelta(object s, DragDeltaEventArgs e)

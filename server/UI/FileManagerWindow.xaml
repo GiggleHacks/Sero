@@ -325,6 +325,9 @@
                         <MenuItem Header="?? Play Music"         Click="PlayMusic_Click">    <MenuItem.Icon><TextBlock Text="??" FontSize="11"/></MenuItem.Icon></MenuItem>
                         <MenuItem Header="?? 7-Zip (compress)"  Click="Zip_Click">          <MenuItem.Icon><TextBlock Text="??" FontSize="11"/></MenuItem.Icon></MenuItem>
                         <MenuItem Header="?? Download from URL" Click="DownloadUrl_Click">  <MenuItem.Icon><TextBlock Text="??" FontSize="11"/></MenuItem.Icon></MenuItem>
+                        <Separator Background="#1E2038"/>
+                        <MenuItem Header="Copy Name"     Click="GridFiles_CopyName_Click">     <MenuItem.Icon><TextBlock Text="&#x1F4CB;" FontSize="11" Foreground="#89b4fa"/></MenuItem.Icon></MenuItem>
+                        <MenuItem Header="Copy Full Path" Click="GridFiles_CopyPath_Click">     <MenuItem.Icon><TextBlock Text="&#x1F4CB;" FontSize="11" Foreground="#89b4fa"/></MenuItem.Icon></MenuItem>
                     </ContextMenu>
                 </DataGrid.ContextMenu>
                 <DataGrid.Columns>

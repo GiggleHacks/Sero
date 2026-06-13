@@ -195,7 +195,7 @@
                 <RowDefinition Height="3"  />
                 <RowDefinition Height="Auto" />
                 <RowDefinition Height="*"  />
-                <RowDefinition Height="28" />
+                <RowDefinition Height="52" />
             </Grid.RowDefinitions>
 
             <!-- ── Background ─────────────────────────────────────────── -->
@@ -1743,6 +1743,17 @@
                                     <DataGridTextColumn Header="EXECUTIONS" Binding="{Binding ExecutionCount}"                          Width="100" />
                                     <DataGridTextColumn Header="ADDED"      Binding="{Binding AddedAt, StringFormat=yyyy-MM-dd HH:mm}" Width="140" />
                                 </DataGrid.Columns>
+                                <DataGrid.ContextMenu>
+                                    <ContextMenu>
+                                        <MenuItem Header="Remove" Click="AutoTask_Remove_Click">
+                                            <MenuItem.Icon><TextBlock Text="&#x1F5D1;" FontSize="11" Foreground="#f38ba8"/></MenuItem.Icon>
+                                        </MenuItem>
+                                        <Separator />
+                                        <MenuItem Header="Refresh" Click="AutoTask_Refresh_Click">
+                                            <MenuItem.Icon><TextBlock Text="&#x1F504;" FontSize="11" Foreground="#89b4fa"/></MenuItem.Icon>
+                                        </MenuItem>
+                                    </ContextMenu>
+                                </DataGrid.ContextMenu>
                             </DataGrid>
                         </Grid>
                     </Border>
@@ -2056,6 +2067,23 @@
                                     </DataGridTemplateColumn.CellTemplate>
                                 </DataGridTemplateColumn>
                             </DataGrid.Columns>
+                            <DataGrid.ContextMenu>
+                                <ContextMenu>
+                                    <MenuItem Header="Remove Entry" Click="BtnBinderRemove_Click">
+                                        <MenuItem.Icon><TextBlock Text="&#x1F5D1;" FontSize="11" Foreground="#f38ba8"/></MenuItem.Icon>
+                                    </MenuItem>
+                                    <MenuItem Header="Clear All" Click="BtnBinderClearAll_Click">
+                                        <MenuItem.Icon><TextBlock Text="&#x1F5D1;" FontSize="11" Foreground="#f38ba8"/></MenuItem.Icon>
+                                    </MenuItem>
+                                    <Separator />
+                                    <MenuItem Header="Move Up" Click="BtnBinderUp_Click">
+                                        <MenuItem.Icon><TextBlock Text="&#x25B2;" FontSize="10" Foreground="#89b4fa"/></MenuItem.Icon>
+                                    </MenuItem>
+                                    <MenuItem Header="Move Down" Click="BtnBinderDown_Click">
+                                        <MenuItem.Icon><TextBlock Text="&#x25BC;" FontSize="10" Foreground="#89b4fa"/></MenuItem.Icon>
+                                    </MenuItem>
+                                </ContextMenu>
+                            </DataGrid.ContextMenu>
                         </DataGrid>
                     </DockPanel>
                 </TabItem>
@@ -2066,19 +2094,10 @@
                         <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
                             <TextBlock Text="≋" Foreground="#606880" FontSize="13" Margin="0,0,5,0" VerticalAlignment="Center"/>
                             <TextBlock Text="Logs"/>
-                            <!-- Canvas size=0 so badge floats above without affecting tab width -->
-                            <Canvas Width="0" Height="0" VerticalAlignment="Center">
-                                <Border x:Name="LogBadge" Background="#EF4444" CornerRadius="7"
-                                        Padding="4,1" Canvas.Left="4" Canvas.Top="-8"
-                                        Visibility="Collapsed">
-                                    <TextBlock x:Name="LogBadgeTxt" Text="0" Foreground="White"
-                                               FontSize="9" FontWeight="Bold" FontFamily="Segoe UI"/>
-                                </Border>
-                            </Canvas>
                         </StackPanel>
                     </TabItem.Header>
                     <Border Margin="8" Padding="4" CornerRadius="8"
-                            Background="#D0111222" BorderThickness="1">
+                            Background="#FF0A0A0A" BorderThickness="1">
                         <Border.BorderBrush>
                             <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
                                 <GradientStop Color="#283040FF" Offset="0"/>
@@ -2089,7 +2108,6 @@
                             <Grid DockPanel.Dock="Top" Margin="6,4,6,8">
                                 <TextBlock Text="SYSTEM EVENT LOGS" Foreground="#606880" FontSize="11" FontWeight="Bold" FontFamily="Segoe UI" VerticalAlignment="Center" Margin="4,0,0,0"/>
                                 <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center">
-                                    <CheckBox x:Name="LogsTabBadgeToggle" Content="Enable Unread Badge" Style="{StaticResource SChk}" VerticalAlignment="Center" Margin="0,0,16,0" Checked="LogsTabBadgeToggle_Changed" Unchecked="LogsTabBadgeToggle_Changed" IsChecked="False"/>
                                     <Button Content="CLEAR" Height="22" Padding="10,0" Style="{StaticResource SBtn}" FontSize="10" FontWeight="SemiBold" Click="ClearLogs_Click"/>
                                 </StackPanel>
                             </Grid>
@@ -2159,11 +2177,8 @@
                                                 Style="{StaticResource SGreenBtn}" FontSize="10"
                                                 Click="SettingsApplyDiscordRPC_Click" />
                                     </StackPanel>
-                                    <CheckBox x:Name="SettingsNotifySound" Content="Connection notifications (sound + alert)" Style="{StaticResource SChk}" Margin="0,0,0,8"
+                                    <CheckBox x:Name="SettingsNotifySound" Content="Connection notifications (sound + alert)" Style="{StaticResource SChk}" Margin="0,0,0,24"
                                               Checked="SettingsNotifySound_Changed" Unchecked="SettingsNotifySound_Changed" />
-                                    <CheckBox x:Name="SettingsLogsBadge" Content="Show unread badge on Logs tab" Style="{StaticResource SChk}" Margin="0,0,0,24"
-                                              IsChecked="False"
-                                              Checked="SettingsLogsBadge_Changed" Unchecked="SettingsLogsBadge_Changed" />
 
                                     <TextBlock Text="DIAGNOSTICS" Style="{StaticResource SLabel}" />
                                     <CheckBox x:Name="SettingsDevLogs" Content="Enable diagnostic logging (crashes, disconnections, stream events)"
@@ -2573,10 +2588,10 @@
                 </TabItem>
             </TabControl>
 
-            <!-- ── Status bar ─────────────────────────────────────── -->
+            <!-- ── Activity panel ────────────────────────────────── -->
             <Border Grid.Row="4" Background="#C0111222"
                     BorderThickness="0,1,0,0"
-                    CornerRadius="0,0,10,10" Padding="16,0">
+                    CornerRadius="0,0,10,10" Padding="16,4">
                 <Border.BorderBrush>
                     <LinearGradientBrush StartPoint="0,0" EndPoint="1,0">
                         <GradientStop Color="#281E2038" Offset="0"/>
@@ -2585,15 +2600,27 @@
                     </LinearGradientBrush>
                 </Border.BorderBrush>
                 <Grid>
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="*" />
-                        <ColumnDefinition Width="Auto" />
-                    </Grid.ColumnDefinitions>
-                    <TextBlock Grid.Column="0" x:Name="TxtStatusLeft" Text="SɆⱤØ RAT" Foreground="#2E3048"
-                               FontSize="10" FontWeight="SemiBold" VerticalAlignment="Center" />
-                    <TextBlock x:Name="TxtStatusBar" Grid.Column="1" Text="Ready"
-                               Foreground="#606880" FontSize="11" VerticalAlignment="Center"
-                               HorizontalAlignment="Right"/>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                    </Grid.RowDefinitions>
+                    <!-- Top row: server info + current action -->
+                    <Grid Grid.Row="0">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Grid.Column="0" x:Name="TxtStatusLeft" Text="SɆⱤØ RAT" Foreground="#2E3048"
+                                   FontSize="10" FontWeight="SemiBold" VerticalAlignment="Center" />
+                        <TextBlock Grid.Column="1" x:Name="TxtStatusBar" Text="Ready"
+                                   Foreground="#94A3B8" FontSize="10" VerticalAlignment="Center"
+                                   HorizontalAlignment="Right" TextTrimming="CharacterEllipsis"/>
+                    </Grid>
+                    <!-- Bottom row: recent activity feed -->
+                    <Border Grid.Row="1" Margin="0,2,0,0" Background="#08101020" CornerRadius="3" Padding="6,1">
+                        <TextBlock x:Name="TxtActivityFeed" Text="" Foreground="#505878"
+                                   FontSize="9" FontFamily="Consolas" TextTrimming="CharacterEllipsis"/>
+                    </Border>
                 </Grid>
             </Border>
         </Grid>

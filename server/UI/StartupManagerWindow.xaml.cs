@@ -95,6 +95,18 @@ public partial class StartupManagerWindow : Window
         Height = Math.Max(MinHeight, Height + e.VerticalChange);
     }
 
+    private void GridStartup_CopyName_Click(object s, RoutedEventArgs e)
+    {
+        if (GridStartup.SelectedItem is StartupEntryVM vm)
+            try { System.Windows.Clipboard.SetText(vm.Name); TxtStatus.Text = $"Copied: {vm.Name}"; } catch { }
+    }
+
+    private void GridStartup_CopyPath_Click(object s, RoutedEventArgs e)
+    {
+        if (GridStartup.SelectedItem is StartupEntryVM vm)
+            try { System.Windows.Clipboard.SetText(vm.Path); TxtStatus.Text = $"Copied: {vm.Path}"; } catch { }
+    }
+
     private void Close_Click(object s, RoutedEventArgs e) => Close();
 }
 

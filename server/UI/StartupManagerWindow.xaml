@@ -152,6 +152,9 @@
                     <ContextMenu>
                         <MenuItem Header="Delete Entry" Click="Delete_Click"/>
                         <Separator/>
+                        <MenuItem Header="Copy Name"    Click="GridStartup_CopyName_Click"/>
+                        <MenuItem Header="Copy Path"    Click="GridStartup_CopyPath_Click"/>
+                        <Separator/>
                         <MenuItem Header="Refresh"      Click="Refresh_Click"/>
                     </ContextMenu>
                 </DataGrid.ContextMenu>

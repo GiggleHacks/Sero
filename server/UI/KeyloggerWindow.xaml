@@ -9,6 +9,30 @@
         AllowsTransparency="True"
         Background="Transparent">
 
+    <Window.Resources>
+        <Style TargetType="ContextMenu">
+            <Setter Property="Background" Value="#0F1020"/>
+            <Setter Property="BorderBrush" Value="#1E2038"/>
+            <Setter Property="Foreground" Value="#DDE0F0"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="ContextMenu">
+                        <Border Background="#0F1020" BorderBrush="#1E2038" BorderThickness="1" CornerRadius="8" Padding="4">
+                            <Border.Effect><DropShadowEffect BlurRadius="24" ShadowDepth="6" Opacity="0.7" Color="#000"/></Border.Effect>
+                            <ItemsPresenter/>
+                        </Border>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+        <Style TargetType="MenuItem">
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="Foreground" Value="#DDE0F0"/>
+            <Setter Property="FontSize" Value="12"/>
+            <Setter Property="Cursor" Value="Hand"/>
+        </Style>
+    </Window.Resources>
+
     <Border x:Name="RootBorder" CornerRadius="8" BorderThickness="1" ClipToBounds="True">
         <Border.Background><SolidColorBrush Color="#0C0D18"/></Border.Background>
         <Border.BorderBrush>
@@ -107,6 +131,23 @@
                         <ListBox x:Name="ListFiles" Background="Transparent" BorderThickness="0"
                                  Foreground="#C0CCDD" FontFamily="Consolas" FontSize="12"
                                  SelectionChanged="ListFiles_SelectionChanged">
+                            <ListBox.ContextMenu>
+                                <ContextMenu>
+                                    <MenuItem Header="Download" Click="BtnDownload_Click">
+                                        <MenuItem.Icon><TextBlock Text="&#x1F4E5;" FontSize="11" Foreground="#89b4fa"/></MenuItem.Icon>
+                                    </MenuItem>
+                                    <MenuItem Header="Delete" Click="BtnDelete_Click">
+                                        <MenuItem.Icon><TextBlock Text="&#x1F5D1;" FontSize="11" Foreground="#f38ba8"/></MenuItem.Icon>
+                                    </MenuItem>
+                                    <Separator />
+                                    <MenuItem Header="Copy Name" Click="ListFiles_CopyName_Click">
+                                        <MenuItem.Icon><TextBlock Text="&#x1F4CB;" FontSize="11" Foreground="#89b4fa"/></MenuItem.Icon>
+                                    </MenuItem>
+                                    <MenuItem Header="Refresh" Click="BtnRefresh_Click">
+                                        <MenuItem.Icon><TextBlock Text="&#x1F504;" FontSize="11" Foreground="#a6e3a1"/></MenuItem.Icon>
+                                    </MenuItem>
+                                </ContextMenu>
+                            </ListBox.ContextMenu>
                             <ListBox.ItemContainerStyle>
                                 <Style TargetType="ListBoxItem">
                                     <Setter Property="Padding" Value="10,6"/>

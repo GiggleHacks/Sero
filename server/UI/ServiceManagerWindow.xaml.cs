@@ -172,6 +172,22 @@ public partial class ServiceManagerWindow : Window
     {
         var sel = GridServices.SelectedItems.Cast<ServiceEntryVM>().ToList();
         if (sel.Count == 0) return;
+        var destructive = type is PacketType.SvcStop or PacketType.SvcRestart or PacketType.SvcDisable or PacketType.SvcDelete;
+        if (destructive)
+        {
+            string label = type switch
+            {
+                PacketType.SvcStop    => "Stop",
+                PacketType.SvcRestart => "Restart",
+                PacketType.SvcDisable => "Disable",
+                PacketType.SvcDelete  => "Delete",
+                _ => type.ToString()
+            };
+            string msg = sel.Count == 1
+                ? $"{label} service '{sel[0].DisplayName}'?"
+                : $"{label} {sel.Count} services?";
+            if (MessageBox.Show(msg, "Confirm", MessageBoxButton.YesNo, MessageBoxImage.Warning) != MessageBoxResult.Yes) return;
+        }
         foreach (var vm in sel)
             _ = _server.SendToClient(_clientId, new Packet { Type = type, Data = JsonConvert.SerializeObject(new SvcActionData { ServiceName = vm.Name }) });
         TxtStatus.Text = sel.Count == 1 ? $"Sending {type} → {sel[0].DisplayName}…" : $"Sending {type} → {sel.Count} services…";
@@ -183,6 +199,12 @@ public partial class ServiceManagerWindow : Window
     private void BtnRestart_Click(object s, RoutedEventArgs e) => SendAction(PacketType.SvcRestart);
     private void BtnDisable_Click(object s, RoutedEventArgs e) => SendAction(PacketType.SvcDisable);
     private void BtnDelete_Click (object s, RoutedEventArgs e) => SendAction(PacketType.SvcDelete);
+
+    private void GridServices_CopyName_Click(object s, RoutedEventArgs e)
+    {
+        if (GridServices.SelectedItem is ServiceEntryVM vm)
+            try { System.Windows.Clipboard.SetText(vm.Name); TxtStatus.Text = $"Copied: {vm.DisplayName}"; } catch { }
+    }
 
     private void Window_MouseLeftButtonDown(object s, System.Windows.Input.MouseButtonEventArgs e)
     { if (e.LeftButton == System.Windows.Input.MouseButtonState.Pressed && WindowState != WindowState.Maximized) DragMove(); }

@@ -131,6 +131,18 @@ public partial class InstalledAppsWindow : Window
         if (FindName("BtnMax") is System.Windows.Controls.Button btn)
             btn.Content = _max ? "❐" : "☐";
     }
+    private void GridApps_CopyName_Click(object s, RoutedEventArgs e)
+    {
+        if (GridApps.SelectedItem is InstalledAppVM vm)
+            try { System.Windows.Clipboard.SetText(vm.Name); TxtStatus.Text = $"Copied: {vm.Name}"; } catch { }
+    }
+
+    private void GridApps_CopyPublisher_Click(object s, RoutedEventArgs e)
+    {
+        if (GridApps.SelectedItem is InstalledAppVM vm && !string.IsNullOrEmpty(vm.Publisher))
+            try { System.Windows.Clipboard.SetText(vm.Publisher); TxtStatus.Text = $"Copied: {vm.Publisher}"; } catch { }
+    }
+
     private void Close_Click(object s, RoutedEventArgs e) => Close();
 
     private static System.Windows.Media.ImageSource? DecodeIcon(string b64)

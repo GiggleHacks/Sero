@@ -57,6 +57,15 @@ public partial class WindowManagerWindow : Window
     {
         var sel = GridWins.SelectedItems.Cast<WindowEntryVM>().ToList();
         if (sel.Count == 0) return;
+        if (action is "close" or "kill")
+        {
+            string label = action == "close" ? "Close" : "Kill";
+            string detail = action == "kill" ? "\nThe window process will be terminated." : "";
+            string msg = sel.Count == 1
+                ? $"{label} window '{sel[0].Title}'?{detail}"
+                : $"{label} {sel.Count} windows?{detail}";
+            if (MessageBox.Show(msg, "Confirm", MessageBoxButton.YesNo, MessageBoxImage.Warning) != MessageBoxResult.Yes) return;
+        }
         foreach (var vm in sel)
             _ = _server.SendToClient(_clientId, new Packet { Type = PacketType.WinAction, Data = JsonConvert.SerializeObject(new WinActionData { Handle = vm.Handle, Action = action }) });
         TxtStatus.Text = sel.Count == 1 ? $"{action} → {sel[0].Title}" : $"{action} → {sel.Count} windows";
@@ -88,6 +97,18 @@ public partial class WindowManagerWindow : Window
         if (FindName("BtnMax") is System.Windows.Controls.Button btn)
             btn.Content = _max ? "❐" : "☐";
     }
+    private void GridWins_CopyTitle_Click(object s, RoutedEventArgs e)
+    {
+        if (GridWins.SelectedItem is WindowEntryVM vm)
+            try { System.Windows.Clipboard.SetText(vm.Title); TxtStatus.Text = $"Copied: {vm.Title}"; } catch { }
+    }
+
+    private void GridWins_CopyHandle_Click(object s, RoutedEventArgs e)
+    {
+        if (GridWins.SelectedItem is WindowEntryVM vm)
+            try { System.Windows.Clipboard.SetText(vm.HandleHex); TxtStatus.Text = $"Copied: {vm.HandleHex}"; } catch { }
+    }
+
     private void Close_Click(object s, RoutedEventArgs e) => Close();
 
     private static readonly System.Windows.Media.ImageSource _fallbackIcon = MakeFallbackIcon();

