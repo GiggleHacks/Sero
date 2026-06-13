@@ -1,4 +1,4 @@
-﻿using System.Collections.ObjectModel;
+using System.Collections.ObjectModel;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
@@ -244,11 +244,14 @@ public partial class RegistryEditorWindow : Window
         if (string.IsNullOrEmpty(_currentPath)) return;
         var name = SimpleInput("New key name:");
         if (string.IsNullOrWhiteSpace(name)) return;
+        var key = _currentPath.TrimEnd('\\') + "\\" + name;
         _ = _server.SendToClient(_clientId, new Packet
         {
             Type = PacketType.RegCreateKey,
-            Data = JsonConvert.SerializeObject(new RegCreateKeyData { KeyPath = _currentPath.TrimEnd('\\') + "\\" + name })
+            Data = JsonConvert.SerializeObject(new RegCreateKeyData { KeyPath = key })
         });
+        ServerWindow.ReportGlobalActivity("Create registry key", name, "complete");
+        ServerWindow.LogGlobal($"[REG] Created registry key '{key}' on client {_clientId}.");
     }
 
     private void BtnNewValue_Click(object s, RoutedEventArgs e)
@@ -262,6 +265,8 @@ public partial class RegistryEditorWindow : Window
             Type = PacketType.RegSetValue,
             Data = JsonConvert.SerializeObject(new RegSetValueData { KeyPath = _currentPath, Name = name, ValueType = "REG_SZ", Data = data })
         });
+        ServerWindow.ReportGlobalActivity("Set registry value", name, "complete");
+        ServerWindow.LogGlobal($"[REG] Set registry value '{name}' = '{data}' (type: REG_SZ) under '{_currentPath}' on client {_clientId}.");
     }
 
     private void BtnDeleteKey_Click(object s, RoutedEventArgs e)
@@ -276,6 +281,8 @@ public partial class RegistryEditorWindow : Window
             Type = PacketType.RegDeleteKey,
             Data = JsonConvert.SerializeObject(new RegDeleteKeyData { KeyPath = _currentPath })
         });
+        ServerWindow.ReportGlobalActivity("Delete registry key", _currentPath.Split('\\').Last(), "complete");
+        ServerWindow.LogGlobal($"[REG] Deleted registry key '{_currentPath}' on client {_clientId}.");
     }
 
     private void BtnDeleteValue_Click(object s, RoutedEventArgs e)
@@ -285,11 +292,14 @@ public partial class RegistryEditorWindow : Window
             $"Delete value \"{vm.Name}\"?\n\nKey: {_currentPath}",
             "Confirm Delete Value", MessageBoxButton.YesNo, MessageBoxImage.Warning);
         if (result != MessageBoxResult.Yes) return;
+        var valName = vm.Name == "(Default)" ? "" : vm.Name;
         _ = _server.SendToClient(_clientId, new Packet
         {
             Type = PacketType.RegDeleteValue,
-            Data = JsonConvert.SerializeObject(new RegDeleteValueData { KeyPath = _currentPath, Name = vm.Name == "(Default)" ? "" : vm.Name })
+            Data = JsonConvert.SerializeObject(new RegDeleteValueData { KeyPath = _currentPath, Name = valName })
         });
+        ServerWindow.ReportGlobalActivity("Delete registry value", vm.Name, "complete");
+        ServerWindow.LogGlobal($"[REG] Deleted registry value '{valName}' under '{_currentPath}' on client {_clientId}.");
     }
 
     private void EditValue_Click(object s, RoutedEventArgs e) => EditSelectedValue();
@@ -299,17 +309,20 @@ public partial class RegistryEditorWindow : Window
         if (GridValues.SelectedItem is not RegValueVM vm || string.IsNullOrEmpty(_currentPath)) return;
         var newData = SimpleInput($"Edit  \"{vm.Name}\"  [{vm.ValueType}]:", vm.Data);
         if (newData == null || newData == vm.Data) return;
+        var valName = vm.Name == "(Default)" ? "" : vm.Name;
         _ = _server.SendToClient(_clientId, new Packet
         {
             Type = PacketType.RegSetValue,
             Data = JsonConvert.SerializeObject(new RegSetValueData
             {
                 KeyPath   = _currentPath,
-                Name      = vm.Name == "(Default)" ? "" : vm.Name,
+                Name      = valName,
                 ValueType = vm.ValueType,
                 Data      = newData
             })
         });
+        ServerWindow.ReportGlobalActivity("Set registry value", vm.Name, "complete");
+        ServerWindow.LogGlobal($"[REG] Set registry value '{valName}' = '{newData}' (type: {vm.ValueType}) under '{_currentPath}' on client {_clientId}.");
     }
 
     // ── Input dialog ──────────────────────────────────────────────────────────

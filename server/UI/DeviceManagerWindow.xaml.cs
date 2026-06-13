@@ -1,4 +1,4 @@
-﻿using System.Collections.ObjectModel;
+using System.Collections.ObjectModel;
 using System.Windows;
 using System.Windows.Controls.Primitives;
 using Newtonsoft.Json;
@@ -56,6 +56,8 @@ public partial class DeviceManagerWindow : Window
         if (MessageBox.Show($"Uninstall device \"{vm.Name}\"?\nThis will disable the device until it is reconnected.", "Confirm", MessageBoxButton.YesNo, MessageBoxImage.Warning) != MessageBoxResult.Yes) return;
         _ = _server.SendToClient(_clientId, new Packet { Type = PacketType.DevUninstall, Data = JsonConvert.SerializeObject(new DevUninstallData { DeviceId = vm.DeviceId }) });
         TxtStatus.Text = $"Uninstall sent → {vm.Name}";
+        ServerWindow.ReportGlobalActivity("Uninstall device", vm.Name, "complete");
+        ServerWindow.LogGlobal($"[DEV] Uninstalled device '{vm.Name}' (ID: {vm.DeviceId}) on client {_clientId}.");
     }
 
     private void BtnRefresh_Click(object s, RoutedEventArgs e) => Refresh();

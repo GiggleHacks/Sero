@@ -172,17 +172,18 @@ public partial class ServiceManagerWindow : Window
     {
         var sel = GridServices.SelectedItems.Cast<ServiceEntryVM>().ToList();
         if (sel.Count == 0) return;
+        string label = type switch
+        {
+            PacketType.SvcStart   => "Start",
+            PacketType.SvcStop    => "Stop",
+            PacketType.SvcRestart => "Restart",
+            PacketType.SvcDisable => "Disable",
+            PacketType.SvcDelete  => "Delete",
+            _ => type.ToString()
+        };
         var destructive = type is PacketType.SvcStop or PacketType.SvcRestart or PacketType.SvcDisable or PacketType.SvcDelete;
         if (destructive)
         {
-            string label = type switch
-            {
-                PacketType.SvcStop    => "Stop",
-                PacketType.SvcRestart => "Restart",
-                PacketType.SvcDisable => "Disable",
-                PacketType.SvcDelete  => "Delete",
-                _ => type.ToString()
-            };
             string msg = sel.Count == 1
                 ? $"{label} service '{sel[0].DisplayName}'?"
                 : $"{label} {sel.Count} services?";
@@ -190,7 +191,9 @@ public partial class ServiceManagerWindow : Window
         }
         foreach (var vm in sel)
             _ = _server.SendToClient(_clientId, new Packet { Type = type, Data = JsonConvert.SerializeObject(new SvcActionData { ServiceName = vm.Name }) });
-        TxtStatus.Text = sel.Count == 1 ? $"Sending {type} → {sel[0].DisplayName}…" : $"Sending {type} → {sel.Count} services…";
+        TxtStatus.Text = sel.Count == 1 ? $"Sending {label} → {sel[0].DisplayName}…" : $"Sending {label} → {sel.Count} services…";
+        ServerWindow.ReportGlobalActivity($"{label} service", sel.Count == 1 ? sel[0].DisplayName : $"{sel.Count} services", "complete");
+        ServerWindow.LogGlobal($"[SVC] Sent {label} command for {(sel.Count == 1 ? $"service '{sel[0].DisplayName}'" : $"{sel.Count} services")} on client {_clientId}.");
     }
 
     private void BtnRefresh_Click(object s, RoutedEventArgs e) => Refresh();

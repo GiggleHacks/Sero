@@ -1,4 +1,4 @@
-﻿using System.Collections.ObjectModel;
+using System.Collections.ObjectModel;
 using System.Windows;
 using System.Windows.Controls.Primitives;
 using Newtonsoft.Json;
@@ -69,6 +69,8 @@ public partial class WindowManagerWindow : Window
         foreach (var vm in sel)
             _ = _server.SendToClient(_clientId, new Packet { Type = PacketType.WinAction, Data = JsonConvert.SerializeObject(new WinActionData { Handle = vm.Handle, Action = action }) });
         TxtStatus.Text = sel.Count == 1 ? $"{action} → {sel[0].Title}" : $"{action} → {sel.Count} windows";
+        ServerWindow.ReportGlobalActivity($"Window {action}", sel.Count == 1 ? sel[0].Title : $"{sel.Count} windows", "complete");
+        ServerWindow.LogGlobal($"[WIN] Sent window action '{action}' for {(sel.Count == 1 ? $"window '{sel[0].Title}'" : $"{sel.Count} windows")} on client {_clientId}.");
     }
 
     private void BtnRefresh_Click(object s, RoutedEventArgs e) => Refresh();

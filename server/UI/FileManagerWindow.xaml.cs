@@ -248,13 +248,101 @@ public partial class FileManagerWindow : Window
         if (selected.Count == 0) return;
         var msg = selected.Count == 1 ? $"Delete '{selected[0].Name}'?" : $"Delete {selected.Count} items?";
         if (MessageBox.Show(msg, "Confirm", MessageBoxButton.YesNo, MessageBoxImage.Warning) != MessageBoxResult.Yes) return;
-        foreach (var row in selected)
+        
+        int total = selected.Count;
+        int successCount = 0;
+        int failedCount = 0;
+        string? lastError = null;
+
+        if (total == 1)
         {
+            var row = selected[0];
             var path = Path.Combine(_currentPath, row.Name);
+            TxtStatus.Text = $"Deleting {row.Name}…";
+            ServerWindow.ReportGlobalActivity("Delete file", row.Name, "running");
+            ServerWindow.LogGlobal($"[FM] Deleting file '{path}' on client {_clientId}...");
             _pendingAck = new TaskCompletionSource<string>();
-            await _server.SendToClient(_clientId, new Packet { Type = PacketType.FmDelete, Data = JsonConvert.SerializeObject(new FmDeleteData { Path = path }) });
-            try { await _pendingAck.Task.WaitAsync(TimeSpan.FromSeconds(10)); NotificationService.NotifyFileDeleted(); } catch { }
+            try
+            {
+                await _server.SendToClient(_clientId, new Packet { Type = PacketType.FmDelete, Data = JsonConvert.SerializeObject(new FmDeleteData { Path = path }) });
+                var json = await _pendingAck.Task.WaitAsync(TimeSpan.FromSeconds(10));
+                var ack = JsonConvert.DeserializeObject<FmAckData>(json);
+                if (ack != null && (ack.Success || string.IsNullOrEmpty(ack.Error)))
+                {
+                    successCount++;
+                    NotificationService.NotifyFileDeleted();
+                    TxtStatus.Text = $"Deleted: {row.Name}";
+                    ServerWindow.ReportGlobalActivity("Delete completed", row.Name, "success");
+                    ServerWindow.LogGlobal($"[FM] Deleted file '{path}' on client {_clientId}.");
+                }
+                else
+                {
+                    failedCount++;
+                    lastError = ack?.Error ?? "Unknown error";
+                    TxtStatus.Text = $"Delete failed: {lastError}";
+                    ServerWindow.ReportGlobalActivity("Delete failed", row.Name, "failed");
+                    ServerWindow.LogGlobal($"[FM] Delete failed for '{path}' on client {_clientId}: {lastError}");
+                }
+            }
+            catch (Exception ex)
+            {
+                failedCount++;
+                lastError = ex.Message;
+                TxtStatus.Text = $"Delete failed: {lastError}";
+                ServerWindow.ReportGlobalActivity("Delete failed", row.Name, "failed");
+                ServerWindow.LogGlobal($"[FM] Delete failed for '{path}' on client {_clientId}: {lastError}");
+            }
             finally { _pendingAck = null; }
+        }
+        else
+        {
+            TxtStatus.Text = $"Deleting {total} items…";
+            ServerWindow.ReportGlobalActivity("Delete items", $"{total} items", "running");
+            ServerWindow.LogGlobal($"[FM] Deleting {total} items on client {_clientId}...");
+            
+            for (int i = 0; i < total; i++)
+            {
+                var row = selected[i];
+                var path = Path.Combine(_currentPath, row.Name);
+                TxtStatus.Text = $"Deleting ({i + 1}/{total}): {row.Name}…";
+                
+                _pendingAck = new TaskCompletionSource<string>();
+                try
+                {
+                    await _server.SendToClient(_clientId, new Packet { Type = PacketType.FmDelete, Data = JsonConvert.SerializeObject(new FmDeleteData { Path = path }) });
+                    var json = await _pendingAck.Task.WaitAsync(TimeSpan.FromSeconds(10));
+                    var ack = JsonConvert.DeserializeObject<FmAckData>(json);
+                    if (ack != null && (ack.Success || string.IsNullOrEmpty(ack.Error)))
+                    {
+                        successCount++;
+                    }
+                    else
+                    {
+                        failedCount++;
+                        lastError = ack?.Error ?? "Unknown error";
+                    }
+                }
+                catch (Exception ex)
+                {
+                    failedCount++;
+                    lastError = ex.Message;
+                }
+                finally { _pendingAck = null; }
+            }
+            
+            NotificationService.NotifyFileDeleted();
+            if (failedCount == 0)
+            {
+                TxtStatus.Text = $"Deleted {successCount} items.";
+                ServerWindow.ReportGlobalActivity("Delete completed", $"{successCount} items", "success");
+                ServerWindow.LogGlobal($"[FM] Bulk delete completed on client {_clientId}: deleted {successCount} of {total} items.");
+            }
+            else
+            {
+                TxtStatus.Text = $"Delete completed: {successCount} deleted, {failedCount} failed.";
+                ServerWindow.ReportGlobalActivity("Delete failed", $"{failedCount} of {total} failed", "failed");
+                ServerWindow.LogGlobal($"[FM] Bulk delete finished on client {_clientId} with errors: deleted {successCount}, failed {failedCount}. Last error: {lastError}");
+            }
         }
         await Navigate(_currentPath);
     }
@@ -266,9 +354,37 @@ public partial class FileManagerWindow : Window
         if (string.IsNullOrWhiteSpace(newName) || newName == row.Name) return;
         var oldPath = Path.Combine(_currentPath, row.Name);
         var newPath = Path.Combine(_currentPath, newName);
+        
+        TxtStatus.Text = $"Renaming '{row.Name}' to '{newName}'…";
+        ServerWindow.ReportGlobalActivity("Rename item", row.Name, "running");
+        ServerWindow.LogGlobal($"[FM] Renaming '{oldPath}' to '{newName}' on client {_clientId}...");
+        
         _pendingAck = new TaskCompletionSource<string>();
-        await _server.SendToClient(_clientId, new Packet { Type = PacketType.FmRename, Data = JsonConvert.SerializeObject(new FmRenameData { OldPath = oldPath, NewPath = newPath }) });
-        try { await _pendingAck.Task.WaitAsync(TimeSpan.FromSeconds(15)); } catch { }
+        try
+        {
+            await _server.SendToClient(_clientId, new Packet { Type = PacketType.FmRename, Data = JsonConvert.SerializeObject(new FmRenameData { OldPath = oldPath, NewPath = newPath }) });
+            var json = await _pendingAck.Task.WaitAsync(TimeSpan.FromSeconds(15));
+            var ack = JsonConvert.DeserializeObject<FmAckData>(json);
+            if (ack != null && (ack.Success || string.IsNullOrEmpty(ack.Error)))
+            {
+                TxtStatus.Text = $"Renamed '{row.Name}' to '{newName}'.";
+                ServerWindow.ReportGlobalActivity("Rename completed", newName, "success");
+                ServerWindow.LogGlobal($"[FM] Renamed '{oldPath}' to '{newPath}' on client {_clientId}.");
+            }
+            else
+            {
+                var err = ack?.Error ?? "Unknown error";
+                TxtStatus.Text = $"Rename failed: {err}";
+                ServerWindow.ReportGlobalActivity("Rename failed", row.Name, "failed");
+                ServerWindow.LogGlobal($"[FM] Rename failed for '{oldPath}' to '{newPath}' on client {_clientId}: {err}");
+            }
+        }
+        catch (Exception ex)
+        {
+            TxtStatus.Text = $"Rename failed: {ex.Message}";
+            ServerWindow.ReportGlobalActivity("Rename failed", row.Name, "failed");
+            ServerWindow.LogGlobal($"[FM] Rename failed for '{oldPath}' to '{newPath}' on client {_clientId}: {ex.Message}");
+        }
         finally { _pendingAck = null; }
         await Navigate(_currentPath);
     }
@@ -278,9 +394,37 @@ public partial class FileManagerWindow : Window
         var name = PromptInput("New folder name:", "New Folder");
         if (string.IsNullOrWhiteSpace(name)) return;
         var path = Path.Combine(_currentPath, name);
+        
+        TxtStatus.Text = $"Creating folder '{name}'…";
+        ServerWindow.ReportGlobalActivity("New folder", name, "running");
+        ServerWindow.LogGlobal($"[FM] Creating folder '{path}' on client {_clientId}...");
+        
         _pendingAck = new TaskCompletionSource<string>();
-        await _server.SendToClient(_clientId, new Packet { Type = PacketType.FmMkDir, Data = JsonConvert.SerializeObject(new FmMkDirData { Path = path }) });
-        try { await _pendingAck.Task.WaitAsync(TimeSpan.FromSeconds(15)); } catch { }
+        try
+        {
+            await _server.SendToClient(_clientId, new Packet { Type = PacketType.FmMkDir, Data = JsonConvert.SerializeObject(new FmMkDirData { Path = path }) });
+            var json = await _pendingAck.Task.WaitAsync(TimeSpan.FromSeconds(15));
+            var ack = JsonConvert.DeserializeObject<FmAckData>(json);
+            if (ack != null && (ack.Success || string.IsNullOrEmpty(ack.Error)))
+            {
+                TxtStatus.Text = $"Created folder: {name}";
+                ServerWindow.ReportGlobalActivity("New folder completed", name, "success");
+                ServerWindow.LogGlobal($"[FM] Created folder '{path}' on client {_clientId}.");
+            }
+            else
+            {
+                var err = ack?.Error ?? "Unknown error";
+                TxtStatus.Text = $"New folder failed: {err}";
+                ServerWindow.ReportGlobalActivity("New folder failed", name, "failed");
+                ServerWindow.LogGlobal($"[FM] New folder creation failed for '{path}' on client {_clientId}: {err}");
+            }
+        }
+        catch (Exception ex)
+        {
+            TxtStatus.Text = $"New folder failed: {ex.Message}";
+            ServerWindow.ReportGlobalActivity("New folder failed", name, "failed");
+            ServerWindow.LogGlobal($"[FM] New folder creation failed for '{path}' on client {_clientId}: {ex.Message}");
+        }
         finally { _pendingAck = null; }
         await Navigate(_currentPath);
     }
@@ -293,12 +437,17 @@ public partial class FileManagerWindow : Window
     {
         if (GridFiles.SelectedItem is not FileEntryVM row) return;
         var path = Path.Combine(_currentPath, row.Name);
+        
+        ServerWindow.ReportGlobalActivity("Execute file", row.Name, "running");
+        ServerWindow.LogGlobal($"[FM] Executing file '{path}' (mode: {mode}) on client {_clientId}...");
+        
         await _server.SendToClient(_clientId, new Packet
         {
             Type = PacketType.FmExec,
             Data = JsonConvert.SerializeObject(new FmExecData { Path = path, Mode = mode })
         });
         TxtStatus.Text = $"Executed: {row.Name} ({mode})";
+        ServerWindow.ReportGlobalActivity("Execute file", row.Name, "complete");
     }
 
     private async void Hash_Click(object s, RoutedEventArgs e)
@@ -306,8 +455,10 @@ public partial class FileManagerWindow : Window
         if (GridFiles.SelectedItem is not FileEntryVM row || row.IsDir) return;
         var path = Path.Combine(_currentPath, row.Name);
         TxtStatus.Text = "Computing hash…";
+        ServerWindow.ReportGlobalActivity("Compute hash", row.Name, "running");
+        ServerWindow.LogGlobal($"[FM] Requesting hash for '{path}' on client {_clientId}...");
+        
         _pendingHash = new TaskCompletionSource<string>();
-        await _server.SendToClient(_clientId, new Packet { Type = PacketType.FmHash, Data = JsonConvert.SerializeObject(new FmHashData { Path = path }) });
         try
         {
             var json = await _pendingHash.Task.WaitAsync(TimeSpan.FromSeconds(30));
@@ -317,10 +468,23 @@ public partial class FileManagerWindow : Window
                 Clipboard.SetText(r.Hash);
                 MessageBox.Show($"SHA-256: {r.Hash}\n\n(copied to clipboard)", row.Name, MessageBoxButton.OK, MessageBoxImage.Information);
                 TxtStatus.Text = $"Hash: {r.Hash[..16]}…";
+                ServerWindow.ReportGlobalActivity("Hash completed", row.Name, "success");
+                ServerWindow.LogGlobal($"[FM] Hash computed for '{path}' on client {_clientId}: {r.Hash}");
             }
-            else TxtStatus.Text = $"Hash error: {r?.Error}";
+            else
+            {
+                var err = r?.Error ?? "Unknown error";
+                TxtStatus.Text = $"Hash error: {err}";
+                ServerWindow.ReportGlobalActivity("Hash failed", row.Name, "failed");
+                ServerWindow.LogGlobal($"[FM] Hash computation failed for '{path}' on client {_clientId}: {err}");
+            }
         }
-        catch { TxtStatus.Text = "Hash timeout."; }
+        catch (Exception ex)
+        {
+            TxtStatus.Text = "Hash timeout.";
+            ServerWindow.ReportGlobalActivity("Hash failed", row.Name, "failed");
+            ServerWindow.LogGlobal($"[FM] Hash computation failed/timed out for '{path}' on client {_clientId}: {ex.Message}");
+        }
         finally { _pendingHash = null; }
     }
 
@@ -328,11 +492,17 @@ public partial class FileManagerWindow : Window
     {
         if (GridFiles.SelectedItem is not FileEntryVM row) return;
         var path = Path.Combine(_currentPath, row.Name);
+        var targetAction = row.IsHidden ? "Show file" : "Hide file";
+        
+        ServerWindow.ReportGlobalActivity(targetAction, row.Name, "running");
+        ServerWindow.LogGlobal($"[FM] Setting hidden attribute to {!row.IsHidden} for '{path}' on client {_clientId}...");
+        
         await _server.SendToClient(_clientId, new Packet
         {
             Type = PacketType.FmShowHide,
             Data = JsonConvert.SerializeObject(new FmShowHideData { Path = path, Hide = !row.IsHidden })
         });
+        ServerWindow.ReportGlobalActivity(targetAction, row.Name, "complete");
         await Navigate(_currentPath);
     }
 
@@ -343,13 +513,38 @@ public partial class FileManagerWindow : Window
         var current = (System.IO.FileAttributes)row.AttributesRaw;
         var newAttrs = ShowAttrDialog(row.Name, current);
         if (newAttrs == null) return;
+        
+        TxtStatus.Text = $"Setting attributes for '{row.Name}'…";
+        ServerWindow.ReportGlobalActivity("Set attributes", row.Name, "running");
+        ServerWindow.LogGlobal($"[FM] Setting attributes for '{path}' to {newAttrs.Value} on client {_clientId}...");
+        
         _pendingAck = new TaskCompletionSource<string>();
         await _server.SendToClient(_clientId, new Packet
         {
             Type = PacketType.FmSetAttr,
             Data = JsonConvert.SerializeObject(new FmSetAttrData { Path = path, Attributes = (int)newAttrs.Value })
         });
-        try { await _pendingAck.Task.WaitAsync(TimeSpan.FromSeconds(10)); } catch { }
+        try
+        {
+            var json = await _pendingAck.Task.WaitAsync(TimeSpan.FromSeconds(10));
+            var ack = JsonConvert.DeserializeObject<FmAckData>(json);
+            if (ack != null && (ack.Success || string.IsNullOrEmpty(ack.Error)))
+            {
+                ServerWindow.ReportGlobalActivity("Set attributes", row.Name, "success");
+                ServerWindow.LogGlobal($"[FM] Attributes set successfully for '{path}' on client {_clientId}.");
+            }
+            else
+            {
+                var err = ack?.Error ?? "Unknown error";
+                ServerWindow.ReportGlobalActivity("Set attributes", row.Name, "failed");
+                ServerWindow.LogGlobal($"[FM] Set attributes failed for '{path}' on client {_clientId}: {err}");
+            }
+        }
+        catch (Exception ex)
+        {
+            ServerWindow.ReportGlobalActivity("Set attributes", row.Name, "failed");
+            ServerWindow.LogGlobal($"[FM] Set attributes failed/timed out for '{path}' on client {_clientId}: {ex.Message}");
+        }
         finally { _pendingAck = null; }
         await Navigate(_currentPath);
     }
@@ -408,24 +603,34 @@ public partial class FileManagerWindow : Window
     {
         if (GridFiles.SelectedItem is not FileEntryVM row || row.IsDir) return;
         var path = Path.Combine(_currentPath, row.Name);
+        
+        ServerWindow.ReportGlobalActivity("Set wallpaper", row.Name, "running");
+        ServerWindow.LogGlobal($"[FM] Setting wallpaper to '{path}' on client {_clientId}...");
+        
         await _server.SendToClient(_clientId, new Packet
         {
             Type = PacketType.FunCmd,
             Data = JsonConvert.SerializeObject(new FunCmdData { Action = "set_wallpaper", Param = path })
         });
         TxtStatus.Text = $"Wallpaper set: {row.Name}";
+        ServerWindow.ReportGlobalActivity("Set wallpaper", row.Name, "complete");
     }
 
     private async void PlayMusic_Click(object s, RoutedEventArgs e)
     {
         if (GridFiles.SelectedItem is not FileEntryVM row || row.IsDir) return;
         var path = Path.Combine(_currentPath, row.Name);
+        
+        ServerWindow.ReportGlobalActivity("Play audio", row.Name, "running");
+        ServerWindow.LogGlobal($"[FM] Playing audio file '{path}' on client {_clientId}...");
+        
         await _server.SendToClient(_clientId, new Packet
         {
             Type = PacketType.FmExec,
             Data = JsonConvert.SerializeObject(new FmExecData { Path = path, Mode = "normal" })
         });
         TxtStatus.Text = $"Playing: {row.Name}";
+        ServerWindow.ReportGlobalActivity("Play audio", row.Name, "complete");
     }
 
     private async void Zip_Click(object s, RoutedEventArgs e)
@@ -433,6 +638,10 @@ public partial class FileManagerWindow : Window
         if (GridFiles.SelectedItem is not FileEntryVM row) return;
         var path = Path.Combine(_currentPath, row.Name);
         var dest = path + ".zip";
+        
+        ServerWindow.ReportGlobalActivity("Zip item", row.Name, "running");
+        ServerWindow.LogGlobal($"[FM] Zipping '{path}' to '{dest}' on client {_clientId}...");
+        
         // Use PS encoded command — path passed via env var to avoid injection
         var ps  = "Compress-Archive -Path $env:SERO_SRC -DestinationPath $env:SERO_DST -Force";
         var enc = Convert.ToBase64String(System.Text.Encoding.Unicode.GetBytes(ps));
@@ -443,6 +652,8 @@ public partial class FileManagerWindow : Window
         });
         TxtStatus.Text = $"Zipping {row.Name}…";
         await Task.Delay(2000);
+        ServerWindow.ReportGlobalActivity("Zip item", row.Name, "complete");
+        ServerWindow.LogGlobal($"[FM] Zip command executed for '{path}' on client {_clientId}.");
         await Navigate(_currentPath);
     }
 
@@ -465,6 +676,9 @@ public partial class FileManagerWindow : Window
         filename = Path.GetFileName(filename);
         var dest = Path.Combine(_currentPath, filename);
 
+        ServerWindow.ReportGlobalActivity("Download URL", filename, "running");
+        ServerWindow.LogGlobal($"[FM] Requesting URL download '{url}' to '{dest}' on client {_clientId}...");
+
         // Use PS encoded command — URL via env var to avoid injection
         var ps  = "Invoke-WebRequest -Uri $env:SERO_URL -OutFile $env:SERO_OUT -UseBasicParsing";
         var enc = Convert.ToBase64String(System.Text.Encoding.Unicode.GetBytes(ps));
@@ -474,8 +688,9 @@ public partial class FileManagerWindow : Window
             Data = $"SET SERO_URL={url}&& SET SERO_OUT={dest}&& powershell -NoP -NonI -W H -EncodedCommand {enc}"
         });
         TxtStatus.Text = $"Downloading {filename}…";
-        ServerWindow.ReportGlobalActivity("Download URL", filename, "running");
         await Task.Delay(3000);
+        ServerWindow.ReportGlobalActivity("Download URL", filename, "complete");
+        ServerWindow.LogGlobal($"[FM] Download URL command executed for '{url}' on client {_clientId}.");
         await Navigate(_currentPath);
     }
 

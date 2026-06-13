@@ -377,7 +377,8 @@ public partial class ProcessManagerWindow : Window
         foreach (var vm in sel)
             _ = _server.SendToClient(_clientId, new Packet { Type = PacketType.ProcKill, Data = JsonConvert.SerializeObject(new ProcKillData { Pid = vm.Pid }) });
         TxtStatus.Text = sel.Count == 1 ? $"Kill → PID {sel[0].Pid} ({sel[0].Name})" : $"Kill → {sel.Count} processes";
-        ServerWindow.ReportGlobalActivity("Kill process", sel.Count == 1 ? sel[0].Name : $"{sel.Count} processes", "running");
+        ServerWindow.ReportGlobalActivity("Kill process", sel.Count == 1 ? sel[0].Name : $"{sel.Count} processes", "complete");
+        ServerWindow.LogGlobal($"[PROC] Terminated process {(sel.Count == 1 ? $"'{sel[0].Name}' (PID {sel[0].Pid})" : $"{sel.Count} processes")} on client {_clientId}.");
     }
 
     private void BtnSuspend_Click(object s, RoutedEventArgs e)
@@ -387,6 +388,8 @@ public partial class ProcessManagerWindow : Window
         foreach (var vm in sel)
             _ = _server.SendToClient(_clientId, new Packet { Type = PacketType.ProcSuspend, Data = JsonConvert.SerializeObject(new ProcSuspendData2 { Pid = vm.Pid }) });
         TxtStatus.Text = sel.Count == 1 ? $"Suspend → PID {sel[0].Pid} ({sel[0].Name})" : $"Suspend → {sel.Count} processes";
+        ServerWindow.ReportGlobalActivity("Suspend process", sel.Count == 1 ? sel[0].Name : $"{sel.Count} processes", "complete");
+        ServerWindow.LogGlobal($"[PROC] Suspended process {(sel.Count == 1 ? $"'{sel[0].Name}' (PID {sel[0].Pid})" : $"{sel.Count} processes")} on client {_clientId}.");
     }
 
     private void BtnResume_Click(object s, RoutedEventArgs e)
@@ -396,6 +399,8 @@ public partial class ProcessManagerWindow : Window
         foreach (var vm in sel)
             _ = _server.SendToClient(_clientId, new Packet { Type = PacketType.ProcResume, Data = JsonConvert.SerializeObject(new ProcResumeData2 { Pid = vm.Pid }) });
         TxtStatus.Text = sel.Count == 1 ? $"Resume → PID {sel[0].Pid} ({sel[0].Name})" : $"Resume → {sel.Count} processes";
+        ServerWindow.ReportGlobalActivity("Resume process", sel.Count == 1 ? sel[0].Name : $"{sel.Count} processes", "complete");
+        ServerWindow.LogGlobal($"[PROC] Resumed process {(sel.Count == 1 ? $"'{sel[0].Name}' (PID {sel[0].Pid})" : $"{sel.Count} processes")} on client {_clientId}.");
     }
 
 

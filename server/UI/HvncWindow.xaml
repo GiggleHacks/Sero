@@ -198,6 +198,10 @@
                             <TextBlock x:Name="TxtFps" Text="— fps" Foreground="#404878"
                                        FontSize="10" FontFamily="Segoe UI Mono" MinWidth="44" TextAlignment="Center"/>
                         </Border>
+                        <Button x:Name="BtnMenu" Content="☰" Width="28" Height="26" Margin="0,0,4,0"
+                                Background="#0F1020" BorderBrush="#1E2038" BorderThickness="1"
+                                Foreground="#606880" FontSize="14" Cursor="Hand" Padding="0"
+                                ToolTip="Actions" Click="BtnMenu_Click"/>
                         <Button x:Name="BtnFullscreen" Content="⛶" Width="28" Height="26" Margin="0,0,4,0"
                                 Style="{StaticResource IconBtn}" FontSize="13" Padding="0"
                                 Click="BtnFullscreen_Click"/>
@@ -365,6 +369,32 @@
                                        HorizontalAlignment="Center" Margin="0,8,0,0"/>
                         </StackPanel>
                     </Border>
+                </Grid>
+
+                <!-- Reconnecting overlay -->
+                <Grid x:Name="ReconnectOverlay" Visibility="Collapsed" IsHitTestVisible="False">
+                    <Rectangle Fill="#CC000000"/>
+                    <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
+                        <TextBlock x:Name="TxtReconnectIcon" Text="⟳" FontSize="36" Foreground="#60A5FA"
+                                   HorizontalAlignment="Center" Margin="0,0,0,12">
+                            <TextBlock.Triggers>
+                                <EventTrigger RoutedEvent="Loaded">
+                                    <BeginStoryboard>
+                                        <Storyboard>
+                                            <DoubleAnimation Storyboard.TargetProperty="Opacity"
+                                                             From="0.3" To="1.0" Duration="0:0:0.8"
+                                                             AutoReverse="True" RepeatBehavior="Forever"/>
+                                        </Storyboard>
+                                    </BeginStoryboard>
+                                </EventTrigger>
+                            </TextBlock.Triggers>
+                        </TextBlock>
+                        <TextBlock Text="Connection lost" Foreground="#DDE0F0" FontSize="16"
+                                   FontWeight="SemiBold" FontFamily="Segoe UI" HorizontalAlignment="Center"/>
+                        <TextBlock x:Name="TxtReconnectCountdown" Text="Reconnecting... (60s)"
+                                   Foreground="#94A3B8" FontSize="12" FontFamily="Segoe UI"
+                                   HorizontalAlignment="Center" Margin="0,6,0,0"/>
+                    </StackPanel>
                 </Grid>
             </Grid>
 

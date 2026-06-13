@@ -550,16 +550,52 @@
             <Setter Property="Background" Value="Transparent"/>
             <Setter Property="Foreground" Value="#DDE0F0"/>
             <Setter Property="FontSize"   Value="12"/>
+            <Setter Property="Cursor"     Value="Hand"/>
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="MenuItem">
-                        <Border x:Name="bd" Background="Transparent" CornerRadius="5" Margin="1">
-                            <ContentPresenter ContentSource="Header"
-                                              Margin="10,7" VerticalAlignment="Center"/>
-                        </Border>
+                        <Grid Background="Transparent">
+                            <!-- Item row -->
+                            <Border x:Name="bd" Background="Transparent" CornerRadius="5" Margin="1,1">
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="28"/>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="16"/>
+                                    </Grid.ColumnDefinitions>
+                                    <Rectangle Grid.Column="0" Fill="#0C0D1E"/>
+                                    <Rectangle Grid.Column="0" HorizontalAlignment="Right" Width="1" Fill="#191B30" VerticalAlignment="Stretch"/>
+                                    <ContentPresenter Grid.Column="0" ContentSource="Icon"
+                                                      HorizontalAlignment="Center" VerticalAlignment="Center"
+                                                      Margin="0,6,0,6"/>
+                                    <ContentPresenter Grid.Column="1" ContentSource="Header"
+                                                      Margin="4,7,4,7" VerticalAlignment="Center"/>
+                                    <TextBlock x:Name="Arrow" Grid.Column="2" Text="›" FontSize="13"
+                                               VerticalAlignment="Center" HorizontalAlignment="Center"
+                                               Foreground="#505878" Visibility="Collapsed"/>
+                                </Grid>
+                            </Border>
+                            <!-- Sub-menu popup (only rendered when item has children) -->
+                            <Popup x:Name="PART_Popup"
+                                   IsOpen="{Binding IsSubmenuOpen, RelativeSource={RelativeSource TemplatedParent}}"
+                                   Placement="Right" HorizontalOffset="0" VerticalOffset="-5"
+                                   AllowsTransparency="True" Focusable="False" PopupAnimation="None">
+                                <Border Background="#111225" BorderBrush="#22253E" BorderThickness="1"
+                                        CornerRadius="8" Padding="4" MinWidth="168">
+                                    <Border.Effect>
+                                        <DropShadowEffect BlurRadius="22" ShadowDepth="6" Opacity="0.75" Color="#000"/>
+                                    </Border.Effect>
+                                    <ItemsPresenter KeyboardNavigation.TabNavigation="Cycle"
+                                                    KeyboardNavigation.DirectionalNavigation="Cycle"/>
+                                </Border>
+                            </Popup>
+                        </Grid>
                         <ControlTemplate.Triggers>
                             <Trigger Property="IsHighlighted" Value="True">
-                                <Setter TargetName="bd" Property="Background" Value="#1A1D38"/>
+                                <Setter TargetName="bd" Property="Background" Value="#1E2248"/>
+                            </Trigger>
+                            <Trigger Property="Role" Value="SubmenuHeader">
+                                <Setter TargetName="Arrow" Property="Visibility" Value="Visible"/>
                             </Trigger>
                             <Trigger Property="IsEnabled" Value="False">
                                 <Setter Property="Opacity" Value="0.38"/>

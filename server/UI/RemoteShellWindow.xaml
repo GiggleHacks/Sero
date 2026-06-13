@@ -1,4 +1,4 @@
-﻿<Window x:Class="SeroServer.UI.RemoteShellWindow"
+<Window x:Class="SeroServer.UI.RemoteShellWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         Title="Remote Shell"
@@ -109,6 +109,32 @@
                     </TextBox>
                 </ScrollViewer>
             </Border>
+
+            <!-- Reconnecting overlay -->
+            <Grid x:Name="ReconnectOverlay" Visibility="Collapsed" IsHitTestVisible="False">
+                <Rectangle Fill="#CC000000"/>
+                <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
+                    <TextBlock x:Name="TxtReconnectIcon" Text="⟳" FontSize="36" Foreground="#60A5FA"
+                               HorizontalAlignment="Center" Margin="0,0,0,12">
+                        <TextBlock.Triggers>
+                            <EventTrigger RoutedEvent="Loaded">
+                                <BeginStoryboard>
+                                    <Storyboard>
+                                        <DoubleAnimation Storyboard.TargetProperty="Opacity"
+                                                         From="0.3" To="1.0" Duration="0:0:0.8"
+                                                         AutoReverse="True" RepeatBehavior="Forever"/>
+                                    </Storyboard>
+                                </BeginStoryboard>
+                            </EventTrigger>
+                        </TextBlock.Triggers>
+                    </TextBlock>
+                    <TextBlock Text="Connection lost" Foreground="#DDE0F0" FontSize="16"
+                               FontWeight="SemiBold" FontFamily="Segoe UI" HorizontalAlignment="Center"/>
+                    <TextBlock x:Name="TxtReconnectCountdown" Text="Reconnecting... (60s)"
+                               Foreground="#94A3B8" FontSize="12" FontFamily="Segoe UI"
+                               HorizontalAlignment="Center" Margin="0,6,0,0"/>
+                </StackPanel>
+            </Grid>
 
         </DockPanel>
     </Border>

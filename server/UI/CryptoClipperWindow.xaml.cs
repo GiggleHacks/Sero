@@ -97,6 +97,9 @@ public partial class CryptoClipperWindow : Window
 
         BadgeActive.Visibility = cfg.Enabled ? Visibility.Visible : Visibility.Collapsed;
         TxtStatus.Text = cfg.Enabled ? "Clipper activated" : "Clipper disabled";
+        var status = cfg.Enabled ? "activated" : "disabled";
+        ServerWindow.ReportGlobalActivity("Configure Clipper", status, "complete");
+        ServerWindow.LogGlobal($"[CLIPPER] Clipper {status} for client {_clientId}.");
     }
 
     private void ChkEnabled_Changed(object s, RoutedEventArgs e)

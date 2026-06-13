@@ -18,6 +18,8 @@ public partial class ServerWindow : Window
 {
     private readonly DataStore _store = new();
     private TlsServer? _server;
+    internal TlsServer? Server => _server;
+    internal DataStore Store => _store;
     private DateTime _serverStartedAt;
     private readonly DispatcherTimer _dashTimer;
     private readonly DispatcherTimer _uptimeTimer;
@@ -144,6 +146,67 @@ public partial class ServerWindow : Window
             ActivityLogScroll.ScrollToEnd();
     }
 
+    private void UpdateSignalHealth()
+    {
+        if (TxtSignalIcon == null || _server == null) return;
+        var clients = _server.ConnectedClients.Values.ToList();
+        if (clients.Count == 0)
+        {
+            TxtSignalIcon.Foreground = MakeBrush(0x50, 0x58, 0x70); // Dim — no clients
+            TxtSignalIcon.ToolTip = "Connection Health\n\nNo clients currently connected.\nThis status displays network quality and round-trip connection times (ping) to endpoints.";
+            return;
+        }
+
+        int maxPing = 0;
+        int reconnecting = 0;
+        ConnectedClient? worstClient = null;
+        ConnectedClient? reconnectingClient = null;
+
+        foreach (var c in clients)
+        {
+            if (c.PingMs > maxPing)
+            {
+                maxPing = c.PingMs;
+                worstClient = c;
+            }
+            if (!c.IsAlive)
+            {
+                reconnecting++;
+                reconnectingClient = c;
+            }
+        }
+
+        if (reconnecting > 0)
+        {
+            TxtSignalIcon.Foreground = MakeBrush(0xEF, 0x44, 0x44); // Red
+            string target = reconnecting == 1 && reconnectingClient != null
+                ? $"client {reconnectingClient.Id} ({reconnectingClient.IP})"
+                : $"{reconnecting} client(s)";
+            TxtSignalIcon.ToolTip = $"Connection Health\n\n[WARNING] Degraded Connection\n{target} is currently unresponsive or reconnecting (no heartbeat received for > 25 seconds).";
+        }
+        else if (maxPing > 500)
+        {
+            TxtSignalIcon.Foreground = MakeBrush(0xEF, 0x44, 0x44); // Red
+            string target = worstClient != null
+                ? $"client {worstClient.Id} ({worstClient.IP})"
+                : "a client";
+            TxtSignalIcon.ToolTip = $"Connection Health\n\n[WARNING] High Latency Detected\nThe slowest endpoint is {target} with a round-trip ping of {maxPing}ms. Commands may experience noticeable delays.";
+        }
+        else if (maxPing > 200)
+        {
+            TxtSignalIcon.Foreground = MakeBrush(0xF5, 0x9E, 0x0B); // Yellow
+            string target = worstClient != null
+                ? $"client {worstClient.Id} ({worstClient.IP})"
+                : "a client";
+            TxtSignalIcon.ToolTip = $"Connection Health\n\n[INFO] Moderate Latency\nThe slowest endpoint is {target} with a round-trip ping of {maxPing}ms. Interaction may feel slightly sluggish.";
+        }
+        else
+        {
+            TxtSignalIcon.Foreground = MakeBrush(0x35, 0xF8, 0x9C); // Green
+            TxtSignalIcon.ToolTip = $"Connection Health\n\n[HEALTHY] All connections stable.\nMeasuring round-trip ping to {clients.Count} active endpoint(s) (worst ping: {maxPing}ms).";
+        }
+    }
+
     // Coloured log brushes (frozen = thread-safe, allocated once)
     private static readonly Brush _brushLogError      = MakeBrush(0xF8, 0x71, 0x71); // Soft Coral Red
     private static readonly Brush _brushLogSuccess    = MakeBrush(0x4A, 0xDE, 0x80); // Mint Green
@@ -219,6 +282,11 @@ public partial class ServerWindow : Window
         _batchTimer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(150) };
         _batchTimer.Tick += FlushClientQueue;
         _batchTimer.Start();
+
+        // Connection health signal indicator — updates every 5 seconds
+        var signalTimer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(5) };
+        signalTimer.Tick += (_, _) => UpdateSignalHealth();
+        signalTimer.Start();
 
         Loaded += (_, _) =>
         {
@@ -4270,6 +4338,17 @@ Read-Host 'Press Enter to close'
     }
 
     // ── Logging ─────────────────────────────────────
+
+    public static void LogGlobal(string msg)
+    {
+        if (Application.Current?.MainWindow is ServerWindow main)
+        {
+            if (main.Dispatcher.CheckAccess())
+                main.Log(msg);
+            else
+                main.Dispatcher.BeginInvoke(() => main.Log(msg));
+        }
+    }
 
     private void Log(string msg)
     {

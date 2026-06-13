@@ -1,4 +1,4 @@
-﻿using System.Collections.ObjectModel;
+using System.Collections.ObjectModel;
 using System.Windows;
 using System.Windows.Input;
 using Newtonsoft.Json;
@@ -86,6 +86,8 @@ public partial class TcpManagerWindow : Window
             var data = JsonConvert.SerializeObject(new TcpCloseData { LocalAddr = row.LocalAddr, RemoteAddr = row.RemoteAddr });
             await _server.SendToClient(_clientId, new Packet { Type = PacketType.TcpClose, Data = data });
         }
+        ServerWindow.ReportGlobalActivity("Close TCP", sel.Count == 1 ? sel[0].RemoteAddr : $"{sel.Count} conns", "complete");
+        ServerWindow.LogGlobal($"[TCP] Closed {(sel.Count == 1 ? $"TCP connection {sel[0].RemoteAddr} ({sel[0].ProcessName})" : $"{sel.Count} TCP connections")} on client {_clientId}.");
         await Task.Delay(300);
         await Refresh();
     }
@@ -116,6 +118,8 @@ public partial class TcpManagerWindow : Window
             await _server.SendToClient(_clientId, new Packet { Type = PacketType.AutoTaskShell, Data = cmd });
         }
         TxtStatus.Text = sel.Count == 1 ? $"Kill sent → PID {sel[0].Pid} ({sel[0].ProcessName})" : $"Kill sent → {sel.Count} processes";
+        ServerWindow.ReportGlobalActivity("Kill process", sel.Count == 1 ? sel[0].ProcessName : $"{sel.Count} processes", "complete");
+        ServerWindow.LogGlobal($"[TCP] Killed process {(sel.Count == 1 ? $"'{sel[0].ProcessName}' (PID {sel[0].Pid})" : $"{sel.Count} processes")} via TCP manager on client {_clientId}.");
         await Task.Delay(600);
         await Refresh();
     }
@@ -132,6 +136,8 @@ public partial class TcpManagerWindow : Window
             Data = JsonConvert.SerializeObject(new TcpFirewallBlockData { ProcessName = "", Port = 0, RemoteIp = ip, Direction = "both" })
         });
         TxtStatus.Text = $"🛡 Firewall block sent → IP {ip}";
+        ServerWindow.ReportGlobalActivity("Firewall block IP", ip, "complete");
+        ServerWindow.LogGlobal($"[TCP] Blocked remote IP {ip} in firewall on client {_clientId}.");
     }
 
     private async void BlockProcess_Click(object s, RoutedEventArgs e)
@@ -145,6 +151,8 @@ public partial class TcpManagerWindow : Window
             Data = JsonConvert.SerializeObject(new TcpFirewallBlockData { ProcessName = name, Port = 0, Direction = "both" })
         });
         TxtStatus.Text = $"Firewall block sent → {name} (in+out)";
+        ServerWindow.ReportGlobalActivity("Firewall block proc", name, "complete");
+        ServerWindow.LogGlobal($"[TCP] Blocked process '{name}' in firewall on client {_clientId}.");
     }
 
     private async void BlockPort_Click(object s, RoutedEventArgs e)
@@ -163,6 +171,8 @@ public partial class TcpManagerWindow : Window
             Data = JsonConvert.SerializeObject(new TcpFirewallBlockData { ProcessName = "", Port = port, Direction = "both" })
         });
         TxtStatus.Text = $"Firewall block sent → port {port} (in+out)";
+        ServerWindow.ReportGlobalActivity("Firewall block port", port.ToString(), "complete");
+        ServerWindow.LogGlobal($"[TCP] Blocked TCP port {port} in firewall on client {_clientId}.");
     }
 
     private static string? SimpleInput(string prompt, string? def = null)

@@ -1,4 +1,4 @@
-﻿using System.Collections.ObjectModel;
+using System.Collections.ObjectModel;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
@@ -113,6 +113,8 @@ public partial class InstalledAppsWindow : Window
         foreach (var vm in sel)
             _ = _server.SendToClient(_clientId, new Packet { Type = PacketType.InstalledUninstall, Data = JsonConvert.SerializeObject(new InstalledUninstallData { UninstallString = vm.UninstallString }) });
         TxtStatus.Text = sel.Count == 1 ? $"Uninstall sent → {sel[0].Name}" : $"Uninstall sent → {sel.Count} apps";
+        ServerWindow.ReportGlobalActivity("Uninstall app", sel.Count == 1 ? sel[0].Name : $"{sel.Count} apps", "complete");
+        ServerWindow.LogGlobal($"[APPS] Sent uninstall command for {(sel.Count == 1 ? $"app '{sel[0].Name}'" : $"{sel.Count} apps")} on client {_clientId}.");
     }
 
     private void BtnRefresh_Click(object s, RoutedEventArgs e) => Refresh();

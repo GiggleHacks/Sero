@@ -1,4 +1,4 @@
-﻿using System.Collections.Concurrent;
+using System.Collections.Concurrent;
 using System.Net;
 using System.Net.Sockets;
 using System.Windows;
@@ -51,6 +51,9 @@ public partial class Socks5Window : Window
         if (!int.TryParse(TxtPort.Text, out int port) || port < 1 || port > 65535)
         { TxtStatus.Text = "Invalid port."; return; }
 
+        ServerWindow.ReportGlobalActivity("SOCKS5 Proxy", $"Port {port}", "running");
+        ServerWindow.LogGlobal($"[SOCKS5] Starting SOCKS5 proxy on local port {port} targeting client {_clientId}...");
+
         await _server.SendToClient(_clientId, new Packet
         {
             Type = PacketType.SocksStart,
@@ -67,23 +70,36 @@ public partial class Socks5Window : Window
             _listener.Start();
             TxtStatus.Text = $"SOCKS5 listening on 127.0.0.1:{port}";
             AddLog($"[+] Started on port {port}");
+            ServerWindow.ReportGlobalActivity("SOCKS5 Proxy", $"Port {port}", "success");
+            ServerWindow.LogGlobal($"[SOCKS5] SOCKS5 proxy running on local port {port} for client {_clientId}.");
             _ = AcceptLoop();
         }
-        catch (Exception ex) { TxtStatus.Text = $"Error: {ex.Message}"; StopProxy(); }
+        catch (Exception ex)
+        {
+            TxtStatus.Text = $"Error: {ex.Message}";
+            ServerWindow.ReportGlobalActivity("SOCKS5 Proxy", $"Port {port}", "failed");
+            ServerWindow.LogGlobal($"[SOCKS5] SOCKS5 proxy failed to start on port {port}: {ex.Message}");
+            StopProxy(logStop: false);
+        }
     }
 
     private async void BtnStop_Click(object s, RoutedEventArgs e)
     {
         await _server.SendToClient(_clientId, new Packet { Type = PacketType.SocksStop });
-        StopProxy();
+        StopProxy(logStop: true);
     }
 
-    private void StopProxy()
+    private void StopProxy(bool logStop = true)
     {
         _running = false;
         _listener?.Stop(); _listener = null;
         foreach (var t in _pending.Values) try { t.Close(); } catch { }
         _pending.Clear();
+        if (logStop)
+        {
+            ServerWindow.ReportGlobalActivity("SOCKS5 Proxy", $"Port {TxtPort.Text}", "complete");
+            ServerWindow.LogGlobal($"[SOCKS5] Stopped SOCKS5 proxy for client {_clientId}.");
+        }
         Dispatcher.BeginInvoke(() =>
         {
             BtnStart.IsEnabled = true; BtnStop.IsEnabled = false;

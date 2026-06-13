@@ -1,4 +1,4 @@
-﻿using System.Collections.ObjectModel;
+using System.Collections.ObjectModel;
 using System.Windows;
 using System.Windows.Input;
 using Newtonsoft.Json;
@@ -74,6 +74,8 @@ public partial class StartupManagerWindow : Window
             await _server.SendToClient(_clientId, new Packet { Type = PacketType.StartupDelete, Data = data });
             await Task.Delay(80);
         }
+        ServerWindow.ReportGlobalActivity("Delete startup", selected.Count == 1 ? selected[0].Name : $"{selected.Count} items", "complete");
+        ServerWindow.LogGlobal($"[STARTUP] Deleted startup entry {(selected.Count == 1 ? $"'{selected[0].Name}'" : $"{selected.Count} entries")} on client {_clientId}.");
         await Task.Delay(400);
         await Refresh();
     }
