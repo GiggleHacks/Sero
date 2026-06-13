@@ -31,9 +31,9 @@
     <Product></Product>
     <Company></Company>
     <Copyright></Copyright>
-    <FileVersion>1.0.0.0</FileVersion>
-    <ProductVersion>1.0.0.0</ProductVersion>
-    <InformationalVersion>1.0.0.0</InformationalVersion>
+    <FileVersion>1.1.0.0</FileVersion>
+    <ProductVersion>1.1.0.0</ProductVersion>
+    <InformationalVersion>1.1.0.0</InformationalVersion>
     <Platforms>AnyCPU;x64</Platforms>
     <!-- CS0162: intentional dead-code branches from compile-time const feature flags -->
     <!-- CS0168: catch(Exception ex){} blocks where ex is intentionally unused -->
