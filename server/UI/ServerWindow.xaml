@@ -288,7 +288,7 @@
                                     </LinearGradientBrush>
                                 </Run.Foreground>
                             </Run>
-                            <Run x:Name="TxtVersionNumber" Text=" v1.4.1" Foreground="#C8922A" FontSize="10" FontWeight="Normal"/>
+                            <Run x:Name="TxtVersionNumber" Text=" v1.4.2" Foreground="#C8922A" FontSize="10" FontWeight="Normal"/>
                         </TextBlock>
                     </StackPanel>
 
