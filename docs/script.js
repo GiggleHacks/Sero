@@ -1,51 +1,81 @@
-/* ── Three.js — C2 node network ── */
+/* ── Three.js — C2 node constellation ── */
 (function () {
   const canvas = document.getElementById('bg-canvas');
   if (!canvas || typeof THREE === 'undefined') return;
 
   const mobile  = window.innerWidth < 768;
-  const N       = mobile ? 60  : 200;   // particle count
-  const CONNECT = mobile ? 7.5 : 10.5;  // connection distance threshold
-  const MAXSEG  = mobile ? 300 : 1400;  // pre-allocated line segments
+  const N       = mobile ? 50  : 160;
+  const CONNECT = mobile ? 7.0 : 9.5;
+  const MAXSEG  = mobile ? 220 : 1000;
 
   const renderer = new THREE.WebGLRenderer({ canvas, alpha: false, antialias: false });
   renderer.setPixelRatio(Math.min(devicePixelRatio, mobile ? 1 : 1.5));
   renderer.setClearColor(0x07080f, 1);
 
   const scene = new THREE.Scene();
-  scene.fog = new THREE.FogExp2(0x07080f, mobile ? 0.038 : 0.024);
+  scene.fog = new THREE.FogExp2(0x07080f, mobile ? 0.044 : 0.030);
 
-  const camera = new THREE.PerspectiveCamera(52, 1, 0.1, 60);
-  camera.position.set(0, 0, 22);
+  const camera = new THREE.PerspectiveCamera(50, 1, 0.1, 55);
+  camera.position.set(0, 0, 20);
 
-  // ── Particle positions + velocities ───────────────────────────────────────
-  const ptPos = new Float32Array(N * 3);
-  const vel   = new Float32Array(N * 3);
-  const BOUNDS = [20, 13, 14]; // half-extents x y z
-
-  for (let i = 0; i < N; i++) {
-    ptPos[i*3]   = (Math.random() - 0.5) * BOUNDS[0] * 2;
-    ptPos[i*3+1] = (Math.random() - 0.5) * BOUNDS[1] * 2;
-    ptPos[i*3+2] = (Math.random() - 0.5) * BOUNDS[2] * 2;
-    vel[i*3]     = (Math.random() - 0.5) * 0.010;
-    vel[i*3+1]   = (Math.random() - 0.5) * 0.008;
-    vel[i*3+2]   = (Math.random() - 0.5) * 0.006;
+  // ── Circular soft-glow sprite ─────────────────────────────────────────────
+  function makeCircleSprite(coreAlpha, feather) {
+    const sz = 64;
+    const cv = document.createElement('canvas');
+    cv.width = cv.height = sz;
+    const ctx = cv.getContext('2d');
+    const r = sz / 2;
+    const g = ctx.createRadialGradient(r, r, 0, r, r, r);
+    g.addColorStop(0,       'rgba(255,255,255,' + coreAlpha + ')');
+    g.addColorStop(feather, 'rgba(255,255,255,0.35)');
+    g.addColorStop(1,       'rgba(255,255,255,0)');
+    ctx.fillStyle = g;
+    ctx.fillRect(0, 0, sz, sz);
+    const t = new THREE.CanvasTexture(cv);
+    t.needsUpdate = true;
+    return t;
   }
 
-  // Points — regular nodes
+  const texNode = makeCircleSprite(0.90, 0.40);
+  const texHub  = makeCircleSprite(1.00, 0.30);
+
+  // ── Particle data ──────────────────────────────────────────────────────────
+  const ptPos = new Float32Array(N * 3);
+  const vel   = new Float32Array(N * 3);
+  const BX = 22, BY = 13, BZ = 15;
+
+  for (let i = 0; i < N; i++) {
+    ptPos[i*3]   = (Math.random() - 0.5) * BX * 2;
+    ptPos[i*3+1] = (Math.random() - 0.5) * BY * 2;
+    ptPos[i*3+2] = (Math.random() - 0.5) * BZ * 2;
+    vel[i*3]     = (Math.random() - 0.5) * 0.009;
+    vel[i*3+1]   = (Math.random() - 0.5) * 0.007;
+    vel[i*3+2]   = (Math.random() - 0.5) * 0.005;
+  }
+
+  // Regular nodes — small round dots
   const ptGeo = new THREE.BufferGeometry();
   ptGeo.setAttribute('position', new THREE.BufferAttribute(ptPos, 3));
   scene.add(new THREE.Points(ptGeo, new THREE.PointsMaterial({
-    color: 0x2a5fc4, size: mobile ? 0.16 : 0.13,
-    sizeAttenuation: true, transparent: true, opacity: 0.85,
+    map: texNode,
+    color: 0x3a70d4,
+    size: mobile ? 0.40 : 0.30,
+    sizeAttenuation: true,
+    transparent: true,
+    opacity: 0.65,
+    depthWrite: false,
+    alphaTest: 0.005,
   })));
 
-  // Pick ~8% of nodes as "active hubs" (brighter)
-  const HUB_N   = Math.max(4, Math.floor(N * 0.08));
-  const hubIdx  = new Set();
-  while (hubIdx.size < HUB_N) hubIdx.add(Math.floor(Math.random() * N));
+  // Hub nodes — larger glowing circles
+  const HUB_N  = Math.max(4, Math.floor(N * 0.09));
+  const hubArr = [];
+  const used   = new Set();
+  while (hubArr.length < HUB_N) {
+    const idx = Math.floor(Math.random() * N);
+    if (!used.has(idx)) { used.add(idx); hubArr.push(idx); }
+  }
   const hubPos = new Float32Array(HUB_N * 3);
-  const hubArr = [...hubIdx];
   for (let h = 0; h < HUB_N; h++) {
     const i = hubArr[h];
     hubPos[h*3]   = ptPos[i*3];
@@ -55,16 +85,24 @@
   const hubGeo = new THREE.BufferGeometry();
   hubGeo.setAttribute('position', new THREE.BufferAttribute(hubPos, 3));
   scene.add(new THREE.Points(hubGeo, new THREE.PointsMaterial({
-    color: 0x4a85f5, size: mobile ? 0.28 : 0.22,
-    sizeAttenuation: true, transparent: true, opacity: 1.0,
+    map: texHub,
+    color: 0x5a9af8,
+    size: mobile ? 0.70 : 0.58,
+    sizeAttenuation: true,
+    transparent: true,
+    opacity: 0.90,
+    depthWrite: false,
+    alphaTest: 0.005,
   })));
 
   // ── Connection lines ───────────────────────────────────────────────────────
-  const linePosArr = new Float32Array(MAXSEG * 6); // 2 verts × 3 floats per segment
+  const linePosArr = new Float32Array(MAXSEG * 6);
   const lineGeo = new THREE.BufferGeometry();
   lineGeo.setAttribute('position', new THREE.BufferAttribute(linePosArr, 3));
   const lineObj = new THREE.LineSegments(lineGeo, new THREE.LineBasicMaterial({
-    color: 0x1a3a70, transparent: true, opacity: mobile ? 0.40 : 0.35,
+    color: 0x1a3870,
+    transparent: true,
+    opacity: mobile ? 0.22 : 0.18,
   }));
   scene.add(lineObj);
 
@@ -92,18 +130,16 @@
     const dt = Math.min(clock.getDelta(), 0.05);
     t += dt;
 
-    // Move particles
     for (let i = 0; i < N; i++) {
       ptPos[i*3]   += vel[i*3]   * dt * 60;
       ptPos[i*3+1] += vel[i*3+1] * dt * 60;
       ptPos[i*3+2] += vel[i*3+2] * dt * 60;
-      for (let ax = 0; ax < 3; ax++) {
-        if (Math.abs(ptPos[i*3+ax]) > BOUNDS[ax]) vel[i*3+ax] *= -1;
-      }
+      if (Math.abs(ptPos[i*3])   > BX) vel[i*3]   *= -1;
+      if (Math.abs(ptPos[i*3+1]) > BY) vel[i*3+1] *= -1;
+      if (Math.abs(ptPos[i*3+2]) > BZ) vel[i*3+2] *= -1;
     }
     ptGeo.attributes.position.needsUpdate = true;
 
-    // Sync hub positions
     for (let h = 0; h < HUB_N; h++) {
       const i = hubArr[h];
       hubPos[h*3]   = ptPos[i*3];
@@ -112,14 +148,15 @@
     }
     hubGeo.attributes.position.needsUpdate = true;
 
-    // Rebuild connections
+    // Rebuild connection segments
     let seg = 0;
+    const C2 = CONNECT * CONNECT;
     outer: for (let i = 0; i < N; i++) {
       for (let j = i + 1; j < N; j++) {
         const dx = ptPos[i*3]   - ptPos[j*3];
         const dy = ptPos[i*3+1] - ptPos[j*3+1];
         const dz = ptPos[i*3+2] - ptPos[j*3+2];
-        if (dx*dx + dy*dy + dz*dz < CONNECT*CONNECT) {
+        if (dx*dx + dy*dy + dz*dz < C2) {
           linePosArr[seg*6]   = ptPos[i*3];
           linePosArr[seg*6+1] = ptPos[i*3+1];
           linePosArr[seg*6+2] = ptPos[i*3+2];
@@ -133,12 +170,12 @@
     lineGeo.attributes.position.needsUpdate = true;
     lineGeo.setDrawRange(0, seg * 2);
 
-    // Slow camera drift — subtle arc, no spin
+    // Gentle arc drift — never distracts from content
     if (!mobile) {
-      camera.position.x = Math.sin(t * 0.055) * 3.0 + Math.sin(t * 0.021) * 0.8;
-      camera.position.y = Math.sin(t * 0.038) * 1.4 + Math.sin(t * 0.017) * 0.5;
-      camera.position.z = 22 + Math.sin(t * 0.028) * 1.8;
-      camera.lookAt(Math.sin(t * 0.042) * 0.6, Math.sin(t * 0.029) * 0.3, 0);
+      camera.position.x = Math.sin(t * 0.048) * 2.5 + Math.sin(t * 0.019) * 0.7;
+      camera.position.y = Math.sin(t * 0.033) * 1.2 + Math.sin(t * 0.015) * 0.4;
+      camera.position.z = 20 + Math.sin(t * 0.022) * 1.4;
+      camera.lookAt(Math.sin(t * 0.038) * 0.4, Math.sin(t * 0.026) * 0.2, 0);
     }
 
     renderer.render(scene, camera);
