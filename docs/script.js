@@ -1,71 +1,72 @@
-/* ── Three.js — wave grid ── */
+/* ── Three.js — C2 node network ── */
 (function () {
   const canvas = document.getElementById('bg-canvas');
   if (!canvas || typeof THREE === 'undefined') return;
 
-  const mobile = window.innerWidth < 768;
-  const lowEnd  = window.innerWidth < 480;
+  const mobile  = window.innerWidth < 768;
+  const N       = mobile ? 60  : 200;   // particle count
+  const CONNECT = mobile ? 7.5 : 10.5;  // connection distance threshold
+  const MAXSEG  = mobile ? 300 : 1400;  // pre-allocated line segments
 
-  const renderer = new THREE.WebGLRenderer({ canvas, alpha: false, antialias: !mobile });
+  const renderer = new THREE.WebGLRenderer({ canvas, alpha: false, antialias: false });
   renderer.setPixelRatio(Math.min(devicePixelRatio, mobile ? 1 : 1.5));
   renderer.setClearColor(0x07080f, 1);
 
   const scene = new THREE.Scene();
-  scene.fog = new THREE.FogExp2(0x07080f, mobile ? 0.028 : 0.020);
+  scene.fog = new THREE.FogExp2(0x07080f, mobile ? 0.038 : 0.024);
 
-  const camera = new THREE.PerspectiveCamera(44, 1, 0.1, 80);
-  camera.position.set(0, 4.2, 8.0);
-  camera.lookAt(0, -0.5, -5);
+  const camera = new THREE.PerspectiveCamera(52, 1, 0.1, 60);
+  camera.position.set(0, 0, 22);
 
-  // ── Main grid ─────────────────────────────────────────────────────────────
-  // 100 segments: cell size = 50/100 = 0.5 units
-  // Wave spatial freq 0.14 → wavelength 44 units = 88 cells → perfectly round, zero spikes
-  const S1 = lowEnd ? 28 : mobile ? 44 : 100;
-  const geo1 = new THREE.PlaneGeometry(50, 70, S1, S1);
-  geo1.rotateX(-Math.PI / 2);
-  const mesh1 = new THREE.Mesh(geo1, new THREE.MeshBasicMaterial({
-    color: 0x112460,
-    wireframe: true,
-    transparent: true,
-    opacity: mobile ? 0.36 : 0.42,
+  // ── Particle positions + velocities ───────────────────────────────────────
+  const ptPos = new Float32Array(N * 3);
+  const vel   = new Float32Array(N * 3);
+  const BOUNDS = [20, 13, 14]; // half-extents x y z
+
+  for (let i = 0; i < N; i++) {
+    ptPos[i*3]   = (Math.random() - 0.5) * BOUNDS[0] * 2;
+    ptPos[i*3+1] = (Math.random() - 0.5) * BOUNDS[1] * 2;
+    ptPos[i*3+2] = (Math.random() - 0.5) * BOUNDS[2] * 2;
+    vel[i*3]     = (Math.random() - 0.5) * 0.010;
+    vel[i*3+1]   = (Math.random() - 0.5) * 0.008;
+    vel[i*3+2]   = (Math.random() - 0.5) * 0.006;
+  }
+
+  // Points — regular nodes
+  const ptGeo = new THREE.BufferGeometry();
+  ptGeo.setAttribute('position', new THREE.BufferAttribute(ptPos, 3));
+  scene.add(new THREE.Points(ptGeo, new THREE.PointsMaterial({
+    color: 0x2a5fc4, size: mobile ? 0.16 : 0.13,
+    sizeAttenuation: true, transparent: true, opacity: 0.85,
+  })));
+
+  // Pick ~8% of nodes as "active hubs" (brighter)
+  const HUB_N   = Math.max(4, Math.floor(N * 0.08));
+  const hubIdx  = new Set();
+  while (hubIdx.size < HUB_N) hubIdx.add(Math.floor(Math.random() * N));
+  const hubPos = new Float32Array(HUB_N * 3);
+  const hubArr = [...hubIdx];
+  for (let h = 0; h < HUB_N; h++) {
+    const i = hubArr[h];
+    hubPos[h*3]   = ptPos[i*3];
+    hubPos[h*3+1] = ptPos[i*3+1];
+    hubPos[h*3+2] = ptPos[i*3+2];
+  }
+  const hubGeo = new THREE.BufferGeometry();
+  hubGeo.setAttribute('position', new THREE.BufferAttribute(hubPos, 3));
+  scene.add(new THREE.Points(hubGeo, new THREE.PointsMaterial({
+    color: 0x4a85f5, size: mobile ? 0.28 : 0.22,
+    sizeAttenuation: true, transparent: true, opacity: 1.0,
+  })));
+
+  // ── Connection lines ───────────────────────────────────────────────────────
+  const linePosArr = new Float32Array(MAXSEG * 6); // 2 verts × 3 floats per segment
+  const lineGeo = new THREE.BufferGeometry();
+  lineGeo.setAttribute('position', new THREE.BufferAttribute(linePosArr, 3));
+  const lineObj = new THREE.LineSegments(lineGeo, new THREE.LineBasicMaterial({
+    color: 0x1a3a70, transparent: true, opacity: mobile ? 0.40 : 0.35,
   }));
-  mesh1.position.set(0, -1.2, -6);
-  scene.add(mesh1);
-
-  const pos1  = geo1.attributes.position;
-  const base1 = new Float32Array(pos1.count);
-  for (let i = 0; i < pos1.count; i++) base1[i] = pos1.getY(i);
-
-  // ── Far parallax grid ─────────────────────────────────────────────────────
-  let farPos = null, farBase = null;
-  if (!mobile) {
-    const geo2 = new THREE.PlaneGeometry(80, 100, 24, 24);
-    geo2.rotateX(-Math.PI / 2);
-    const mesh2 = new THREE.Mesh(geo2, new THREE.MeshBasicMaterial({
-      color: 0x091a40, wireframe: true, transparent: true, opacity: 0.10,
-    }));
-    mesh2.position.set(0, -4.0, -18);
-    scene.add(mesh2);
-    farPos  = geo2.attributes.position;
-    farBase = new Float32Array(farPos.count);
-    for (let i = 0; i < farPos.count; i++) farBase[i] = farPos.getY(i);
-  }
-
-  // ── Wave functions ─────────────────────────────────────────────────────────
-  // Low spatial frequencies (0.10–0.14) → wavelengths 44–63 units
-  // At 100 segs (cell=0.5u): each wave covers 88–126 cells → zero spike effect
-  function ambientWave(x, z, t) {
-    return Math.sin(x * 0.14 + t * 0.72) * 0.38
-         + Math.sin(z * 0.10 + t * 0.50) * 0.28
-         + Math.sin((x - z) * 0.068 + t * 0.35) * 0.18
-         + Math.sin((x + z) * 0.034 + t * 0.20) * 0.12
-         + Math.sin(x * 0.048 + z * 0.036 + t * 0.14) * 0.08;
-  }
-
-  function sonarWave(x, z, t) {
-    const d = Math.hypot(x, z);
-    return Math.max(0, Math.sin(t * 1.9 - d * 0.20)) * Math.exp(-d * 0.048) * 0.90;
-  }
+  scene.add(lineObj);
 
   // ── Resize ────────────────────────────────────────────────────────────────
   function resize() {
@@ -83,31 +84,62 @@
   });
 
   const clock = new THREE.Clock();
-  const SPEED = mobile ? 0.130 : 0.150;
-
   let t = 0;
+
   function tick() {
     if (paused) return;
     requestAnimationFrame(tick);
-
     const dt = Math.min(clock.getDelta(), 0.05);
-    t += dt * SPEED;
+    t += dt;
 
-    for (let i = 0; i < pos1.count; i++)
-      pos1.setY(i, base1[i] + ambientWave(pos1.getX(i), pos1.getZ(i), t)
-                             + (mobile ? 0 : sonarWave(pos1.getX(i), pos1.getZ(i), t)));
-    pos1.needsUpdate = true;
-
-    if (farPos && farBase) {
-      for (let i = 0; i < farPos.count; i++)
-        farPos.setY(i, farBase[i] + ambientWave(farPos.getX(i), farPos.getZ(i), t * 0.38) * 0.44);
-      farPos.needsUpdate = true;
+    // Move particles
+    for (let i = 0; i < N; i++) {
+      ptPos[i*3]   += vel[i*3]   * dt * 60;
+      ptPos[i*3+1] += vel[i*3+1] * dt * 60;
+      ptPos[i*3+2] += vel[i*3+2] * dt * 60;
+      for (let ax = 0; ax < 3; ax++) {
+        if (Math.abs(ptPos[i*3+ax]) > BOUNDS[ax]) vel[i*3+ax] *= -1;
+      }
     }
+    ptGeo.attributes.position.needsUpdate = true;
 
-    camera.position.x = Math.sin(t * 0.110) * 0.48 + Math.sin(t * 0.037) * 0.13;
-    camera.position.y = 4.2 + Math.sin(t * 0.068) * 0.18 + Math.sin(t * 0.039) * 0.07;
-    camera.position.z = 8.0 + Math.sin(t * 0.018) * 1.1;
-    camera.lookAt(Math.sin(t * 0.085) * 0.16, -0.5, -5);
+    // Sync hub positions
+    for (let h = 0; h < HUB_N; h++) {
+      const i = hubArr[h];
+      hubPos[h*3]   = ptPos[i*3];
+      hubPos[h*3+1] = ptPos[i*3+1];
+      hubPos[h*3+2] = ptPos[i*3+2];
+    }
+    hubGeo.attributes.position.needsUpdate = true;
+
+    // Rebuild connections
+    let seg = 0;
+    outer: for (let i = 0; i < N; i++) {
+      for (let j = i + 1; j < N; j++) {
+        const dx = ptPos[i*3]   - ptPos[j*3];
+        const dy = ptPos[i*3+1] - ptPos[j*3+1];
+        const dz = ptPos[i*3+2] - ptPos[j*3+2];
+        if (dx*dx + dy*dy + dz*dz < CONNECT*CONNECT) {
+          linePosArr[seg*6]   = ptPos[i*3];
+          linePosArr[seg*6+1] = ptPos[i*3+1];
+          linePosArr[seg*6+2] = ptPos[i*3+2];
+          linePosArr[seg*6+3] = ptPos[j*3];
+          linePosArr[seg*6+4] = ptPos[j*3+1];
+          linePosArr[seg*6+5] = ptPos[j*3+2];
+          if (++seg >= MAXSEG) break outer;
+        }
+      }
+    }
+    lineGeo.attributes.position.needsUpdate = true;
+    lineGeo.setDrawRange(0, seg * 2);
+
+    // Slow camera drift — subtle arc, no spin
+    if (!mobile) {
+      camera.position.x = Math.sin(t * 0.055) * 3.0 + Math.sin(t * 0.021) * 0.8;
+      camera.position.y = Math.sin(t * 0.038) * 1.4 + Math.sin(t * 0.017) * 0.5;
+      camera.position.z = 22 + Math.sin(t * 0.028) * 1.8;
+      camera.lookAt(Math.sin(t * 0.042) * 0.6, Math.sin(t * 0.029) * 0.3, 0);
+    }
 
     renderer.render(scene, camera);
   }
@@ -119,9 +151,7 @@
   const audio = document.getElementById('bg-music');
   if (!audio) return;
   audio.volume = 0.28;
-
   function tryPlay() { audio.play().catch(() => {}); }
-
   tryPlay();
   document.addEventListener('click',      tryPlay, { once: true, passive: true });
   document.addEventListener('keydown',    tryPlay, { once: true, passive: true });
@@ -139,7 +169,6 @@ const revealIO = new IntersectionObserver(entries => {
     if (isIntersecting) { target.classList.add('visible'); revealIO.unobserve(target); }
   });
 }, { threshold: 0.07 });
-
 document.querySelectorAll('.reveal').forEach((el, i) => {
   el.style.transitionDelay = (i % 4) * 60 + 'ms';
   revealIO.observe(el);
@@ -149,17 +178,16 @@ document.querySelectorAll('.reveal').forEach((el, i) => {
 document.querySelectorAll('.gallery-item img, .screen-body img').forEach(img => {
   let busy = false;
   const box = img.closest('.gallery-item') || img.closest('.screen-frame') || img;
-
   function doTilt() {
     if (busy) return;
     busy = true;
     box.style.transition = 'transform 0.13s ease';
-    box.style.transform = 'perspective(700px) rotateY(18deg) scale(0.95)';
+    box.style.transform  = 'perspective(700px) rotateY(18deg) scale(0.95)';
     setTimeout(() => {
       box.style.transform = 'perspective(700px) rotateY(-14deg) scale(0.95)';
       setTimeout(() => {
         box.style.transition = 'transform 0.22s ease';
-        box.style.transform = '';
+        box.style.transform  = '';
         setTimeout(() => { busy = false; }, 220);
       }, 130);
     }, 130);
@@ -171,7 +199,7 @@ document.querySelectorAll('.gallery-item img, .screen-body img').forEach(img => 
 /* ── Smooth anchor scroll ── */
 document.querySelectorAll('a[href^="#"]').forEach(a => {
   a.addEventListener('click', e => {
-    const t = document.querySelector(a.getAttribute('href'));
-    if (t) { e.preventDefault(); t.scrollIntoView({ behavior: 'smooth' }); }
+    const target = document.querySelector(a.getAttribute('href'));
+    if (target) { e.preventDefault(); target.scrollIntoView({ behavior: 'smooth' }); }
   });
 });
