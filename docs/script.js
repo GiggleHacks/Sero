@@ -6,16 +6,16 @@
   const mobile = window.innerWidth < 768;
   const R      = 10;   // globe radius
 
-  const renderer = new THREE.WebGLRenderer({ canvas, alpha: false, antialias: !mobile });
-  renderer.setPixelRatio(Math.min(devicePixelRatio, mobile ? 1 : 1.5));
+  const renderer = new THREE.WebGLRenderer({ canvas, alpha: false, antialias: true });
+  renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
   renderer.setClearColor(0x07080f, 1);
 
   const scene = new THREE.Scene();
-  scene.fog = new THREE.FogExp2(0x07080f, mobile ? 0.032 : 0.022);
+  scene.fog = new THREE.FogExp2(0x07080f, mobile ? 0.026 : 0.018);
 
   const camera = new THREE.PerspectiveCamera(44, 1, 0.1, 80);
-  camera.position.set(mobile ? 0 : 3.5, 2.5, 22);
-  camera.lookAt(mobile ? 0 : 2, 0, 0);
+  camera.position.set(0, 2, 22);
+  camera.lookAt(0, 0, 0);
 
   // ── Atmospheric glow behind globe ──────────────────────────────────────
   (function () {
@@ -46,10 +46,10 @@
   const SEG = mobile ? 48 : 80;   // smoothness per line
 
   const latMat = new THREE.LineBasicMaterial({
-    color: 0x0a1f4d, transparent: true, opacity: mobile ? 0.55 : 0.45,
+    color: 0x0d2560, transparent: true, opacity: mobile ? 0.50 : 0.38,
   });
   const lonMat = new THREE.LineBasicMaterial({
-    color: 0x0c2458, transparent: true, opacity: mobile ? 0.40 : 0.30,
+    color: 0x0f2870, transparent: true, opacity: mobile ? 0.38 : 0.28,
   });
 
   // Latitude circles (horizontal rings)
@@ -80,36 +80,17 @@
     globeGroup.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints(pts), lonMat));
   }
 
-  // ── Node dots on globe surface ────────────────────────────────────────
+  // ── Equator highlight ─────────────────────────────────────────────────
   (function () {
-    const NODE_N = mobile ? 6 : 14;
-    const nodePos = new Float32Array(NODE_N * 3);
-    for (let i = 0; i < NODE_N; i++) {
-      const phi  = Math.acos(2 * Math.random() - 1);
-      const th   = Math.random() * Math.PI * 2;
-      nodePos[i*3]   = R * Math.sin(phi) * Math.cos(th);
-      nodePos[i*3+1] = R * Math.cos(phi);
-      nodePos[i*3+2] = R * Math.sin(phi) * Math.sin(th);
+    const pts = [];
+    for (let j = 0; j <= 120; j++) {
+      const th = (j / 120) * Math.PI * 2;
+      pts.push(new THREE.Vector3(R * Math.cos(th), 0, R * Math.sin(th)));
     }
-
-    // Build a small circle sprite for round dots
-    const sz = 32, cv = document.createElement('canvas');
-    cv.width = cv.height = sz;
-    const ctx = cv.getContext('2d'), r = sz/2;
-    const grd = ctx.createRadialGradient(r,r,0,r,r,r);
-    grd.addColorStop(0, 'rgba(255,255,255,1)');
-    grd.addColorStop(0.4,'rgba(255,255,255,0.5)');
-    grd.addColorStop(1,  'rgba(255,255,255,0)');
-    ctx.fillStyle = grd; ctx.fillRect(0,0,sz,sz);
-    const tex = new THREE.CanvasTexture(cv);
-
-    const geo = new THREE.BufferGeometry();
-    geo.setAttribute('position', new THREE.BufferAttribute(nodePos, 3));
-    globeGroup.add(new THREE.Points(geo, new THREE.PointsMaterial({
-      map: tex, color: 0x3a75e0, size: mobile ? 0.28 : 0.22,
-      sizeAttenuation: true, transparent: true, opacity: 0.85,
-      depthWrite: false, alphaTest: 0.01,
-    })));
+    globeGroup.add(new THREE.Line(
+      new THREE.BufferGeometry().setFromPoints(pts),
+      new THREE.LineBasicMaterial({ color: 0x1a3a80, transparent: true, opacity: mobile ? 0.65 : 0.55 })
+    ));
   })();
 
   // ── Connection arcs (Bezier curves between globe surface points) ───────
@@ -140,13 +121,18 @@
 
   for (let i = 0; i < ARC_N; i++) arcs.push(spawnArc((i / ARC_N) * 5));
 
-  // ── Resize ────────────────────────────────────────────────────────────
+  // ── Resize — debounced to avoid scroll-bar jank on mobile ────────────
+  let resizeTimer;
   function resize() {
-    renderer.setSize(window.innerWidth, window.innerHeight, false);
-    camera.aspect = window.innerWidth / window.innerHeight;
+    const w = window.innerWidth, h = window.innerHeight;
+    renderer.setSize(w, h, false);
+    camera.aspect = w / h;
     camera.updateProjectionMatrix();
   }
-  window.addEventListener('resize', resize, { passive: true });
+  window.addEventListener('resize', () => {
+    clearTimeout(resizeTimer);
+    resizeTimer = setTimeout(resize, 120);
+  }, { passive: true });
   resize();
 
   let paused = false;
