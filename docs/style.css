@@ -312,7 +312,8 @@ body::before {
 .num { color: #f9e2af; }
 
 /* ── Deep-dive cards ── */
-.deepdive-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+.deepdive-section { text-align: center; }
+.deepdive-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; text-align: left; }
 .deepdive-card {
   background: rgba(255,255,255,0.018); border: 1px solid var(--border);
   border-left: 2px solid rgba(59,130,246,0.35); border-radius: 10px; padding: 32px;
@@ -338,10 +339,12 @@ body::before {
 /* ── Contributors ── */
 .contrib-section {
   position: relative; z-index: 1; padding: 80px 0;
+  text-align: center;
 }
 .contrib-section::before { content: none; }
 .contrib-grid {
   display: flex; gap: 20px; flex-wrap: wrap; margin-top: 44px;
+  justify-content: center;
 }
 .contrib-card {
   display: flex; flex-direction: column; align-items: center; gap: 12px;
