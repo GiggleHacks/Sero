@@ -24,7 +24,7 @@
   </audio>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="style.css?v=5">
+  <link rel="stylesheet" href="style.css?v=6">
   <style>
     /* Inline fallback — bypasses all external CSS caching */
     @media (max-width: 900px) {
@@ -34,7 +34,14 @@
 </head>
 <body>
 
+<div id="page-intro"></div>
 <canvas id="bg-canvas"></canvas>
+
+<!-- Lightbox -->
+<div id="lightbox" role="dialog" aria-modal="true">
+  <button id="lightbox-close" aria-label="Fermer">&times;</button>
+  <img id="lightbox-img" src="" alt="">
+</div>
 
 <!-- Nav -->
 <nav id="nav">
@@ -240,15 +247,15 @@
     <div class="gallery">
       <div class="gallery-item reveal">
         <img src="assets/listonline.png" alt="SeroRAT — online clients list" loading="lazy">
-        <span class="gallery-label">Dashboard — live client list</span>
+        <span class="gallery-label">Dashboard</span>
       </div>
       <div class="gallery-item reveal">
         <img src="assets/builder.png" alt="SeroRAT builder — NativeAOT stub generator" loading="lazy">
-        <span class="gallery-label">Builder — NativeAOT stub generator</span>
+        <span class="gallery-label">Builder NativeAOT stab</span>
       </div>
       <div class="gallery-item reveal">
         <img src="assets/listonline2.png" alt="SeroRAT — client detail view" loading="lazy">
-        <span class="gallery-label">Client detail view</span>
+        <span class="gallery-label">Panel</span>
       </div>
       <div class="gallery-item reveal">
         <img src="assets/services.png" alt="SeroRAT — service manager" loading="lazy">
@@ -386,6 +393,6 @@ SetThreadDesktop(hvnc);
 </footer>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-<script src="script.js?v=5"></script>
+<script src="script.js?v=6"></script>
 </body>
 </html>

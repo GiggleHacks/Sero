@@ -1,112 +1,146 @@
-/* ── Three.js — C2 node constellation ── */
+/* ── Three.js — C2 global network globe ── */
 (function () {
   const canvas = document.getElementById('bg-canvas');
   if (!canvas || typeof THREE === 'undefined') return;
 
-  const mobile  = window.innerWidth < 768;
-  const N       = mobile ? 50  : 160;
-  const CONNECT = mobile ? 7.0 : 9.5;
-  const MAXSEG  = mobile ? 220 : 1000;
+  const mobile = window.innerWidth < 768;
+  const R      = 10;   // globe radius
 
-  const renderer = new THREE.WebGLRenderer({ canvas, alpha: false, antialias: false });
+  const renderer = new THREE.WebGLRenderer({ canvas, alpha: false, antialias: !mobile });
   renderer.setPixelRatio(Math.min(devicePixelRatio, mobile ? 1 : 1.5));
   renderer.setClearColor(0x07080f, 1);
 
   const scene = new THREE.Scene();
-  scene.fog = new THREE.FogExp2(0x07080f, mobile ? 0.044 : 0.030);
+  scene.fog = new THREE.FogExp2(0x07080f, mobile ? 0.032 : 0.022);
 
-  const camera = new THREE.PerspectiveCamera(50, 1, 0.1, 55);
-  camera.position.set(0, 0, 20);
+  const camera = new THREE.PerspectiveCamera(44, 1, 0.1, 80);
+  camera.position.set(mobile ? 0 : 3.5, 2.5, 22);
+  camera.lookAt(mobile ? 0 : 2, 0, 0);
 
-  // ── Circular soft-glow sprite ─────────────────────────────────────────────
-  function makeCircleSprite(coreAlpha, feather) {
-    const sz = 64;
+  // ── Atmospheric glow behind globe ──────────────────────────────────────
+  (function () {
+    const sz = 512;
     const cv = document.createElement('canvas');
     cv.width = cv.height = sz;
     const ctx = cv.getContext('2d');
-    const r = sz / 2;
-    const g = ctx.createRadialGradient(r, r, 0, r, r, r);
-    g.addColorStop(0,       'rgba(255,255,255,' + coreAlpha + ')');
-    g.addColorStop(feather, 'rgba(255,255,255,0.35)');
-    g.addColorStop(1,       'rgba(255,255,255,0)');
-    ctx.fillStyle = g;
-    ctx.fillRect(0, 0, sz, sz);
-    const t = new THREE.CanvasTexture(cv);
-    t.needsUpdate = true;
-    return t;
+    const g = ctx.createRadialGradient(sz/2,sz/2,0, sz/2,sz/2,sz/2);
+    g.addColorStop(0,   'rgba(20,70,200,0.13)');
+    g.addColorStop(0.35,'rgba(15,55,180,0.06)');
+    g.addColorStop(1,   'rgba(0,0,0,0)');
+    ctx.fillStyle = g; ctx.fillRect(0, 0, sz, sz);
+    const spr = new THREE.Sprite(new THREE.SpriteMaterial({
+      map: new THREE.CanvasTexture(cv),
+      transparent: true, depthWrite: false,
+      blending: THREE.AdditiveBlending,
+    }));
+    spr.scale.set(30, 30, 1);
+    scene.add(spr);
+  })();
+
+  // ── Globe lat/lon wireframe ────────────────────────────────────────────
+  const globeGroup = new THREE.Group();
+  scene.add(globeGroup);
+
+  const LAT = mobile ? 9  : 15;   // latitude rings
+  const LON = mobile ? 14 : 26;   // meridian arcs
+  const SEG = mobile ? 48 : 80;   // smoothness per line
+
+  const latMat = new THREE.LineBasicMaterial({
+    color: 0x0a1f4d, transparent: true, opacity: mobile ? 0.55 : 0.45,
+  });
+  const lonMat = new THREE.LineBasicMaterial({
+    color: 0x0c2458, transparent: true, opacity: mobile ? 0.40 : 0.30,
+  });
+
+  // Latitude circles (horizontal rings)
+  for (let i = 1; i < LAT; i++) {
+    const phi = (i / LAT) * Math.PI;
+    const ry  = R * Math.cos(phi);
+    const rr  = R * Math.sin(phi);
+    const pts = [];
+    for (let j = 0; j <= SEG; j++) {
+      const th = (j / SEG) * Math.PI * 2;
+      pts.push(new THREE.Vector3(rr * Math.cos(th), ry, rr * Math.sin(th)));
+    }
+    globeGroup.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints(pts), latMat));
   }
 
-  const texNode = makeCircleSprite(0.90, 0.40);
-  const texHub  = makeCircleSprite(1.00, 0.30);
-
-  // ── Particle data ──────────────────────────────────────────────────────────
-  const ptPos = new Float32Array(N * 3);
-  const vel   = new Float32Array(N * 3);
-  const BX = 22, BY = 13, BZ = 15;
-
-  for (let i = 0; i < N; i++) {
-    ptPos[i*3]   = (Math.random() - 0.5) * BX * 2;
-    ptPos[i*3+1] = (Math.random() - 0.5) * BY * 2;
-    ptPos[i*3+2] = (Math.random() - 0.5) * BZ * 2;
-    vel[i*3]     = (Math.random() - 0.5) * 0.009;
-    vel[i*3+1]   = (Math.random() - 0.5) * 0.007;
-    vel[i*3+2]   = (Math.random() - 0.5) * 0.005;
+  // Longitude arcs (meridians — pole to pole)
+  for (let i = 0; i < LON; i++) {
+    const th  = (i / LON) * Math.PI * 2;
+    const pts = [];
+    for (let j = 0; j <= SEG; j++) {
+      const phi = (j / SEG) * Math.PI;
+      pts.push(new THREE.Vector3(
+        R * Math.sin(phi) * Math.cos(th),
+        R * Math.cos(phi),
+        R * Math.sin(phi) * Math.sin(th)
+      ));
+    }
+    globeGroup.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints(pts), lonMat));
   }
 
-  // Regular nodes — small round dots
-  const ptGeo = new THREE.BufferGeometry();
-  ptGeo.setAttribute('position', new THREE.BufferAttribute(ptPos, 3));
-  scene.add(new THREE.Points(ptGeo, new THREE.PointsMaterial({
-    map: texNode,
-    color: 0x3a70d4,
-    size: mobile ? 0.40 : 0.30,
-    sizeAttenuation: true,
-    transparent: true,
-    opacity: 0.65,
-    depthWrite: false,
-    alphaTest: 0.005,
-  })));
+  // ── Node dots on globe surface ────────────────────────────────────────
+  (function () {
+    const NODE_N = mobile ? 6 : 14;
+    const nodePos = new Float32Array(NODE_N * 3);
+    for (let i = 0; i < NODE_N; i++) {
+      const phi  = Math.acos(2 * Math.random() - 1);
+      const th   = Math.random() * Math.PI * 2;
+      nodePos[i*3]   = R * Math.sin(phi) * Math.cos(th);
+      nodePos[i*3+1] = R * Math.cos(phi);
+      nodePos[i*3+2] = R * Math.sin(phi) * Math.sin(th);
+    }
 
-  // Hub nodes — larger glowing circles
-  const HUB_N  = Math.max(4, Math.floor(N * 0.09));
-  const hubArr = [];
-  const used   = new Set();
-  while (hubArr.length < HUB_N) {
-    const idx = Math.floor(Math.random() * N);
-    if (!used.has(idx)) { used.add(idx); hubArr.push(idx); }
+    // Build a small circle sprite for round dots
+    const sz = 32, cv = document.createElement('canvas');
+    cv.width = cv.height = sz;
+    const ctx = cv.getContext('2d'), r = sz/2;
+    const grd = ctx.createRadialGradient(r,r,0,r,r,r);
+    grd.addColorStop(0, 'rgba(255,255,255,1)');
+    grd.addColorStop(0.4,'rgba(255,255,255,0.5)');
+    grd.addColorStop(1,  'rgba(255,255,255,0)');
+    ctx.fillStyle = grd; ctx.fillRect(0,0,sz,sz);
+    const tex = new THREE.CanvasTexture(cv);
+
+    const geo = new THREE.BufferGeometry();
+    geo.setAttribute('position', new THREE.BufferAttribute(nodePos, 3));
+    globeGroup.add(new THREE.Points(geo, new THREE.PointsMaterial({
+      map: tex, color: 0x3a75e0, size: mobile ? 0.28 : 0.22,
+      sizeAttenuation: true, transparent: true, opacity: 0.85,
+      depthWrite: false, alphaTest: 0.01,
+    })));
+  })();
+
+  // ── Connection arcs (Bezier curves between globe surface points) ───────
+  const ARC_N = mobile ? 4 : 7;
+  const arcs  = [];
+
+  function randomSurfacePoint() {
+    const phi = Math.acos(2 * Math.random() - 1);
+    const th  = Math.random() * Math.PI * 2;
+    return new THREE.Vector3(
+      R * Math.sin(phi) * Math.cos(th),
+      R * Math.cos(phi),
+      R * Math.sin(phi) * Math.sin(th)
+    );
   }
-  const hubPos = new Float32Array(HUB_N * 3);
-  for (let h = 0; h < HUB_N; h++) {
-    const i = hubArr[h];
-    hubPos[h*3]   = ptPos[i*3];
-    hubPos[h*3+1] = ptPos[i*3+1];
-    hubPos[h*3+2] = ptPos[i*3+2];
+
+  function spawnArc(delay) {
+    const a    = randomSurfacePoint();
+    const b    = randomSurfacePoint();
+    const ctrl = a.clone().add(b).multiplyScalar(0.5).normalize().multiplyScalar(R * 1.6);
+    const pts  = new THREE.QuadraticBezierCurve3(a, ctrl, b).getPoints(56);
+    const geo  = new THREE.BufferGeometry().setFromPoints(pts);
+    const mat  = new THREE.LineBasicMaterial({ color: 0x2468e8, transparent: true, opacity: 0 });
+    const line = new THREE.Line(geo, mat);
+    globeGroup.add(line);
+    return { line, mat, t: -(delay || 0), dur: 3.5 + Math.random() * 3, peak: 0.50 + Math.random() * 0.30 };
   }
-  const hubGeo = new THREE.BufferGeometry();
-  hubGeo.setAttribute('position', new THREE.BufferAttribute(hubPos, 3));
-  scene.add(new THREE.Points(hubGeo, new THREE.PointsMaterial({
-    map: texHub,
-    color: 0x5a9af8,
-    size: mobile ? 0.70 : 0.58,
-    sizeAttenuation: true,
-    transparent: true,
-    opacity: 0.90,
-    depthWrite: false,
-    alphaTest: 0.005,
-  })));
 
-  // ── Connection lines ───────────────────────────────────────────────────────
-  const linePosArr = new Float32Array(MAXSEG * 6);
-  const lineGeo = new THREE.BufferGeometry();
-  lineGeo.setAttribute('position', new THREE.BufferAttribute(linePosArr, 3));
-  const lineObj = new THREE.LineSegments(lineGeo, new THREE.LineBasicMaterial({
-    color: 0x1a3870,
-    transparent: true,
-    opacity: mobile ? 0.22 : 0.18,
-  }));
-  scene.add(lineObj);
+  for (let i = 0; i < ARC_N; i++) arcs.push(spawnArc((i / ARC_N) * 5));
 
-  // ── Resize ────────────────────────────────────────────────────────────────
+  // ── Resize ────────────────────────────────────────────────────────────
   function resize() {
     renderer.setSize(window.innerWidth, window.innerHeight, false);
     camera.aspect = window.innerWidth / window.innerHeight;
@@ -130,52 +164,27 @@
     const dt = Math.min(clock.getDelta(), 0.05);
     t += dt;
 
-    for (let i = 0; i < N; i++) {
-      ptPos[i*3]   += vel[i*3]   * dt * 60;
-      ptPos[i*3+1] += vel[i*3+1] * dt * 60;
-      ptPos[i*3+2] += vel[i*3+2] * dt * 60;
-      if (Math.abs(ptPos[i*3])   > BX) vel[i*3]   *= -1;
-      if (Math.abs(ptPos[i*3+1]) > BY) vel[i*3+1] *= -1;
-      if (Math.abs(ptPos[i*3+2]) > BZ) vel[i*3+2] *= -1;
-    }
-    ptGeo.attributes.position.needsUpdate = true;
+    // Globe slow rotation + subtle tilt oscillation
+    globeGroup.rotation.y = t * 0.048;
+    globeGroup.rotation.x = Math.sin(t * 0.016) * 0.07;
+    globeGroup.rotation.z = Math.sin(t * 0.011) * 0.03;
 
-    for (let h = 0; h < HUB_N; h++) {
-      const i = hubArr[h];
-      hubPos[h*3]   = ptPos[i*3];
-      hubPos[h*3+1] = ptPos[i*3+1];
-      hubPos[h*3+2] = ptPos[i*3+2];
-    }
-    hubGeo.attributes.position.needsUpdate = true;
-
-    // Rebuild connection segments
-    let seg = 0;
-    const C2 = CONNECT * CONNECT;
-    outer: for (let i = 0; i < N; i++) {
-      for (let j = i + 1; j < N; j++) {
-        const dx = ptPos[i*3]   - ptPos[j*3];
-        const dy = ptPos[i*3+1] - ptPos[j*3+1];
-        const dz = ptPos[i*3+2] - ptPos[j*3+2];
-        if (dx*dx + dy*dy + dz*dz < C2) {
-          linePosArr[seg*6]   = ptPos[i*3];
-          linePosArr[seg*6+1] = ptPos[i*3+1];
-          linePosArr[seg*6+2] = ptPos[i*3+2];
-          linePosArr[seg*6+3] = ptPos[j*3];
-          linePosArr[seg*6+4] = ptPos[j*3+1];
-          linePosArr[seg*6+5] = ptPos[j*3+2];
-          if (++seg >= MAXSEG) break outer;
-        }
+    // Arc lifecycle
+    for (let i = 0; i < arcs.length; i++) {
+      const a = arcs[i];
+      a.t += dt;
+      const p = a.t / a.dur;
+      if (p < 0) { a.mat.opacity = 0; continue; }
+      if (p >= 1) {
+        globeGroup.remove(a.line);
+        a.line.geometry.dispose(); a.mat.dispose();
+        arcs[i] = spawnArc(0);
+        continue;
       }
-    }
-    lineGeo.attributes.position.needsUpdate = true;
-    lineGeo.setDrawRange(0, seg * 2);
-
-    // Gentle arc drift — never distracts from content
-    if (!mobile) {
-      camera.position.x = Math.sin(t * 0.048) * 2.5 + Math.sin(t * 0.019) * 0.7;
-      camera.position.y = Math.sin(t * 0.033) * 1.2 + Math.sin(t * 0.015) * 0.4;
-      camera.position.z = 20 + Math.sin(t * 0.022) * 1.4;
-      camera.lookAt(Math.sin(t * 0.038) * 0.4, Math.sin(t * 0.026) * 0.2, 0);
+      // fade in 0-25%, hold 25-70%, fade out 70-100%
+      if (p < 0.25)      a.mat.opacity = a.peak * (p / 0.25);
+      else if (p < 0.70) a.mat.opacity = a.peak;
+      else               a.mat.opacity = a.peak * (1 - (p - 0.70) / 0.30);
     }
 
     renderer.render(scene, camera);
@@ -211,13 +220,40 @@ document.querySelectorAll('.reveal').forEach((el, i) => {
   revealIO.observe(el);
 });
 
-/* ── 3D tilt on click/tap ── */
-document.querySelectorAll('.gallery-item img, .screen-body img').forEach(img => {
+/* ── Lightbox — gallery images open full-screen ── */
+(function () {
+  const lb    = document.getElementById('lightbox');
+  const lbImg = document.getElementById('lightbox-img');
+  const lbBtn = document.getElementById('lightbox-close');
+  if (!lb || !lbImg) return;
+
+  function open(src, alt) {
+    lbImg.src = src; lbImg.alt = alt || '';
+    lb.classList.add('open');
+    document.body.style.overflow = 'hidden';
+  }
+  function close() {
+    lb.classList.remove('open');
+    document.body.style.overflow = '';
+    setTimeout(() => { lbImg.src = ''; }, 200);
+  }
+
+  document.querySelectorAll('.gallery-item img').forEach(img => {
+    img.style.cursor = 'zoom-in';
+    img.addEventListener('click', () => open(img.src, img.alt));
+    img.addEventListener('touchend', e => { e.preventDefault(); open(img.src, img.alt); }, { passive: false });
+  });
+
+  lb.addEventListener('click', e => { if (e.target === lb || e.target === lbBtn) close(); });
+  document.addEventListener('keydown', e => { if (e.key === 'Escape') close(); });
+})();
+
+/* ── 3D tilt on hero dashboard click only ── */
+document.querySelectorAll('.screen-body img').forEach(img => {
   let busy = false;
-  const box = img.closest('.gallery-item') || img.closest('.screen-frame') || img;
+  const box = img.closest('.screen-frame') || img;
   function doTilt() {
-    if (busy) return;
-    busy = true;
+    if (busy) return; busy = true;
     box.style.transition = 'transform 0.13s ease';
     box.style.transform  = 'perspective(700px) rotateY(18deg) scale(0.95)';
     setTimeout(() => {
