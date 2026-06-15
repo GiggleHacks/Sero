@@ -360,20 +360,14 @@ function applyLang(code) {
       my = (e.clientY / window.innerHeight - 0.5) * 0.045;
     }, { passive: true });
   } else {
-    /* Mobile: map finger position to tilt — same logic as mouse */
-    window.addEventListener('touchstart', e => {
-      const t = e.touches[0];
-      mx = (t.clientX / window.innerWidth  - 0.5) * 0.18;
-      my = (t.clientY / window.innerHeight - 0.5) * 0.12;
-    }, { passive: true });
-    window.addEventListener('touchmove', e => {
-      const t = e.touches[0];
-      mx = (t.clientX / window.innerWidth  - 0.5) * 0.18;
-      my = (t.clientY / window.innerHeight - 0.5) * 0.12;
-    }, { passive: true });
-    window.addEventListener('touchend', () => {
-      mx = 0; my = 0; /* lerp in tick() returns to neutral smoothly */
-    }, { passive: true });
+    /* Mobile: strong tilt — finger position maps to camera angle */
+    function applyTouch(touch) {
+      mx = (touch.clientX / window.innerWidth  - 0.5) * 0.55;
+      my = (touch.clientY / window.innerHeight - 0.5) * 0.38;
+    }
+    window.addEventListener('touchstart', e => applyTouch(e.touches[0]), { passive: true });
+    window.addEventListener('touchmove',  e => applyTouch(e.touches[0]), { passive: true });
+    window.addEventListener('touchend',   () => { mx = 0; my = 0; }, { passive: true });
   }
 
   /* ── Stellar spectral colors — real star palette ──────────────────── */
@@ -571,9 +565,10 @@ function applyLang(code) {
     scene.rotation.y += dt * 0.0055;
     scene.rotation.x  = Math.sin(t * 0.014) * 0.018;
 
-    /* Mouse parallax lerp */
-    crx += (my - crx) * 0.030;
-    cry += (mx - cry) * 0.030;
+    /* Parallax lerp — faster on mobile for snappy response */
+    const lf = mobile ? 0.08 : 0.030;
+    crx += (my - crx) * lf;
+    cry += (mx - cry) * lf;
     camera.rotation.x = crx;
     camera.rotation.y = cry;
 
