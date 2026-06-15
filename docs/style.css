@@ -433,9 +433,9 @@ body::before {
 .cta-inner { display: flex; flex-direction: column; align-items: center; gap: 16px; }
 .cta-logo {
   width: clamp(80px, 14vw, 160px);
-  opacity: 0.13;
+  opacity: 0.28;
   margin-bottom: 8px;
-  filter: drop-shadow(0 0 32px rgba(74,133,245,0.65)) drop-shadow(0 0 12px rgba(124,92,232,0.45));
+  filter: brightness(6) drop-shadow(0 0 40px rgba(74,133,245,0.90)) drop-shadow(0 0 18px rgba(124,92,232,0.65));
   animation: logo3d 9s ease-in-out infinite;
 }
 @keyframes logo3d {
