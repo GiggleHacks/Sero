@@ -432,20 +432,24 @@ body::before {
 .cta-section { text-align: center; }
 .cta-inner { display: flex; flex-direction: column; align-items: center; gap: 16px; }
 .cta-logo {
-  width: clamp(140px, 22vw, 260px);
-  opacity: 0.78;
+  width: clamp(170px, 26vw, 310px);
+  opacity: 0.82;
   margin-bottom: 8px;
   filter: brightness(1.55) contrast(1.12) saturate(1.05)
-          drop-shadow(0 0 18px rgba(74,133,245,0.85))
-          drop-shadow(0 0 36px rgba(74,133,245,0.45))
-          drop-shadow(0 2px 6px rgba(0,0,0,0.60));
-  animation: logo3d 9s ease-in-out infinite;
+          drop-shadow(0 0 22px rgba(74,133,245,0.92))
+          drop-shadow(0 0 44px rgba(74,133,245,0.50))
+          drop-shadow(0 4px 10px rgba(0,0,0,0.65));
+  animation: logo3d 12s ease-in-out infinite;
+  will-change: transform;
 }
 @keyframes logo3d {
-  0%, 100% { transform: perspective(280px) rotateY(-14deg) rotateX(7deg)  translateY(0px);  }
-  25%       { transform: perspective(280px) rotateY(0deg)   rotateX(-4deg) translateY(-5px); }
-  50%       { transform: perspective(280px) rotateY(14deg)  rotateX(7deg)  translateY(0px);  }
-  75%       { transform: perspective(280px) rotateY(0deg)   rotateX(-4deg) translateY(-5px); }
+  0%   { transform: perspective(190px) rotateY(-22deg) rotateX(10deg)  rotateZ(-1.5deg) translateY(0px);   }
+  18%  { transform: perspective(190px) rotateY(-5deg)  rotateX(-7deg)  rotateZ(1.2deg)  translateY(-11px); }
+  36%  { transform: perspective(190px) rotateY(20deg)  rotateX(8deg)   rotateZ(2deg)    translateY(-4px);  }
+  54%  { transform: perspective(190px) rotateY(24deg)  rotateX(-10deg) rotateZ(-1deg)   translateY(-14px); }
+  72%  { transform: perspective(190px) rotateY(6deg)   rotateX(6deg)   rotateZ(1.8deg)  translateY(-6px);  }
+  88%  { transform: perspective(190px) rotateY(-15deg) rotateX(-4deg)  rotateZ(-2deg)   translateY(-9px);  }
+  100% { transform: perspective(190px) rotateY(-22deg) rotateX(10deg)  rotateZ(-1.5deg) translateY(0px);   }
 }
 .cta-section h2 { font-size: clamp(2rem, 4vw, 3rem); font-weight: 700; letter-spacing: -0.03em; line-height: 1.1; }
 .cta-section > .container > p { color: var(--muted); font-size: 0.95rem; max-width: 420px; }
@@ -735,7 +739,7 @@ footer { position: relative; z-index: 1; border-top: 1px solid var(--border); pa
   /* CTA */
   .cta-section h2 { font-size: 1.4rem; line-height: 1.18; }
   .cta-section p  { font-size: 0.78rem; }
-  .cta-logo { width: clamp(100px, 36vw, 160px); }
+  .cta-logo { width: clamp(130px, 44vw, 190px); }
 
   /* Gallery — keep single col from 420px, tighten gap */
   .gallery { gap: 8px; }
