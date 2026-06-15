@@ -440,7 +440,6 @@ body::before {
           drop-shadow(0 0 36px rgba(74,133,245,0.45))
           drop-shadow(0 2px 6px rgba(0,0,0,0.60));
   animation: logo3d 9s ease-in-out infinite;
-  pointer-events: none;
 }
 @keyframes logo3d {
   0%, 100% { transform: perspective(280px) rotateY(-14deg) rotateX(7deg)  translateY(0px);  }
