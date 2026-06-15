@@ -442,18 +442,46 @@ body::before {
   animation: logo3d 9s linear infinite;
   will-change: transform;
 }
-/* Orbit: RIGHT → LEFT (Y sweep), then TOP → BOTTOM (X sweep), back to start.
-   Each position in the loop is unique — no reversal, no revisit. */
+/* Orbit: RIGHT → LEFT → TOP → BOTTOM → RIGHT.
+   scale() linked to |rotateY|: face-on = 1.04, sideways = 0.96 (depth illusion).
+   translateZ: face-on = +10px (closer), sideways = -10px (further).
+   Per-keyframe ease-in-out: natural acceleration between each stop. */
 @keyframes logo3d {
-  0%   { transform: perspective(180px) rotateY(28deg)  rotateX(3deg)   rotateZ(2deg)    translateY(-5px);  } /* RIGHT */
-  12%  { transform: perspective(180px) rotateY(10deg)  rotateX(-2deg)  rotateZ(-1deg)   translateY(-11px); }
-  25%  { transform: perspective(180px) rotateY(-26deg) rotateX(2deg)   rotateZ(-2.5deg) translateY(-7px);  } /* LEFT */
-  37%  { transform: perspective(180px) rotateY(-14deg) rotateX(9deg)   rotateZ(1.5deg)  translateY(-2px);  }
-  50%  { transform: perspective(180px) rotateY(0deg)   rotateX(15deg)  rotateZ(-1deg)   translateY(-1px);  } /* TOP */
-  62%  { transform: perspective(180px) rotateY(8deg)   rotateX(4deg)   rotateZ(2.5deg)  translateY(-10px); }
-  75%  { transform: perspective(180px) rotateY(-2deg)  rotateX(-14deg) rotateZ(-2deg)   translateY(-17px); } /* BOTTOM */
-  88%  { transform: perspective(180px) rotateY(18deg)  rotateX(-5deg)  rotateZ(1deg)    translateY(-12px); }
-  100% { transform: perspective(180px) rotateY(28deg)  rotateX(3deg)   rotateZ(2deg)    translateY(-5px);  } /* RIGHT */
+  0%   {
+    transform: perspective(180px) rotateY(28deg)  rotateX(3deg)   rotateZ(2deg)    translateY(-5px)  translateZ(-10px) scale(0.96);
+    animation-timing-function: ease-in-out;
+  }
+  12%  {
+    transform: perspective(180px) rotateY(10deg)  rotateX(-2deg)  rotateZ(-1deg)   translateY(-11px) translateZ(3px)   scale(1.01);
+    animation-timing-function: ease-in-out;
+  }
+  25%  {
+    transform: perspective(180px) rotateY(-26deg) rotateX(2deg)   rotateZ(-2.5deg) translateY(-7px)  translateZ(-9px)  scale(0.97);
+    animation-timing-function: ease-in-out;
+  }
+  37%  {
+    transform: perspective(180px) rotateY(-14deg) rotateX(9deg)   rotateZ(1.5deg)  translateY(-2px)  translateZ(0px)   scale(1.00);
+    animation-timing-function: ease-in-out;
+  }
+  50%  {
+    transform: perspective(180px) rotateY(0deg)   rotateX(15deg)  rotateZ(-1deg)   translateY(-1px)  translateZ(10px)  scale(1.04);
+    animation-timing-function: ease-in-out;
+  }
+  62%  {
+    transform: perspective(180px) rotateY(8deg)   rotateX(4deg)   rotateZ(2.5deg)  translateY(-10px) translateZ(4px)   scale(1.02);
+    animation-timing-function: ease-in-out;
+  }
+  75%  {
+    transform: perspective(180px) rotateY(-2deg)  rotateX(-14deg) rotateZ(-2deg)   translateY(-17px) translateZ(9px)   scale(1.04);
+    animation-timing-function: ease-in-out;
+  }
+  88%  {
+    transform: perspective(180px) rotateY(18deg)  rotateX(-5deg)  rotateZ(1deg)    translateY(-12px) translateZ(-3px)  scale(0.99);
+    animation-timing-function: ease-in-out;
+  }
+  100% {
+    transform: perspective(180px) rotateY(28deg)  rotateX(3deg)   rotateZ(2deg)    translateY(-5px)  translateZ(-10px) scale(0.96);
+  }
 }
 .cta-section h2 { font-size: clamp(2rem, 4vw, 3rem); font-weight: 700; letter-spacing: -0.03em; line-height: 1.1; }
 .cta-section > .container > p { color: var(--muted); font-size: 0.95rem; max-width: 420px; }
