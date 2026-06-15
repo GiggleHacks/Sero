@@ -352,12 +352,29 @@ function applyLang(code) {
   const camera = new THREE.PerspectiveCamera(75, W / H, 0.1, 1000);
   camera.position.z = 1;
 
-  /* ── Mouse parallax (desktop) ─────────────────────────────────────── */
+  /* ── Parallax — mouse on desktop, touch drag on mobile ────────────── */
   let mx = 0, my = 0, crx = 0, cry = 0;
   if (!mobile) {
     window.addEventListener('mousemove', e => {
       mx = (e.clientX / window.innerWidth  - 0.5) * 0.07;
       my = (e.clientY / window.innerHeight - 0.5) * 0.045;
+    }, { passive: true });
+  } else {
+    /* On mobile: track touch position to tilt the sky */
+    let tx0 = 0, ty0 = 0;
+    window.addEventListener('touchstart', e => {
+      tx0 = e.touches[0].clientX;
+      ty0 = e.touches[0].clientY;
+    }, { passive: true });
+    window.addEventListener('touchmove', e => {
+      const dx = e.touches[0].clientX - tx0;
+      const dy = e.touches[0].clientY - ty0;
+      mx = (dx / window.innerWidth)  *  0.10;
+      my = (dy / window.innerHeight) *  0.07;
+    }, { passive: true });
+    window.addEventListener('touchend', () => {
+      /* Slowly reset back to neutral */
+      mx *= 0.5; my *= 0.5;
     }, { passive: true });
   }
 
