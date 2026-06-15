@@ -7,9 +7,9 @@ img { max-width: 100%; height: auto; display: block; }
   --border: #181a2b;
   --blue:   #4a85f5;
   --silver: #94a3b8;
-  --muted:  #b4c6dc;
-  --dim:    #7a8eaa;
-  --text:   #edf2f8;
+  --muted:  #c8d8ec;
+  --dim:    #8ea2b8;
+  --text:   #f0f4fa;
   --green:  #22c55e;
   --amber:  #f59e0b;
   --red:    #ef4444;
@@ -82,7 +82,7 @@ body::before {
   -webkit-backdrop-filter: blur(24px);
   border-bottom: 1px solid rgba(24,26,43,0.8);
   display: flex; align-items: center;
-  overflow: hidden;
+  overflow: visible;
   transition: background 0.25s;
 }
 #nav.scrolled {
@@ -231,9 +231,9 @@ body::before {
 /* ── Features ── */
 .section-h {
   font-size: clamp(1.4rem, 4vw, 2.2rem);
-  font-weight: 700; letter-spacing: -0.03em; margin-bottom: 48px;
+  font-weight: 700; letter-spacing: -0.03em; margin-bottom: 12px;
 }
-.section-sub { color: var(--muted); font-size: 0.9rem; margin-top: -36px; margin-bottom: 44px; }
+.section-sub { color: var(--muted); font-size: 0.9rem; margin-top: 0; margin-bottom: 44px; line-height: 1.6; }
 .feat-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 48px; }
 .feat-col h4 {
   font-family: 'JetBrains Mono', monospace; font-size: 0.67rem; font-weight: 600;
@@ -562,8 +562,8 @@ footer { position: relative; z-index: 1; border-top: 1px solid var(--border); pa
   .tech-list li { padding-left: 10px; }
   .code-body code { font-size: 0.7rem; }
   .code-body { padding: 14px; }
-  .section-h { margin-bottom: 24px; }
-  .section-sub { margin-bottom: 32px; }
+  .section-h { margin-bottom: 10px; }
+  .section-sub { margin-bottom: 28px; }
   .screenshot-section { padding-bottom: 56px; }
   .oss-list li, .feat-col li { word-break: break-word; overflow-wrap: break-word; }
   /* contributors on small screens */
@@ -602,4 +602,69 @@ footer { position: relative; z-index: 1; border-top: 1px solid var(--border); pa
   .contrib-avatar { width: 44px; height: 44px; }
   .contrib-name { font-size: 0.78rem; }
   .contrib-role .tag-blue { font-size: 0.58rem; padding: 1px 5px; }
+  .lang-menu { grid-template-columns: 1fr; min-width: 190px; right: -6px; }
 }
+
+/* ── Language switcher ─────────────────────────────────────────────────── */
+.lang-wrap { position: relative; flex-shrink: 0; }
+
+.lang-btn {
+  display: flex; align-items: center; gap: 5px;
+  padding: 6px 10px; border-radius: 6px;
+  background: rgba(255,255,255,0.05); border: 1px solid var(--border);
+  color: var(--muted); font-size: 0.78rem; font-weight: 500;
+  letter-spacing: 0.05em; cursor: pointer; white-space: nowrap;
+  transition: background 0.15s, color 0.15s, border-color 0.15s;
+}
+.lang-btn:hover { background: rgba(255,255,255,0.09); color: var(--text); border-color: rgba(59,130,246,0.35); }
+.lang-btn svg { flex-shrink: 0; opacity: 0.65; }
+#lang-current { font-family: 'JetBrains Mono', monospace; font-size: 0.72rem; }
+
+.lang-menu {
+  position: absolute; top: calc(100% + 8px); right: 0;
+  background: rgba(10,11,20,0.97); border: 1px solid rgba(24,26,43,0.9);
+  border-radius: 10px; padding: 8px;
+  display: grid; grid-template-columns: 1fr 1fr; gap: 2px;
+  min-width: 290px; max-height: 380px; overflow-y: auto;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.75), 0 0 0 1px rgba(255,255,255,0.04);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  z-index: 300;
+}
+.lang-menu[hidden] { display: none; }
+
+.lang-opt {
+  display: flex; align-items: center; gap: 9px;
+  padding: 8px 11px; border-radius: 6px;
+  background: none; border: none; cursor: pointer;
+  color: var(--muted); font-size: 0.81rem; text-align: left;
+  transition: background 0.12s, color 0.12s;
+  white-space: nowrap; width: 100%;
+}
+.lang-opt:hover { background: rgba(255,255,255,0.07); color: var(--text); }
+.lang-opt.active { color: var(--blue); }
+.lang-flag { font-size: 1em; line-height: 1; flex-shrink: 0; }
+
+/* ── Text readability ───────────────────────────────────────────────────── */
+.section-h {
+  text-shadow: 0 1px 24px rgba(7,8,15,0.85), 0 2px 8px rgba(7,8,15,0.6);
+}
+.section-sub {
+  text-shadow: 0 1px 12px rgba(7,8,15,0.7);
+}
+.hero-lead {
+  text-shadow: 0 1px 10px rgba(7,8,15,0.6);
+}
+.feat-col li, .tech-list li p, .tech-list strong {
+  text-shadow: 0 1px 6px rgba(7,8,15,0.5);
+}
+
+/* ── RTL support (Arabic) ──────────────────────────────────────────────── */
+[dir=rtl] .hero-lead {
+  border-left: none;
+  border-right: 2px solid rgba(59,130,246,0.35);
+  padding-left: 0;
+  padding-right: 16px;
+}
+[dir=rtl] .nav-right { margin-left: 0; margin-right: auto; }
+[dir=rtl] .lang-menu { right: auto; left: 0; }

