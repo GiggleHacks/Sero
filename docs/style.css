@@ -432,7 +432,7 @@ body::before {
 .cta-section { text-align: center; }
 .cta-inner { display: flex; flex-direction: column; align-items: center; gap: 16px; }
 .cta-logo {
-  width: clamp(80px, 14vw, 160px);
+  width: clamp(110px, 18vw, 210px);
   opacity: 0.78;
   margin-bottom: 8px;
   filter: brightness(1.55) contrast(1.12) saturate(1.05)
