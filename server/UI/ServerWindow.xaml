@@ -3,8 +3,8 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         Title="SERO RAT"
         Icon="/sero.ico"
-        Width="1100" Height="720"
-        MinWidth="900" MinHeight="540"
+        Width="1240" Height="740"
+        MinWidth="980" MinHeight="560"
         WindowStartupLocation="CenterScreen"
         ResizeMode="CanResize"
         WindowStyle="None"
@@ -163,7 +163,8 @@
             </Setter>
         </Style>
 
-        <!-- Dynamically swappable accent brush — changed by ApplyTheme() -->
+        <!-- Dynamically swappable accent brush + color — changed by ApplyTheme() -->
+        <Color x:Key="AccentColor">#4A85F5</Color>
         <SolidColorBrush x:Key="AccentBrush" Color="#4A85F5"/>
 
         <!-- RadioButton style used for theme selectors in Settings -->
@@ -352,13 +353,13 @@
                         <LinearGradientBrush.Transform>
                             <TranslateTransform X="0"/>
                         </LinearGradientBrush.Transform>
-                        <GradientStop Color="#4A85F5" Offset="0.00"/>
+                        <GradientStop Color="{DynamicResource AccentColor}" Offset="0.00"/>
                         <GradientStop Color="#0DCCFF" Offset="0.20"/>
                         <GradientStop Color="#7C5CE8" Offset="0.42"/>
                         <GradientStop Color="#D040FF" Offset="0.58"/>
                         <GradientStop Color="#7C5CE8" Offset="0.76"/>
                         <GradientStop Color="#0DCCFF" Offset="0.90"/>
-                        <GradientStop Color="#4A85F5" Offset="1.00"/>
+                        <GradientStop Color="{DynamicResource AccentColor}" Offset="1.00"/>
                     </LinearGradientBrush>
                 </Rectangle.Fill>
                 <Rectangle.Triggers>
@@ -384,7 +385,7 @@
                 </Grid.ColumnDefinitions>
 
                 <!-- ══ Left sidebar ══════════════════════════════════ -->
-                <Border Grid.Column="0" Background="#0B0C17"
+                <Border x:Name="SidebarPanel" Grid.Column="0" Background="#0B0C17"
                         BorderBrush="#1C1E30" BorderThickness="0,0,1,0">
                     <DockPanel>
 
@@ -2263,27 +2264,21 @@
                                                Foreground="#404060" FontSize="10" Margin="0,0,0,20"/>
 
                                     <TextBlock Text="THEME" Style="{StaticResource SLabel}" />
-                                    <WrapPanel Margin="0,0,0,6">
-                                        <RadioButton x:Name="ThemeSeroDark" GroupName="ThemeGroup" Content="Sero Dark"
-                                                     Style="{StaticResource SRadio}" IsChecked="True"
-                                                     Checked="SettingsTheme_Changed" Margin="0,0,12,6"/>
-                                        <RadioButton x:Name="ThemeClassic"   GroupName="ThemeGroup" Content="Classic"
-                                                     Style="{StaticResource SRadio}"
-                                                     Checked="SettingsTheme_Changed" Margin="0,0,12,6"/>
-                                        <RadioButton x:Name="ThemeCrimson"   GroupName="ThemeGroup" Content="Crimson"
-                                                     Style="{StaticResource SRadio}"
-                                                     Checked="SettingsTheme_Changed" Margin="0,0,12,6"/>
-                                        <RadioButton x:Name="ThemePhantom"   GroupName="ThemeGroup" Content="Phantom"
-                                                     Style="{StaticResource SRadio}"
-                                                     Checked="SettingsTheme_Changed" Margin="0,0,12,6"/>
-                                        <RadioButton x:Name="ThemeMatrix"    GroupName="ThemeGroup" Content="Matrix"
-                                                     Style="{StaticResource SRadio}"
-                                                     Checked="SettingsTheme_Changed" Margin="0,0,12,6"/>
-                                        <RadioButton x:Name="ThemeEmber"     GroupName="ThemeGroup" Content="Ember"
-                                                     Style="{StaticResource SRadio}"
-                                                     Checked="SettingsTheme_Changed" Margin="0,0,0,6"/>
-                                    </WrapPanel>
-                                    <TextBlock Text="Changes the accent color throughout the interface." Foreground="#606880" FontSize="11" Margin="0,0,0,20"/>
+                                    <ComboBox x:Name="SettingsTheme"
+                                              Style="{StaticResource SCombo}"
+                                              Width="200" HorizontalAlignment="Left"
+                                              SelectionChanged="SettingsTheme_Changed"
+                                              Margin="0,0,0,4">
+                                        <ComboBoxItem Content="Sero Dark"   Tag="SeroDark" IsSelected="True"/>
+                                        <ComboBoxItem Content="Classic"     Tag="Classic"/>
+                                        <ComboBoxItem Content="Crimson"     Tag="Crimson"/>
+                                        <ComboBoxItem Content="Phantom"     Tag="Phantom"/>
+                                        <ComboBoxItem Content="Matrix"      Tag="Matrix"/>
+                                        <ComboBoxItem Content="Ember"       Tag="Ember"/>
+                                        <ComboBoxItem Content="NanoCore"    Tag="NanoCore"/>
+                                        <ComboBoxItem Content="⊞ Win Seven" Tag="WinSeven"/>
+                                    </ComboBox>
+                                    <TextBlock Text="Changes the accent color and sidebar tint throughout the interface." Foreground="#606880" FontSize="11" Margin="0,0,0,20"/>
 
                                     <TextBlock Text="LANGUAGE" Style="{StaticResource SLabel}" />
                                     <ComboBox x:Name="SettingsLanguage"

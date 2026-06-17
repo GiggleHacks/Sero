@@ -5304,26 +5304,44 @@ Read-Host 'Press Enter to close'
 
     private static readonly Dictionary<string, System.Windows.Media.Color> _themeColors = new()
     {
-        ["SeroDark"] = System.Windows.Media.Color.FromRgb(0x4A, 0x85, 0xF5),
-        ["Classic"]  = System.Windows.Media.Color.FromRgb(0x5B, 0x7F, 0xC7),
-        ["Crimson"]  = System.Windows.Media.Color.FromRgb(0xEF, 0x44, 0x44),
-        ["Phantom"]  = System.Windows.Media.Color.FromRgb(0x7C, 0x5C, 0xE8),
-        ["Matrix"]   = System.Windows.Media.Color.FromRgb(0x22, 0xC5, 0x5E),
-        ["Ember"]    = System.Windows.Media.Color.FromRgb(0xF5, 0x9E, 0x0B),
+        ["SeroDark"]  = System.Windows.Media.Color.FromRgb(0x4A, 0x85, 0xF5), // blue
+        ["Classic"]   = System.Windows.Media.Color.FromRgb(0x5B, 0x7F, 0xC7), // steel blue
+        ["Crimson"]   = System.Windows.Media.Color.FromRgb(0xEF, 0x44, 0x44), // red
+        ["Phantom"]   = System.Windows.Media.Color.FromRgb(0x7C, 0x5C, 0xE8), // purple
+        ["Matrix"]    = System.Windows.Media.Color.FromRgb(0x22, 0xC5, 0x5E), // green
+        ["Ember"]     = System.Windows.Media.Color.FromRgb(0xF5, 0x9E, 0x0B), // amber
+        ["NanoCore"]  = System.Windows.Media.Color.FromRgb(0x1D, 0x9E, 0xD0), // teal (NanoCore selected)
+        ["WinSeven"]  = System.Windows.Media.Color.FromRgb(0x16, 0x76, 0xD2), // Aero blue (Win7)
+    };
+
+    private static readonly Dictionary<string, string> _themeSidebarColors = new()
+    {
+        ["SeroDark"]  = "#0B0C17",
+        ["Classic"]   = "#14151E",
+        ["Crimson"]   = "#110A0A",
+        ["Phantom"]   = "#0D0A14",
+        ["Matrix"]    = "#090E0A",
+        ["Ember"]     = "#0E0D0A",
+        ["NanoCore"]  = "#111314", // dark charcoal — NanoCore's sidebar feel
+        ["WinSeven"]  = "#0C1018", // slightly blue-gray — Win7 feel
     };
 
     private void ApplyTheme(string name)
     {
         if (!_themeColors.TryGetValue(name, out var color)) return;
+
         var brush = new System.Windows.Media.SolidColorBrush(color);
         brush.Freeze();
         Resources["AccentBrush"] = brush;
+        Resources["AccentColor"]  = color; // DynamicResource on aurora GradientStops
 
-        // Update aurora bar gradient stops to match accent
-        if (AuroraBar.Fill is System.Windows.Media.LinearGradientBrush lgb && lgb.GradientStops.Count >= 7)
+        // Sidebar background tint
+        if (_themeSidebarColors.TryGetValue(name, out var hex) && SidebarPanel != null)
         {
-            lgb.GradientStops[0].Color = color;
-            lgb.GradientStops[6].Color = color;
+            var sideBrush = new System.Windows.Media.SolidColorBrush(
+                (System.Windows.Media.Color)System.Windows.Media.ColorConverter.ConvertFromString(hex));
+            sideBrush.Freeze();
+            SidebarPanel.Background = sideBrush;
         }
     }
 
@@ -5332,33 +5350,27 @@ Read-Host 'Press Enter to close'
         var name = UiPrefs.GetString("Theme", "SeroDark");
         ApplyTheme(name);
 
-        // Sync radio buttons
-        System.Windows.Controls.RadioButton? rb = name switch
+        // Sync ComboBox selection
+        for (int i = 0; i < SettingsTheme.Items.Count; i++)
         {
-            "Classic"  => ThemeClassic,
-            "Crimson"  => ThemeCrimson,
-            "Phantom"  => ThemePhantom,
-            "Matrix"   => ThemeMatrix,
-            "Ember"    => ThemeEmber,
-            _          => ThemeSeroDark,
-        };
-        if (rb != null) rb.IsChecked = true;
+            if (SettingsTheme.Items[i] is System.Windows.Controls.ComboBoxItem ci
+                && ci.Tag?.ToString() == name)
+            {
+                SettingsTheme.SelectedIndex = i;
+                break;
+            }
+        }
     }
 
-    private void SettingsTheme_Changed(object sender, RoutedEventArgs e)
+    private void SettingsTheme_Changed(object sender, SelectionChangedEventArgs e)
     {
-        if (!IsLoaded || sender is not System.Windows.Controls.RadioButton rb) return;
-        string name = rb.Name switch
+        if (!IsLoaded) return;
+        if (SettingsTheme.SelectedItem is System.Windows.Controls.ComboBoxItem ci
+            && ci.Tag is string name)
         {
-            "ThemeClassic"  => "Classic",
-            "ThemeCrimson"  => "Crimson",
-            "ThemePhantom"  => "Phantom",
-            "ThemeMatrix"   => "Matrix",
-            "ThemeEmber"    => "Ember",
-            _               => "SeroDark",
-        };
-        ApplyTheme(name);
-        UiPrefs.Set("Theme", name);
+            ApplyTheme(name);
+            UiPrefs.Set("Theme", name);
+        }
     }
 
     // ── Language ─────────────────────────────────────────────────────
@@ -5384,6 +5396,18 @@ Read-Host 'Press Enter to close'
             && item.Tag is string tag)
         {
             UiPrefs.Set("Language", tag);
+            var res = System.Windows.MessageBox.Show(
+                "Restart SERO RAT to apply the language change?",
+                "Restart Required",
+                MessageBoxButton.YesNo,
+                MessageBoxImage.Question);
+            if (res == MessageBoxResult.Yes)
+            {
+                var exe = System.Diagnostics.Process.GetCurrentProcess().MainModule?.FileName;
+                if (!string.IsNullOrEmpty(exe))
+                    System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo(exe) { UseShellExecute = true });
+                Application.Current.Shutdown();
+            }
         }
     }
 
