@@ -321,6 +321,7 @@
                                                       Margin="{TemplateBinding Padding}"
                                                       Content="{TemplateBinding SelectionBoxItem}"
                                                       ContentTemplate="{TemplateBinding SelectionBoxItemTemplate}"
+                                                      HorizontalAlignment="Left"
                                                       VerticalAlignment="Center"
                                                       TextBlock.Foreground="{TemplateBinding Foreground}"/>
                                     <!-- chevron -->

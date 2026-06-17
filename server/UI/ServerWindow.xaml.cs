@@ -5269,6 +5269,7 @@ Read-Host 'Press Enter to close'
     // ── Sidebar navigation ───────────────────────────────────────────
 
     private bool _navSyncing;
+    private bool _langSyncing;
 
     private void Nav_Checked(object sender, RoutedEventArgs e)
     {
@@ -5378,6 +5379,12 @@ Read-Host 'Press Enter to close'
                 Resources["SidebarCtrlBgBrush"]    = MkBrush("#1C2228");
                 Resources["SidebarCtrlBorderBrush"] = MkBrush("#2C3848");
                 Resources["SidebarCtrlTextBrush"]   = MkBrush("#5A7890");
+                Resources["WindowBgBrush"]          = MkBrush("#1A1C20");
+                Resources["TitleBgBrush"]           = MkBrush("#141618");
+                Resources["TitleBorderBrush"]       = MkBrush("#252830");
+                Resources["SectionBgBrush"]         = MkBrush("#D0171A1E");
+                Resources["SectionBorderBrush"]     = MkBrush("#2A303A");
+                Resources["ActivityBgBrush"]        = MkBrush("#C0141618");
                 break;
 
             case "WinSeven":
@@ -5393,6 +5400,12 @@ Read-Host 'Press Enter to close'
                 Resources["SidebarCtrlBgBrush"]    = MkBrush("#D8EBF8");
                 Resources["SidebarCtrlBorderBrush"] = MkBrush("#90BCD8");
                 Resources["SidebarCtrlTextBrush"]   = MkBrush("#1A3A7A");
+                Resources["WindowBgBrush"]          = MkBrush("#DCEAF8");
+                Resources["TitleBgBrush"]           = MkBrush("#1563B5");
+                Resources["TitleBorderBrush"]       = MkBrush("#0E4DA0");
+                Resources["SectionBgBrush"]         = MkBrush("#F0111222");
+                Resources["SectionBorderBrush"]     = MkBrush("#2850A8");
+                Resources["ActivityBgBrush"]        = MkBrush("#E8111222");
                 break;
 
             default:
@@ -5408,6 +5421,12 @@ Read-Host 'Press Enter to close'
                 Resources["SidebarCtrlBgBrush"]    = MkBrush("#0D0E1A");
                 Resources["SidebarCtrlBorderBrush"] = MkBrush("#1C2040");
                 Resources["SidebarCtrlTextBrush"]   = MkBrush("#404878");
+                Resources["WindowBgBrush"]          = MkBrush("#0C0D18");
+                Resources["TitleBgBrush"]           = MkBrush("#111222");
+                Resources["TitleBorderBrush"]       = MkBrush("#1E2038");
+                Resources["SectionBgBrush"]         = MkBrush("#D0111222");
+                Resources["SectionBorderBrush"]     = MkBrush("#1E2038");
+                Resources["ActivityBgBrush"]        = MkBrush("#C0111222");
                 break;
         }
     }
@@ -5445,6 +5464,7 @@ Read-Host 'Press Enter to close'
     private void ApplyStoredLanguage()
     {
         var lang = UiPrefs.GetString("Language", "en");
+        _langSyncing = true;
         for (int i = 0; i < SettingsLanguage.Items.Count; i++)
         {
             if (SettingsLanguage.Items[i] is System.Windows.Controls.ComboBoxItem item
@@ -5454,11 +5474,12 @@ Read-Host 'Press Enter to close'
                 break;
             }
         }
+        _langSyncing = false;
     }
 
     private void SettingsLanguage_Changed(object sender, SelectionChangedEventArgs e)
     {
-        if (!IsLoaded) return;
+        if (!IsLoaded || _langSyncing) return;
         if (SettingsLanguage.SelectedItem is System.Windows.Controls.ComboBoxItem item
             && item.Tag is string tag)
         {

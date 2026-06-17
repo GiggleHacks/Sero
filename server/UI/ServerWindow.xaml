@@ -247,6 +247,14 @@
             </Setter>
         </Style>
 
+        <!-- Window-level colour tokens — updated at runtime by ApplyTheme -->
+        <SolidColorBrush x:Key="WindowBgBrush"      Color="#0C0D18"/>
+        <SolidColorBrush x:Key="TitleBgBrush"       Color="#111222"/>
+        <SolidColorBrush x:Key="TitleBorderBrush"   Color="#1E2038"/>
+        <SolidColorBrush x:Key="SectionBgBrush"     Color="#D0111222"/>
+        <SolidColorBrush x:Key="SectionBorderBrush" Color="#1E2038"/>
+        <SolidColorBrush x:Key="ActivityBgBrush"    Color="#C0111222"/>
+
         <!-- Nav button / sidebar colour tokens — updated at runtime by ApplyTheme -->
         <SolidColorBrush x:Key="NavIconBrush"           Color="#404868"/>
         <SolidColorBrush x:Key="NavTextBrush"           Color="#505878"/>
@@ -263,7 +271,7 @@
     </Window.Resources>
 
     <!-- ── Window chrome ──────────────────────────────────────────── -->
-    <Border x:Name="RootBorder" Background="#0C0D18" CornerRadius="8" BorderThickness="1"
+    <Border x:Name="RootBorder" Background="{DynamicResource WindowBgBrush}" CornerRadius="8" BorderThickness="1"
             BorderBrush="#1C1E30">
 
         <Grid>
@@ -277,7 +285,7 @@
             <!-- ── Background ─────────────────────────────────────────── -->
             <Grid Grid.RowSpan="4" IsHitTestVisible="False" ClipToBounds="True">
 
-                <Rectangle Fill="#0C0D18"/>
+                <Rectangle Fill="{DynamicResource WindowBgBrush}"/>
 
                 <!-- Logo watermark centré -->
                 <Image x:Name="BgLogoImage"
@@ -324,8 +332,8 @@
             </Grid>
 
             <!-- ── Title bar ──────────────────────────────────────── -->
-            <Border Grid.Row="0" Background="#111222" CornerRadius="8,8,0,0"
-                    BorderThickness="0,0,0,1" BorderBrush="#1E2038">
+            <Border Grid.Row="0" Background="{DynamicResource TitleBgBrush}" CornerRadius="8,8,0,0"
+                    BorderThickness="0,0,0,1" BorderBrush="{DynamicResource TitleBorderBrush}">
                 <Grid Margin="14,0">
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="Auto" />
@@ -567,8 +575,8 @@
                         </StackPanel>
                     </TabItem.Header>
                     <Border Margin="8" Padding="24,20" CornerRadius="8"
-                            Background="#D0111222" BorderThickness="1">
-                        <Border.BorderBrush><SolidColorBrush Color="#1E2038"/></Border.BorderBrush>
+                            Background="{DynamicResource SectionBgBrush}" BorderThickness="1">
+                        <Border.BorderBrush><DynamicResource ResourceKey="SectionBorderBrush"/></Border.BorderBrush>
                         <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
                             <StackPanel>
 
@@ -812,8 +820,8 @@
                         </StackPanel>
                     </TabItem.Header>
                     <Border Margin="8" CornerRadius="8"
-                            Background="#D0111222" BorderThickness="1">
-                        <Border.BorderBrush><SolidColorBrush Color="#1E2038"/></Border.BorderBrush>
+                            Background="{DynamicResource SectionBgBrush}" BorderThickness="1">
+                        <Border.BorderBrush><DynamicResource ResourceKey="SectionBorderBrush"/></Border.BorderBrush>
                         <Grid>
                             <Grid.RowDefinitions>
                                 <RowDefinition Height="Auto" />
@@ -1139,8 +1147,8 @@
                         </StackPanel>
                     </TabItem.Header>
                     <Border Margin="8" CornerRadius="8"
-                            Background="#D0111222" BorderThickness="1">
-                        <Border.BorderBrush><SolidColorBrush Color="#1E2038"/></Border.BorderBrush>
+                            Background="{DynamicResource SectionBgBrush}" BorderThickness="1">
+                        <Border.BorderBrush><DynamicResource ResourceKey="SectionBorderBrush"/></Border.BorderBrush>
                         <Grid>
                             <Grid.RowDefinitions>
                                 <RowDefinition Height="Auto"/>
@@ -1246,8 +1254,8 @@
                         </StackPanel>
                     </TabItem.Header>
                     <Border Margin="8" Padding="14" CornerRadius="8"
-                            Background="#D0111222" BorderThickness="1">
-                        <Border.BorderBrush><SolidColorBrush Color="#1E2038"/></Border.BorderBrush>
+                            Background="{DynamicResource SectionBgBrush}" BorderThickness="1">
+                        <Border.BorderBrush><DynamicResource ResourceKey="SectionBorderBrush"/></Border.BorderBrush>
                         <Grid>
                             <Grid.RowDefinitions>
                                 <RowDefinition Height="Auto"/>
@@ -1775,8 +1783,8 @@
                         </StackPanel>
                     </TabItem.Header>
                     <Border Margin="8" Padding="20" CornerRadius="8"
-                            Background="#D0111222" BorderThickness="1">
-                        <Border.BorderBrush><SolidColorBrush Color="#1E2038"/></Border.BorderBrush>
+                            Background="{DynamicResource SectionBgBrush}" BorderThickness="1">
+                        <Border.BorderBrush><DynamicResource ResourceKey="SectionBorderBrush"/></Border.BorderBrush>
                         <Grid>
                             <Grid.RowDefinitions>
                                 <RowDefinition Height="Auto" />
@@ -1898,8 +1906,8 @@
                             <TextBlock Text="Clipper"/>
                         </StackPanel>
                     </TabItem.Header>
-                    <Border Margin="8" CornerRadius="8" Background="#D0111222" BorderThickness="1">
-                        <Border.BorderBrush><SolidColorBrush Color="#1E2038"/></Border.BorderBrush>
+                    <Border Margin="8" CornerRadius="8" Background="{DynamicResource SectionBgBrush}" BorderThickness="1">
+                        <Border.BorderBrush><DynamicResource ResourceKey="SectionBorderBrush"/></Border.BorderBrush>
                         <Grid>
                             <!-- Subtle ₿ watermark -->
                             <TextBlock Text="₿" FontSize="320" FontWeight="Bold" Opacity="0.018"
@@ -2187,7 +2195,7 @@
                     </TabItem.Header>
                     <Border Margin="8" Padding="4" CornerRadius="8"
                             Background="#FF000000" BorderThickness="1">
-                        <Border.BorderBrush><SolidColorBrush Color="#1E2038"/></Border.BorderBrush>
+                        <Border.BorderBrush><DynamicResource ResourceKey="SectionBorderBrush"/></Border.BorderBrush>
                         <DockPanel>
                             <Grid DockPanel.Dock="Top" Margin="6,4,6,8">
                                 <TextBlock Text="SYSTEM EVENT LOGS" Foreground="#606880" FontSize="11" FontWeight="Bold" FontFamily="Segoe UI" VerticalAlignment="Center" Margin="4,0,0,0"/>
@@ -2227,8 +2235,8 @@
                         </StackPanel>
                     </TabItem.Header>
                     <Border Margin="8" CornerRadius="8"
-                            Background="#D0111222" BorderThickness="1">
-                        <Border.BorderBrush><SolidColorBrush Color="#1E2038"/></Border.BorderBrush>
+                            Background="{DynamicResource SectionBgBrush}" BorderThickness="1">
+                        <Border.BorderBrush><DynamicResource ResourceKey="SectionBorderBrush"/></Border.BorderBrush>
                         <ScrollViewer VerticalScrollBarVisibility="Auto"
                                       HorizontalScrollBarVisibility="Disabled">
                             <Grid Margin="24" MaxWidth="1050" HorizontalAlignment="Center">
@@ -2306,8 +2314,9 @@
                                         </ComboBoxItem>
                                         <ComboBoxItem Tag="WinSeven">
                                             <StackPanel Orientation="Horizontal">
-                                                <TextBlock Text="⊞" Foreground="#1676D2" FontSize="13"
-                                                           VerticalAlignment="Center" Margin="0,0,6,0"/>
+                                                <Image Source="/windows7.png" Width="14" Height="14"
+                                                       VerticalAlignment="Center" Margin="0,0,6,0"
+                                                       RenderOptions.BitmapScalingMode="HighQuality"/>
                                                 <TextBlock Text="Win Seven" VerticalAlignment="Center"/>
                                             </StackPanel>
                                         </ComboBoxItem>
@@ -2545,8 +2554,8 @@
                         </StackPanel>
                     </TabItem.Header>
                     <Border Margin="8" CornerRadius="8"
-                            Background="#D0111222" BorderThickness="1">
-                        <Border.BorderBrush><SolidColorBrush Color="#1E2038"/></Border.BorderBrush>
+                            Background="{DynamicResource SectionBgBrush}" BorderThickness="1">
+                        <Border.BorderBrush><DynamicResource ResourceKey="SectionBorderBrush"/></Border.BorderBrush>
                         <ScrollViewer VerticalScrollBarVisibility="Auto"
                                       HorizontalScrollBarVisibility="Disabled">
                             <StackPanel HorizontalAlignment="Center"
@@ -2773,7 +2782,7 @@
             </Grid>
 
             <!-- ── Activity panel ────────────────────────────────── -->
-            <Border x:Name="ActivityLogPanel" Grid.Row="3" Height="100" Background="#C0111222"
+            <Border x:Name="ActivityLogPanel" Grid.Row="3" Height="100" Background="{DynamicResource ActivityBgBrush}"
                     BorderThickness="0,1,0,0"
                     CornerRadius="0,0,10,10" Padding="16,8">
                 <Border.BorderBrush>
