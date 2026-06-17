@@ -17,6 +17,31 @@ public class DataStore
     private readonly object _logsLock = new();
     private volatile bool _clientsDirty;
     private readonly System.Timers.Timer _saveTimer;
+
+    // Maintained live — avoids O(n) scan every dashboard refresh
+    private int _taggedCount;
+    public int TaggedCount => _taggedCount;
+
+    // Rolling 24h connect timestamps — avoids scanning all activity logs for the chart
+    private readonly object _connectHistLock = new();
+    private readonly List<DateTime> _connectHistory = [];
+
+    public void AddConnectTimestamp(DateTime utcTime)
+    {
+        lock (_connectHistLock)
+        {
+            _connectHistory.Add(utcTime);
+            // Trim entries older than 25h (one extra hour buffer)
+            var cutoff = utcTime.AddHours(-25);
+            while (_connectHistory.Count > 0 && _connectHistory[0] < cutoff)
+                _connectHistory.RemoveAt(0);
+        }
+    }
+
+    public DateTime[] GetConnectHistory()
+    {
+        lock (_connectHistLock) { return [.. _connectHistory]; }
+    }
     private readonly System.Collections.Concurrent.ConcurrentQueue<string> _logQueue = new();
     private readonly System.Timers.Timer _logFlushTimer;
 
@@ -78,6 +103,7 @@ public class DataStore
             FirstSeen = DateTime.UtcNow
         });
 
+        var connectTime = DateTime.UtcNow;
         lock (_lock)
         {
             record.LastUsername = client.Username;
@@ -90,13 +116,15 @@ public class DataStore
             record.LastIsAdmin   = client.IsAdmin;
             if (!string.IsNullOrEmpty(client.CpuName)) record.LastCpuName = client.CpuName;
             if (!string.IsNullOrEmpty(client.GpuName)) record.LastGpuName = client.GpuName;
-            record.LastSeen = DateTime.UtcNow;
+            record.LastSeen        = connectTime;
+            record.LastConnectedAt = connectTime;
             if (client.Port > 0) record.LastPort = client.Port;
             record.ActivityLog.Add(new ActivityEntry { Action = $"Connected from {client.IP} ({client.Username})" });
 
             if (record.ActivityLog.Count > 200)
                 record.ActivityLog.RemoveRange(0, record.ActivityLog.Count - 200);
         }
+        AddConnectTimestamp(connectTime);
 
         SaveClients();
         return record;
@@ -131,7 +159,14 @@ public class DataStore
     {
         if (AllClients.TryGetValue(hwid, out var record))
         {
-            lock (_lock) { record.Tag = tag; }
+            lock (_lock)
+            {
+                bool hadTag = !string.IsNullOrEmpty(record.Tag);
+                bool hasTag = !string.IsNullOrEmpty(tag);
+                record.Tag = tag;
+                if (!hadTag && hasTag)  Interlocked.Increment(ref _taggedCount);
+                else if (hadTag && !hasTag) Interlocked.Decrement(ref _taggedCount);
+            }
             SaveClients();
         }
     }
@@ -174,7 +209,13 @@ public class DataStore
             var json = File.ReadAllText(ClientsPath);
             var data = JsonSerializer.Deserialize<ConcurrentDictionary<string, ClientRecord>>(json);
             if (data == null) return;
-            foreach (var kv in data) AllClients[kv.Key] = kv.Value;
+            int tagged = 0;
+            foreach (var kv in data)
+            {
+                AllClients[kv.Key] = kv.Value;
+                if (!string.IsNullOrEmpty(kv.Value.Tag)) tagged++;
+            }
+            _taggedCount = tagged;
             Log($"[*] Loaded {AllClients.Count} persistent client records.");
         }
         catch (Exception ex) { Log($"[!] Failed to load clients: {ex.Message}"); }

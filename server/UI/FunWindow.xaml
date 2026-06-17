@@ -97,21 +97,11 @@
             </LinearGradientBrush>
         </Border.BorderBrush>
         <Border.Effect>
-            <DropShadowEffect Color="#000" BlurRadius="36" ShadowDepth="0" Opacity="0.80"/>
+            <DropShadowEffect Color="#000" BlurRadius="18" ShadowDepth="0" Opacity="0.55"/>
         </Border.Effect>
 
         <DockPanel LastChildFill="True">
-            <!-- Gradient accent bar -->
-            <Rectangle DockPanel.Dock="Top" Height="2" IsHitTestVisible="False">
-                <Rectangle.Fill>
-                    <LinearGradientBrush StartPoint="0,0" EndPoint="1,0">
-                        <GradientStop Color="#FF6B6B" Offset="0"/>
-                        <GradientStop Color="#FFE66D" Offset="0.33"/>
-                        <GradientStop Color="#4ECDC4" Offset="0.66"/>
-                        <GradientStop Color="#7C5CE8" Offset="1"/>
-                    </LinearGradientBrush>
-                </Rectangle.Fill>
-            </Rectangle>
+            <Rectangle DockPanel.Dock="Top" Height="1" IsHitTestVisible="False" Fill="#4A85F5" Opacity="0.5"/>
 
             <!-- Title bar -->
             <Border DockPanel.Dock="Top" Height="40" Background="#111222"

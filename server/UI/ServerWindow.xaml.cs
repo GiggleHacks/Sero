@@ -874,21 +874,14 @@ public partial class ServerWindow : Window
         double h = DashChart.ActualHeight;
         if (w <= 0 || h <= 0) return;
 
-        // Build 24 hourly buckets from AllClients activity logs
+        // Build 24 hourly buckets from rolling connect history (O(k) where k = connects in 24h)
         var now    = DateTime.UtcNow;
         var counts = new int[24];
-        foreach (var rec in _store.AllClients.Values)
+        foreach (var ts in _store.GetConnectHistory())
         {
-            lock (rec.ActivityLog)
-            {
-                foreach (var e in rec.ActivityLog)
-                {
-                    var age = (now - e.Time).TotalHours;
-                    if (age < 0 || age >= 24) continue;
-                    if (e.Action.StartsWith("Connected", StringComparison.OrdinalIgnoreCase))
-                        counts[23 - (int)age]++;
-                }
-            }
+            var age = (now - ts).TotalHours;
+            if (age < 0 || age >= 24) continue;
+            counts[23 - (int)age]++;
         }
 
         int peak = Math.Max(1, counts.Max());
@@ -984,35 +977,36 @@ public partial class ServerWindow : Window
 
         DashLastUpdated.Text = DateTime.Now.ToString("HH:mm:ss");
 
-        // ── New 24h: unique clients that connected in the last 24h ──────────
-        var now = DateTime.UtcNow;
+        // ── New 24h: clients whose last connection was within 24h (O(n), no locks) ──
+        var cutoff24h = DateTime.UtcNow.AddHours(-24);
         int new24h = 0;
         foreach (var rec in _store.AllClients.Values)
-        {
-            lock (rec.ActivityLog)
-            {
-                if (rec.ActivityLog.Any(e =>
-                    (now - e.Time).TotalHours < 24 &&
-                    e.Action.StartsWith("Connected", StringComparison.OrdinalIgnoreCase)))
-                    new24h++;
-            }
-        }
+            if (rec.LastConnectedAt >= cutoff24h) new24h++;
         AnimateCounter(DashNew24h, new24h);
 
-        // ── Tagged count (all records) ─────────────────────────────────────
-        int tagged = _store.AllClients.Values.Count(r => !string.IsNullOrEmpty(r.Tag));
-        DashTagged.Text = tagged.ToString();
+        // ── Tagged count — maintained live in DataStore, O(1) ─────────────
+        DashTagged.Text = _store.TaggedCount.ToString();
 
-        // ── Stat pills (from currently online clients) ──────────────────────
+        // ── Stat pills — single pass over online clients ─────────────────
         var clients = _server?.ConnectedClients.Values.ToList() ?? [];
         int n = clients.Count;
         if (n > 0)
         {
-            int win11   = clients.Count(c => c.OS.Contains("11"));
-            int win10   = clients.Count(c => c.OS.Contains("10") && !c.OS.Contains("11"));
-            int other   = n - win11 - win10;
-            int cam     = clients.Count(c => c.CameraStatus.Equals("Yes", StringComparison.OrdinalIgnoreCase));
-            int admin   = clients.Count(c => c.IsAdmin);
+            int win11 = 0, win10 = 0, cam = 0, admin = 0;
+            var countryCounts = new Dictionary<string, int>(n);
+            foreach (var c in clients)
+            {
+                if      (c.OS.Contains("11")) win11++;
+                else if (c.OS.Contains("10")) win10++;
+                if (c.CameraStatus.Equals("Yes", StringComparison.OrdinalIgnoreCase)) cam++;
+                if (c.IsAdmin) admin++;
+                if (!string.IsNullOrEmpty(c.Country) && c.Country != "...")
+                {
+                    countryCounts.TryGetValue(c.Country, out int cc);
+                    countryCounts[c.Country] = cc + 1;
+                }
+            }
+            int other = n - win11 - win10;
             DashWin11.Text   = $"{win11 * 100 / n}%";
             DashWin10.Text   = $"{win10 * 100 / n}%";
             DashOsOther.Text = $"{other * 100 / n}%";
@@ -1022,14 +1016,10 @@ public partial class ServerWindow : Window
             DashOsWin10Bar.Value = win10 * 100 / n;
             DashOsOtherBar.Value = other * 100 / n;
 
-            var topGroup = clients
-                .Where(c => !string.IsNullOrEmpty(c.Country) && c.Country != "...")
-                .GroupBy(c => c.Country)
-                .OrderByDescending(g => g.Count())
-                .FirstOrDefault();
-            DashTopCountry.Text = topGroup != null
-                ? $"{topGroup.Key} ×{topGroup.Count()}"
-                : "—";
+            string? topKey = null; int topCnt = 0;
+            foreach (var kv in countryCounts)
+                if (kv.Value > topCnt) { topCnt = kv.Value; topKey = kv.Key; }
+            DashTopCountry.Text = topKey != null ? $"{topKey} ×{topCnt}" : "—";
         }
         else
         {

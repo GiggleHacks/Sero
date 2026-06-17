@@ -24,8 +24,9 @@ public class ClientRecord
     public string Tag    { get; set; } = string.Empty;
     public bool   HasTag => !string.IsNullOrEmpty(Tag);
     public string AssignedId { get; set; } = string.Empty;
-    public DateTime FirstSeen { get; set; } = DateTime.UtcNow;
-    public DateTime LastSeen { get; set; } = DateTime.UtcNow;
+    public DateTime FirstSeen        { get; set; } = DateTime.UtcNow;
+    public DateTime LastSeen         { get; set; } = DateTime.UtcNow;
+    public DateTime LastConnectedAt  { get; set; } = DateTime.MinValue;
     public List<ActivityEntry> ActivityLog { get; set; } = [];
 }
 
