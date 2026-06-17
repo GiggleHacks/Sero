@@ -27,9 +27,25 @@ internal static class UiPrefs
         return defaultVal;
     }
 
+    public static string GetString(string key, string defaultVal)
+    {
+        return _data.TryGetValue(key, out var v) ? v : defaultVal;
+    }
+
     public static void Set(string key, int value)
     {
         _data[key] = value.ToString();
+        Flush();
+    }
+
+    public static void Set(string key, string value)
+    {
+        _data[key] = value;
+        Flush();
+    }
+
+    private static void Flush()
+    {
         try
         {
             Directory.CreateDirectory(Path.GetDirectoryName(_path)!);

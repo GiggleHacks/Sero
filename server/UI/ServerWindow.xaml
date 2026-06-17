@@ -162,6 +162,90 @@
                 </Setter.Value>
             </Setter>
         </Style>
+
+        <!-- Dynamically swappable accent brush — changed by ApplyTheme() -->
+        <SolidColorBrush x:Key="AccentBrush" Color="#4A85F5"/>
+
+        <!-- RadioButton style used for theme selectors in Settings -->
+        <Style x:Key="SRadio" TargetType="RadioButton">
+            <Setter Property="Foreground" Value="#DDE0F0"/>
+            <Setter Property="FontSize"   Value="12"/>
+            <Setter Property="Cursor"     Value="Hand"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="RadioButton">
+                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                            <Border x:Name="ring" Width="16" Height="16"
+                                    Background="#0D0E1A" BorderBrush="#252840"
+                                    BorderThickness="1.5" CornerRadius="8"
+                                    VerticalAlignment="Center" SnapsToDevicePixels="True">
+                                <Ellipse x:Name="dot" Width="6" Height="6"
+                                         Fill="#4A85F5" Visibility="Collapsed"
+                                         HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                            </Border>
+                            <ContentPresenter Margin="8,0,0,0" VerticalAlignment="Center"
+                                              RecognizesAccessKey="True"
+                                              TextBlock.Foreground="{TemplateBinding Foreground}"/>
+                        </StackPanel>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsChecked" Value="True">
+                                <Setter TargetName="dot"  Property="Visibility" Value="Visible"/>
+                                <Setter TargetName="ring" Property="BorderBrush" Value="#4A85F5"/>
+                                <Setter TargetName="ring" Property="Background"  Value="#080E1C"/>
+                            </Trigger>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="ring" Property="BorderBrush" Value="#3A4070"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!-- Sidebar nav RadioButton style -->
+        <Style x:Key="NavBtn" TargetType="RadioButton">
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="FocusVisualStyle" Value="{x:Null}"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="RadioButton">
+                        <Grid Height="36">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="3"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            <Rectangle x:Name="Accent" Grid.Column="0"
+                                       Fill="{DynamicResource AccentBrush}" Visibility="Hidden"/>
+                            <Border x:Name="Bg" Grid.Column="1" Background="Transparent" Padding="12,0">
+                                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                    <TextBlock x:Name="Icon" Text="{TemplateBinding Tag}"
+                                               FontSize="13" Width="20" TextAlignment="Center"
+                                               Foreground="#404868" VerticalAlignment="Center"
+                                               Margin="0,0,9,0"/>
+                                    <TextBlock x:Name="Label" Text="{TemplateBinding Content}"
+                                               FontSize="12" Foreground="#505878"
+                                               VerticalAlignment="Center"/>
+                                </StackPanel>
+                            </Border>
+                        </Grid>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Bg"    Property="Background" Value="#0E1128"/>
+                                <Setter TargetName="Label" Property="Foreground" Value="#8090B8"/>
+                                <Setter TargetName="Icon"  Property="Foreground" Value="#6070A0"/>
+                            </Trigger>
+                            <Trigger Property="IsChecked" Value="True">
+                                <Setter TargetName="Accent" Property="Visibility" Value="Visible"/>
+                                <Setter TargetName="Bg"     Property="Background" Value="#131628"/>
+                                <Setter TargetName="Label"  Property="Foreground" Value="#DDE0F0"/>
+                                <Setter TargetName="Icon"   Property="Foreground"
+                                        Value="{DynamicResource AccentBrush}"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
     </Window.Resources>
 
     <!-- ── Window chrome ──────────────────────────────────────────── -->
@@ -172,13 +256,12 @@
             <Grid.RowDefinitions>
                 <RowDefinition Height="44" />
                 <RowDefinition Height="3"  />
-                <RowDefinition Height="Auto" />
                 <RowDefinition Height="*"  />
                 <RowDefinition Height="Auto" />
             </Grid.RowDefinitions>
 
             <!-- ── Background ─────────────────────────────────────────── -->
-            <Grid Grid.RowSpan="5" IsHitTestVisible="False" ClipToBounds="True">
+            <Grid Grid.RowSpan="4" IsHitTestVisible="False" ClipToBounds="True">
 
                 <Rectangle Fill="#0C0D18"/>
 
@@ -200,7 +283,7 @@
             </Grid>
 
             <!-- ── Screenshot popup overlay (click-to-enlarge) ──── -->
-            <Grid x:Name="ScreenPopupOverlay" Grid.RowSpan="5" Panel.ZIndex="200"
+            <Grid x:Name="ScreenPopupOverlay" Grid.RowSpan="4" Panel.ZIndex="200"
                   Background="#D0060810" Visibility="Collapsed"
                   MouseLeftButtonDown="ScreenPopupOverlay_Close">
                 <Border Background="#0C0E1E" CornerRadius="10" BorderThickness="1" BorderBrush="#2A3060"
@@ -293,132 +376,172 @@
                 </Rectangle.Triggers>
             </Rectangle>
 
-            <!-- ── Control bar ────────────────────────────────────── -->
-            <Border Grid.Row="2" Background="#C0111222" Padding="16,8"
-                    BorderThickness="0,0,0,1" BorderBrush="#181A2C">
-                <Grid>
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="*" />
-                        <ColumnDefinition Width="Auto" />
-                        <ColumnDefinition Width="*" />
-                    </Grid.ColumnDefinitions>
+            <!-- ── Main area (sidebar + content) ────────────────── -->
+            <Grid Grid.Row="2">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="210"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
 
-                    <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
-                        <TextBlock Text="PORT" Foreground="#606880" VerticalAlignment="Center"
-                                   FontSize="10" FontWeight="SemiBold" Margin="0,0,8,0" />
-                        <TextBox x:Name="TxtPort" Style="{StaticResource STxt}" Width="64" Text="7777" />
-                        <Button x:Name="BtnStartStop" Content="START"
-                                Style="{StaticResource SGreenBtn}" Click="StartStop_Click"
-                                Width="80" Height="30" Margin="8,0,0,0" />
-                    </StackPanel>
+                <!-- ══ Left sidebar ══════════════════════════════════ -->
+                <Border Grid.Column="0" Background="#0B0C17"
+                        BorderBrush="#1C1E30" BorderThickness="0,0,1,0">
+                    <DockPanel>
 
-                    <!-- Status pill with pulsing dot -->
-                    <Border Grid.Column="1" Background="#0D0E1A" CornerRadius="6" Padding="16,6"
-                            BorderThickness="1" BorderBrush="#1C1E30"
-                            VerticalAlignment="Center" HorizontalAlignment="Center">
-                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                            <Grid Width="16" Height="16" VerticalAlignment="Center" Margin="0,0,6,0">
-                                <Ellipse x:Name="ServerDot" Width="7" Height="7" Fill="#EF4444"
-                                         HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                            </Grid>
-                            <TextBlock x:Name="TxtServerStatus" Text="Stopped"
-                                       Foreground="#606880" FontSize="12" />
-                            <TextBlock x:Name="TxtClientCount" Text="  ·  0 clients"
-                                       Foreground="#606880" FontSize="12" />
-                        </StackPanel>
-                    </Border>
+                        <!-- Server controls -->
+                        <Border DockPanel.Dock="Top" Padding="12,14,12,12"
+                                BorderBrush="#1C1E30" BorderThickness="0,0,0,1">
+                            <StackPanel>
+                                <!-- Port + Start/Stop -->
+                                <Grid Margin="0,0,0,10">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                    </Grid.ColumnDefinitions>
+                                    <Border Grid.Column="0" Background="#0D0E1A"
+                                            CornerRadius="5,0,0,5"
+                                            BorderBrush="#1C2040" BorderThickness="1,1,0,1"
+                                            Padding="8,5">
+                                        <Grid>
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="Auto"/>
+                                                <ColumnDefinition Width="*"/>
+                                            </Grid.ColumnDefinitions>
+                                            <TextBlock Grid.Column="0" Text="PORT"
+                                                       Foreground="#404878" FontSize="9"
+                                                       FontWeight="SemiBold" VerticalAlignment="Center"
+                                                       Margin="0,0,6,0"/>
+                                            <TextBox Grid.Column="1" x:Name="TxtPort"
+                                                     Style="{StaticResource STxt}" Text="7777"
+                                                     BorderThickness="0" Background="Transparent"
+                                                     Padding="0"/>
+                                        </Grid>
+                                    </Border>
+                                    <Button Grid.Column="1" x:Name="BtnStartStop" Content="START"
+                                            Style="{StaticResource SGreenBtn}" Click="StartStop_Click"
+                                            Width="64" Height="30" Padding="0"
+                                            FontSize="11" FontWeight="SemiBold"/>
+                                </Grid>
 
-                    <StackPanel Grid.Column="2" Orientation="Horizontal"
-                                VerticalAlignment="Center" HorizontalAlignment="Right">
-                        <Button Content="Backup" Style="{StaticResource SBtn}" Height="32" Padding="14,0"
-                                Click="ExportBackup_Click" ToolTip="Export cert + auth key (.sero)" />
-                        <Button Content="Import" Style="{StaticResource SBtn}" Height="32" Padding="14,0" Margin="6,0,0,0"
-                                Click="ImportBackup_Click" ToolTip="Import .sero backup or .pfx cert" />
-                    </StackPanel>
-                </Grid>
-            </Border>
+                                <!-- Status indicator -->
+                                <Border Background="#09090F" CornerRadius="5" Padding="10,6"
+                                        BorderBrush="#1C1E30" BorderThickness="1" Margin="0,0,0,8">
+                                    <StackPanel Orientation="Horizontal">
+                                        <Grid Width="14" Height="14" VerticalAlignment="Center"
+                                              Margin="0,0,6,0">
+                                            <Ellipse x:Name="ServerDot" Width="7" Height="7"
+                                                     Fill="#EF4444" HorizontalAlignment="Center"
+                                                     VerticalAlignment="Center"/>
+                                        </Grid>
+                                        <TextBlock x:Name="TxtServerStatus" Text="Stopped"
+                                                   Foreground="#606880" FontSize="11"
+                                                   VerticalAlignment="Center"/>
+                                        <TextBlock x:Name="TxtClientCount" Text="  ·  0"
+                                                   Foreground="#404868" FontSize="11"
+                                                   VerticalAlignment="Center"/>
+                                    </StackPanel>
+                                </Border>
 
-            <!-- ── Tab control ────────────────────────────────────── -->
-            <TabControl x:Name="MainTabControl" Grid.Row="3" Background="Transparent" BorderThickness="0"
-                        Foreground="{StaticResource TextBrush}"
-                        SelectionChanged="MainTabControl_SelectionChanged">
-                <TabControl.Template>
-                    <ControlTemplate TargetType="TabControl">
-                        <Grid>
-                            <Grid.RowDefinitions>
-                                <RowDefinition Height="Auto"/>
-                                <RowDefinition Height="Auto"/>
-                                <RowDefinition Height="*"/>
-                            </Grid.RowDefinitions>
-                            <ScrollViewer Grid.Row="0"
-                                          HorizontalScrollBarVisibility="Auto"
-                                          VerticalScrollBarVisibility="Disabled"
-                                          Background="#C0111222"
-                                          Focusable="False">
-                                <StackPanel Orientation="Horizontal"
-                                            IsItemsHost="True"
-                                            HorizontalAlignment="Center"/>
-                            </ScrollViewer>
-                            <Rectangle Grid.Row="1" Height="1">
-                                <Rectangle.Fill>
-                                    <LinearGradientBrush StartPoint="0,0" EndPoint="1,0">
-                                        <GradientStop Color="Transparent" Offset="0"/>
-                                        <GradientStop Color="#301E2038"   Offset="0.2"/>
-                                        <GradientStop Color="#1E2038"     Offset="0.5"/>
-                                        <GradientStop Color="#301E2038"   Offset="0.8"/>
-                                        <GradientStop Color="Transparent" Offset="1"/>
-                                    </LinearGradientBrush>
-                                </Rectangle.Fill>
-                            </Rectangle>
+                                <!-- Backup / Import -->
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition/><ColumnDefinition/>
+                                    </Grid.ColumnDefinitions>
+                                    <Button Grid.Column="0" Content="Backup"
+                                            Style="{StaticResource SBtn}" Height="26"
+                                            Padding="0" FontSize="11" Margin="0,0,4,0"
+                                            Click="ExportBackup_Click"
+                                            ToolTip="Export cert + auth key (.sero)"/>
+                                    <Button Grid.Column="1" Content="Import"
+                                            Style="{StaticResource SBtn}" Height="26"
+                                            Padding="0" FontSize="11"
+                                            Click="ImportBackup_Click"
+                                            ToolTip="Import .sero backup or .pfx cert"/>
+                                </Grid>
+                            </StackPanel>
+                        </Border>
+
+                        <!-- Navigation items -->
+                        <ScrollViewer DockPanel.Dock="Top"
+                                      VerticalScrollBarVisibility="Auto"
+                                      HorizontalScrollBarVisibility="Disabled"
+                                      Margin="0,6,0,0">
+                            <StackPanel>
+                                <TextBlock Text="MAIN" Foreground="#252840"
+                                           FontSize="9" FontWeight="SemiBold"
+                                           Margin="16,6,0,3"/>
+                                <RadioButton x:Name="NavDashboard" GroupName="NavGroup"
+                                             IsChecked="True"
+                                             Style="{StaticResource NavBtn}"
+                                             Tag="▦" Content="Dashboard"
+                                             Checked="Nav_Checked"/>
+                                <RadioButton x:Name="NavOnline" GroupName="NavGroup"
+                                             Style="{StaticResource NavBtn}"
+                                             Tag="◉" Content="Online"
+                                             Checked="Nav_Checked"/>
+                                <RadioButton x:Name="NavAllClients" GroupName="NavGroup"
+                                             Style="{StaticResource NavBtn}"
+                                             Tag="⊞" Content="All Clients"
+                                             Checked="Nav_Checked"/>
+
+                                <TextBlock Text="TOOLS" Foreground="#252840"
+                                           FontSize="9" FontWeight="SemiBold"
+                                           Margin="16,10,0,3"/>
+                                <RadioButton x:Name="NavBuilder" GroupName="NavGroup"
+                                             Style="{StaticResource NavBtn}"
+                                             Tag="⚒" Content="Builder"
+                                             Checked="Nav_Checked"/>
+                                <RadioButton x:Name="NavAutoTask" GroupName="NavGroup"
+                                             Style="{StaticResource NavBtn}"
+                                             Tag="☑" Content="AutoTask"
+                                             Checked="Nav_Checked"/>
+                                <RadioButton x:Name="NavScreen" GroupName="NavGroup"
+                                             Style="{StaticResource NavBtn}"
+                                             Tag="▣" Content="Screen"
+                                             Checked="Nav_Checked"/>
+                                <RadioButton x:Name="NavClipper" GroupName="NavGroup"
+                                             Style="{StaticResource NavBtn}"
+                                             Tag="₿" Content="Clipper"
+                                             Checked="Nav_Checked"/>
+                                <RadioButton x:Name="NavBinder" GroupName="NavGroup"
+                                             Style="{StaticResource NavBtn}"
+                                             Tag="⊕" Content="Binder"
+                                             Checked="Nav_Checked"/>
+
+                                <TextBlock Text="SYSTEM" Foreground="#252840"
+                                           FontSize="9" FontWeight="SemiBold"
+                                           Margin="16,10,0,3"/>
+                                <RadioButton x:Name="NavLogs" GroupName="NavGroup"
+                                             Style="{StaticResource NavBtn}"
+                                             Tag="≡" Content="Logs"
+                                             Checked="Nav_Checked"/>
+                                <RadioButton x:Name="NavSettings" GroupName="NavGroup"
+                                             Style="{StaticResource NavBtn}"
+                                             Tag="⚙" Content="Settings"
+                                             Checked="Nav_Checked"/>
+                                <RadioButton x:Name="NavAbout" GroupName="NavGroup"
+                                             Style="{StaticResource NavBtn}"
+                                             Tag="✦" Content="About"
+                                             Checked="Nav_Checked"/>
+                            </StackPanel>
+                        </ScrollViewer>
+                    </DockPanel>
+                </Border>
+
+                <!-- ══ Tab content (no tab strip) ════════════════════ -->
+                <TabControl x:Name="MainTabControl" Grid.Column="1"
+                            Background="Transparent" BorderThickness="0"
+                            Foreground="{StaticResource TextBrush}"
+                            SelectionChanged="MainTabControl_SelectionChanged">
+                    <TabControl.Template>
+                        <ControlTemplate TargetType="TabControl">
                             <ContentPresenter x:Name="PART_SelectedContentHost"
-                                              Grid.Row="2"
                                               ContentSource="SelectedContent"
                                               ContentTemplate="{TemplateBinding SelectedContentTemplate}"
                                               ContentTemplateSelector="{TemplateBinding ContentTemplateSelector}"
                                               Margin="{TemplateBinding Padding}"/>
-                        </Grid>
-                    </ControlTemplate>
-                </TabControl.Template>
-                <TabControl.Resources>
-                    <Style TargetType="TabItem">
-                        <Setter Property="Foreground" Value="#606880" />
-                        <Setter Property="Background" Value="Transparent" />
-                        <Setter Property="Padding"    Value="14,10" />
-                        <Setter Property="FontSize"   Value="12" />
-                        <Setter Property="Template">
-                            <Setter.Value>
-                                <ControlTemplate TargetType="TabItem">
-                                    <Grid x:Name="root" Cursor="Hand">
-                                        <Border x:Name="bd" Background="Transparent"
-                                                Padding="{TemplateBinding Padding}" />
-                                        <ContentPresenter ContentSource="Header"
-                                                          HorizontalAlignment="Center"
-                                                          VerticalAlignment="Center"
-                                                          Margin="{TemplateBinding Padding}" />
-                                        <Rectangle x:Name="line" Height="3" VerticalAlignment="Bottom"
-                                                   Visibility="Collapsed"
-                                                   Fill="{StaticResource AccentBarBrush}" />
-                                    </Grid>
-                                    <ControlTemplate.Triggers>
-                                        <Trigger Property="IsSelected" Value="True">
-                                            <Setter Property="Foreground" Value="#EEF0FF" />
-                                            <Setter TargetName="bd"   Property="Background"  Value="#181B30" />
-                                            <Setter TargetName="line" Property="Visibility"  Value="Visible" />
-                                        </Trigger>
-                                        <MultiTrigger>
-                                            <MultiTrigger.Conditions>
-                                                <Condition Property="IsMouseOver" Value="True" />
-                                                <Condition Property="IsSelected"  Value="False" />
-                                            </MultiTrigger.Conditions>
-                                            <Setter Property="Foreground" Value="#A0AACE" />
-                                            <Setter TargetName="bd" Property="Background" Value="#10121E" />
-                                        </MultiTrigger>
-                                    </ControlTemplate.Triggers>
-                                </ControlTemplate>
-                            </Setter.Value>
-                        </Setter>
-                    </Style>
-                </TabControl.Resources>
+                        </ControlTemplate>
+                    </TabControl.Template>
 
                 <!-- ── Dashboard ── -->
                 <TabItem>
@@ -2139,6 +2262,48 @@
                                     <TextBlock Text="Logs rotate: 5 files × 5 MB — no screenshots or credentials are ever written."
                                                Foreground="#404060" FontSize="10" Margin="0,0,0,20"/>
 
+                                    <TextBlock Text="THEME" Style="{StaticResource SLabel}" />
+                                    <WrapPanel Margin="0,0,0,6">
+                                        <RadioButton x:Name="ThemeSeroDark" GroupName="ThemeGroup" Content="Sero Dark"
+                                                     Style="{StaticResource SRadio}" IsChecked="True"
+                                                     Checked="SettingsTheme_Changed" Margin="0,0,12,6"/>
+                                        <RadioButton x:Name="ThemeClassic"   GroupName="ThemeGroup" Content="Classic"
+                                                     Style="{StaticResource SRadio}"
+                                                     Checked="SettingsTheme_Changed" Margin="0,0,12,6"/>
+                                        <RadioButton x:Name="ThemeCrimson"   GroupName="ThemeGroup" Content="Crimson"
+                                                     Style="{StaticResource SRadio}"
+                                                     Checked="SettingsTheme_Changed" Margin="0,0,12,6"/>
+                                        <RadioButton x:Name="ThemePhantom"   GroupName="ThemeGroup" Content="Phantom"
+                                                     Style="{StaticResource SRadio}"
+                                                     Checked="SettingsTheme_Changed" Margin="0,0,12,6"/>
+                                        <RadioButton x:Name="ThemeMatrix"    GroupName="ThemeGroup" Content="Matrix"
+                                                     Style="{StaticResource SRadio}"
+                                                     Checked="SettingsTheme_Changed" Margin="0,0,12,6"/>
+                                        <RadioButton x:Name="ThemeEmber"     GroupName="ThemeGroup" Content="Ember"
+                                                     Style="{StaticResource SRadio}"
+                                                     Checked="SettingsTheme_Changed" Margin="0,0,0,6"/>
+                                    </WrapPanel>
+                                    <TextBlock Text="Changes the accent color throughout the interface." Foreground="#606880" FontSize="11" Margin="0,0,0,20"/>
+
+                                    <TextBlock Text="LANGUAGE" Style="{StaticResource SLabel}" />
+                                    <ComboBox x:Name="SettingsLanguage"
+                                              Style="{StaticResource SCombo}"
+                                              Width="200" HorizontalAlignment="Left"
+                                              SelectionChanged="SettingsLanguage_Changed"
+                                              Margin="0,0,0,4">
+                                        <ComboBoxItem Content="English"    Tag="en" IsSelected="True"/>
+                                        <ComboBoxItem Content="Français"   Tag="fr"/>
+                                        <ComboBoxItem Content="Español"    Tag="es"/>
+                                        <ComboBoxItem Content="Deutsch"    Tag="de"/>
+                                        <ComboBoxItem Content="Português"  Tag="pt"/>
+                                        <ComboBoxItem Content="Italiano"   Tag="it"/>
+                                        <ComboBoxItem Content="Русский"    Tag="ru"/>
+                                        <ComboBoxItem Content="中文"        Tag="zh"/>
+                                        <ComboBoxItem Content="العربية"    Tag="ar"/>
+                                        <ComboBoxItem Content="Türkçe"     Tag="tr"/>
+                                    </ComboBox>
+                                    <TextBlock Text="Language strings are applied on next startup." Foreground="#606880" FontSize="11" Margin="0,0,0,20"/>
+
                                     <TextBlock Text="APPEARANCE" Style="{StaticResource SLabel}" />
                                     <CheckBox x:Name="SettingsHideLogo" Content="Hide background logo (dark mode)" Style="{StaticResource SChk}" Margin="0,0,0,8"
                                               Checked="SettingsHideLogo_Changed" Unchecked="SettingsHideLogo_Changed" />
@@ -2532,9 +2697,10 @@
                     </Border>
                 </TabItem>
             </TabControl>
+            </Grid>
 
             <!-- ── Activity panel ────────────────────────────────── -->
-            <Border x:Name="ActivityLogPanel" Grid.Row="4" Height="100" Background="#C0111222"
+            <Border x:Name="ActivityLogPanel" Grid.Row="3" Height="100" Background="#C0111222"
                     BorderThickness="0,1,0,0"
                     CornerRadius="0,0,10,10" Padding="16,8">
                 <Border.BorderBrush>

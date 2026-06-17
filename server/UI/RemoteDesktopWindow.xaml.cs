@@ -298,7 +298,7 @@ public partial class RemoteDesktopWindow : Window
                 var blockList = blocksEl.EnumerateArray().ToList();
                 var decoded   = new System.Collections.Concurrent.ConcurrentBag<(int X, int Y, int W, int H, byte[] Pixels, int Stride)>();
                 Parallel.ForEach(blockList,
-                    new ParallelOptions { MaxDegreeOfParallelism = Environment.ProcessorCount },
+                    new ParallelOptions { MaxDegreeOfParallelism = 2 },
                     block =>
                     {
                         try

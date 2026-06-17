@@ -200,7 +200,7 @@ public partial class HvncWindow : Window
     {
         _lastClip  = "";
         _clipTimer = new System.Windows.Threading.DispatcherTimer
-            { Interval = TimeSpan.FromMilliseconds(400) };
+            { Interval = TimeSpan.FromMilliseconds(1000) };
         _clipTimer.Tick += ClipSync_Tick;
         _clipTimer.Start();
     }
