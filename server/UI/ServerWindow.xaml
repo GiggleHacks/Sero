@@ -221,32 +221,45 @@
                                 <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
                                     <TextBlock x:Name="Icon" Text="{TemplateBinding Tag}"
                                                FontSize="13" Width="20" TextAlignment="Center"
-                                               Foreground="#404868" VerticalAlignment="Center"
+                                               Foreground="{DynamicResource NavIconBrush}" VerticalAlignment="Center"
                                                Margin="0,0,9,0"/>
                                     <TextBlock x:Name="Label" Text="{TemplateBinding Content}"
-                                               FontSize="12" Foreground="#505878"
+                                               FontSize="12" Foreground="{DynamicResource NavTextBrush}"
                                                VerticalAlignment="Center"/>
                                 </StackPanel>
                             </Border>
                         </Grid>
                         <ControlTemplate.Triggers>
                             <Trigger Property="IsMouseOver" Value="True">
-                                <Setter TargetName="Bg"    Property="Background" Value="#0E1128"/>
-                                <Setter TargetName="Label" Property="Foreground" Value="#8090B8"/>
-                                <Setter TargetName="Icon"  Property="Foreground" Value="#6070A0"/>
+                                <Setter TargetName="Bg"    Property="Background" Value="{DynamicResource NavHoverBgBrush}"/>
+                                <Setter TargetName="Label" Property="Foreground" Value="{DynamicResource NavHoverTextBrush}"/>
+                                <Setter TargetName="Icon"  Property="Foreground" Value="{DynamicResource NavHoverIconBrush}"/>
                             </Trigger>
                             <Trigger Property="IsChecked" Value="True">
                                 <Setter TargetName="Accent" Property="Visibility" Value="Visible"/>
-                                <Setter TargetName="Bg"     Property="Background" Value="#131628"/>
-                                <Setter TargetName="Label"  Property="Foreground" Value="#DDE0F0"/>
-                                <Setter TargetName="Icon"   Property="Foreground"
-                                        Value="{DynamicResource AccentBrush}"/>
+                                <Setter TargetName="Bg"     Property="Background" Value="{DynamicResource NavSelBgBrush}"/>
+                                <Setter TargetName="Label"  Property="Foreground" Value="{DynamicResource NavSelTextBrush}"/>
+                                <Setter TargetName="Icon"   Property="Foreground" Value="{DynamicResource NavSelIconBrush}"/>
                             </Trigger>
                         </ControlTemplate.Triggers>
                     </ControlTemplate>
                 </Setter.Value>
             </Setter>
         </Style>
+
+        <!-- Nav button / sidebar colour tokens — updated at runtime by ApplyTheme -->
+        <SolidColorBrush x:Key="NavIconBrush"           Color="#404868"/>
+        <SolidColorBrush x:Key="NavTextBrush"           Color="#505878"/>
+        <SolidColorBrush x:Key="NavHoverBgBrush"        Color="#0E1128"/>
+        <SolidColorBrush x:Key="NavHoverIconBrush"      Color="#6070A0"/>
+        <SolidColorBrush x:Key="NavHoverTextBrush"      Color="#8090B8"/>
+        <SolidColorBrush x:Key="NavSelBgBrush"          Color="#131628"/>
+        <SolidColorBrush x:Key="NavSelTextBrush"        Color="#DDE0F0"/>
+        <SolidColorBrush x:Key="NavSelIconBrush"        Color="#4A85F5"/>
+        <SolidColorBrush x:Key="NavSectionBrush"        Color="#303560"/>
+        <SolidColorBrush x:Key="SidebarCtrlBgBrush"    Color="#0D0E1A"/>
+        <SolidColorBrush x:Key="SidebarCtrlBorderBrush" Color="#1C2040"/>
+        <SolidColorBrush x:Key="SidebarCtrlTextBrush"   Color="#404878"/>
     </Window.Resources>
 
     <!-- ── Window chrome ──────────────────────────────────────────── -->
@@ -269,15 +282,16 @@
                 <!-- Logo watermark centré -->
                 <Image x:Name="BgLogoImage"
                        Source="/serofondtransparent.png"
-                       Width="460" Height="460"
-                       HorizontalAlignment="Center" VerticalAlignment="Center"
-                       Margin="0,55,0,0"
-                       Opacity="0.52"
+                       Width="160" Height="160"
+                       HorizontalAlignment="Left" VerticalAlignment="Bottom"
+                       Margin="215,0,0,28"
+                       Opacity="0.08"
+                       Visibility="Collapsed"
                        Stretch="Uniform"
-                       RenderOptions.BitmapScalingMode="LowQuality"
+                       RenderOptions.BitmapScalingMode="HighQuality"
                        RenderOptions.CachingHint="Cache">
                     <Image.Effect>
-                        <BlurEffect x:Name="BgLogoBlur" Radius="2"/>
+                        <BlurEffect x:Name="BgLogoBlur" Radius="0"/>
                     </Image.Effect>
                 </Image>
 
@@ -399,9 +413,9 @@
                                         <ColumnDefinition Width="*"/>
                                         <ColumnDefinition Width="Auto"/>
                                     </Grid.ColumnDefinitions>
-                                    <Border Grid.Column="0" Background="#0D0E1A"
+                                    <Border Grid.Column="0" Background="{DynamicResource SidebarCtrlBgBrush}"
                                             CornerRadius="5,0,0,5"
-                                            BorderBrush="#1C2040" BorderThickness="1,1,0,1"
+                                            BorderBrush="{DynamicResource SidebarCtrlBorderBrush}" BorderThickness="1,1,0,1"
                                             Padding="8,5">
                                         <Grid>
                                             <Grid.ColumnDefinitions>
@@ -409,7 +423,7 @@
                                                 <ColumnDefinition Width="*"/>
                                             </Grid.ColumnDefinitions>
                                             <TextBlock Grid.Column="0" Text="PORT"
-                                                       Foreground="#404878" FontSize="9"
+                                                       Foreground="{DynamicResource SidebarCtrlTextBrush}" FontSize="9"
                                                        FontWeight="SemiBold" VerticalAlignment="Center"
                                                        Margin="0,0,6,0"/>
                                             <TextBox Grid.Column="1" x:Name="TxtPort"
@@ -425,8 +439,8 @@
                                 </Grid>
 
                                 <!-- Status indicator -->
-                                <Border Background="#09090F" CornerRadius="5" Padding="10,6"
-                                        BorderBrush="#1C1E30" BorderThickness="1" Margin="0,0,0,8">
+                                <Border Background="{DynamicResource SidebarCtrlBgBrush}" CornerRadius="5" Padding="10,6"
+                                        BorderBrush="{DynamicResource SidebarCtrlBorderBrush}" BorderThickness="1" Margin="0,0,0,8">
                                     <StackPanel Orientation="Horizontal">
                                         <Grid Width="14" Height="14" VerticalAlignment="Center"
                                               Margin="0,0,6,0">
@@ -468,7 +482,7 @@
                                       HorizontalScrollBarVisibility="Disabled"
                                       Margin="0,6,0,0">
                             <StackPanel>
-                                <TextBlock Text="MAIN" Foreground="#252840"
+                                <TextBlock Text="MAIN" Foreground="{DynamicResource NavSectionBrush}"
                                            FontSize="9" FontWeight="SemiBold"
                                            Margin="16,6,0,3"/>
                                 <RadioButton x:Name="NavDashboard" GroupName="NavGroup"
@@ -485,7 +499,7 @@
                                              Tag="⊞" Content="All Clients"
                                              Checked="Nav_Checked"/>
 
-                                <TextBlock Text="TOOLS" Foreground="#252840"
+                                <TextBlock Text="TOOLS" Foreground="{DynamicResource NavSectionBrush}"
                                            FontSize="9" FontWeight="SemiBold"
                                            Margin="16,10,0,3"/>
                                 <RadioButton x:Name="NavBuilder" GroupName="NavGroup"
@@ -509,7 +523,7 @@
                                              Tag="⊕" Content="Binder"
                                              Checked="Nav_Checked"/>
 
-                                <TextBlock Text="SYSTEM" Foreground="#252840"
+                                <TextBlock Text="SYSTEM" Foreground="{DynamicResource NavSectionBrush}"
                                            FontSize="9" FontWeight="SemiBold"
                                            Margin="16,10,0,3"/>
                                 <RadioButton x:Name="NavLogs" GroupName="NavGroup"
@@ -2269,14 +2283,34 @@
                                               Width="200" HorizontalAlignment="Left"
                                               SelectionChanged="SettingsTheme_Changed"
                                               Margin="0,0,0,4">
-                                        <ComboBoxItem Content="Sero Dark"   Tag="SeroDark" IsSelected="True"/>
-                                        <ComboBoxItem Content="Classic"     Tag="Classic"/>
-                                        <ComboBoxItem Content="Crimson"     Tag="Crimson"/>
-                                        <ComboBoxItem Content="Phantom"     Tag="Phantom"/>
-                                        <ComboBoxItem Content="Matrix"      Tag="Matrix"/>
-                                        <ComboBoxItem Content="Ember"       Tag="Ember"/>
-                                        <ComboBoxItem Content="NanoCore"    Tag="NanoCore"/>
-                                        <ComboBoxItem Content="⊞ Win Seven" Tag="WinSeven"/>
+                                        <ComboBoxItem Tag="SeroDark" IsSelected="True">
+                                            <StackPanel Orientation="Horizontal">
+                                                <Image Source="/icone.png" Width="14" Height="14"
+                                                       VerticalAlignment="Center" Margin="0,0,6,0"
+                                                       RenderOptions.BitmapScalingMode="HighQuality"/>
+                                                <TextBlock Text="Sero Dark" VerticalAlignment="Center"/>
+                                            </StackPanel>
+                                        </ComboBoxItem>
+                                        <ComboBoxItem Tag="NanoCore">
+                                            <StackPanel Orientation="Horizontal">
+                                                <Border Width="14" Height="14" CornerRadius="7"
+                                                        Background="#F5C400" VerticalAlignment="Center"
+                                                        Margin="0,0,6,0">
+                                                    <TextBlock Text="N" Foreground="#111111" FontSize="8"
+                                                               FontWeight="Bold"
+                                                               HorizontalAlignment="Center"
+                                                               VerticalAlignment="Center"/>
+                                                </Border>
+                                                <TextBlock Text="NanoCore" VerticalAlignment="Center"/>
+                                            </StackPanel>
+                                        </ComboBoxItem>
+                                        <ComboBoxItem Tag="WinSeven">
+                                            <StackPanel Orientation="Horizontal">
+                                                <TextBlock Text="⊞" Foreground="#1676D2" FontSize="13"
+                                                           VerticalAlignment="Center" Margin="0,0,6,0"/>
+                                                <TextBlock Text="Win Seven" VerticalAlignment="Center"/>
+                                            </StackPanel>
+                                        </ComboBoxItem>
                                     </ComboBox>
                                     <TextBlock Text="Changes the accent color and sidebar tint throughout the interface." Foreground="#606880" FontSize="11" Margin="0,0,0,20"/>
 
@@ -2680,6 +2714,50 @@
                                                     </Trigger>
                                                     <Trigger Property="IsPressed" Value="True">
                                                         <Setter TargetName="TgBorder" Property="Opacity" Value="0.50"/>
+                                                    </Trigger>
+                                                </ControlTemplate.Triggers>
+                                            </ControlTemplate>
+                                        </Button.Template>
+                                    </Button>
+
+                                    <!-- Website button -->
+                                    <Button HorizontalAlignment="Center" Cursor="Hand" Margin="0,10,0,0"
+                                            Click="WebsiteLink_Click"
+                                            Background="Transparent" BorderThickness="0" Padding="0">
+                                        <Button.Template>
+                                            <ControlTemplate TargetType="Button">
+                                                <Border x:Name="WebBorder" CornerRadius="14" Padding="28,15"
+                                                        BorderThickness="1">
+                                                    <Border.Background>
+                                                        <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
+                                                            <GradientStop Color="#0A1428" Offset="0"/>
+                                                            <GradientStop Color="#0D1A38" Offset="1"/>
+                                                        </LinearGradientBrush>
+                                                    </Border.Background>
+                                                    <Border.BorderBrush>
+                                                        <LinearGradientBrush StartPoint="0,0" EndPoint="1,0">
+                                                            <GradientStop Color="#704A85F5" Offset="0"/>
+                                                            <GradientStop Color="#707C5CE8" Offset="1"/>
+                                                        </LinearGradientBrush>
+                                                    </Border.BorderBrush>
+                                                    <Border.Effect>
+                                                        <DropShadowEffect Color="#4A85F5" BlurRadius="22"
+                                                                          ShadowDepth="0" Opacity="0.22"/>
+                                                    </Border.Effect>
+                                                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                                        <TextBlock Text="🌐" FontSize="20" VerticalAlignment="Center"
+                                                                   Margin="0,0,12,0"/>
+                                                        <TextBlock Text="serorat.zip" Foreground="#7AABFF"
+                                                                   FontSize="14" FontWeight="SemiBold"
+                                                                   VerticalAlignment="Center"/>
+                                                    </StackPanel>
+                                                </Border>
+                                                <ControlTemplate.Triggers>
+                                                    <Trigger Property="IsMouseOver" Value="True">
+                                                        <Setter TargetName="WebBorder" Property="Opacity" Value="0.78"/>
+                                                    </Trigger>
+                                                    <Trigger Property="IsPressed" Value="True">
+                                                        <Setter TargetName="WebBorder" Property="Opacity" Value="0.50"/>
                                                     </Trigger>
                                                 </ControlTemplate.Triggers>
                                             </ControlTemplate>

@@ -5225,6 +5225,15 @@ Read-Host 'Press Enter to close'
         });
     }
 
+    private void WebsiteLink_Click(object sender, RoutedEventArgs e)
+    {
+        System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo
+        {
+            FileName = "https://serorat.zip",
+            UseShellExecute = true
+        });
+    }
+
     private void MainTabControl_SelectionChanged(object sender, SelectionChangedEventArgs e)
     {
         if (!ReferenceEquals(e.OriginalSource, MainTabControl)) return;
@@ -5316,32 +5325,90 @@ Read-Host 'Press Enter to close'
 
     private static readonly Dictionary<string, string> _themeSidebarColors = new()
     {
-        ["SeroDark"]  = "#0B0C17",
+        ["SeroDark"]  = "#0D0F1E",
         ["Classic"]   = "#14151E",
         ["Crimson"]   = "#110A0A",
         ["Phantom"]   = "#0D0A14",
         ["Matrix"]    = "#090E0A",
         ["Ember"]     = "#0E0D0A",
-        ["NanoCore"]  = "#111314", // dark charcoal — NanoCore's sidebar feel
-        ["WinSeven"]  = "#0C1018", // slightly blue-gray — Win7 feel
+        ["NanoCore"]  = "#252830", // NanoCore medium-dark charcoal
+        ["WinSeven"]  = "#EFF4FC", // Windows 7 Aero light sidebar
     };
 
     private void ApplyTheme(string name)
     {
         if (!_themeColors.TryGetValue(name, out var color)) return;
 
-        var brush = new System.Windows.Media.SolidColorBrush(color);
-        brush.Freeze();
-        Resources["AccentBrush"] = brush;
-        Resources["AccentColor"]  = color; // DynamicResource on aurora GradientStops
-
-        // Sidebar background tint
-        if (_themeSidebarColors.TryGetValue(name, out var hex) && SidebarPanel != null)
+        System.Windows.Media.SolidColorBrush MkBrush(string hex)
         {
-            var sideBrush = new System.Windows.Media.SolidColorBrush(
+            var b = new System.Windows.Media.SolidColorBrush(
                 (System.Windows.Media.Color)System.Windows.Media.ColorConverter.ConvertFromString(hex));
-            sideBrush.Freeze();
-            SidebarPanel.Background = sideBrush;
+            b.Freeze();
+            return b;
+        }
+
+        var accentBrush = new System.Windows.Media.SolidColorBrush(color);
+        accentBrush.Freeze();
+        Resources["AccentBrush"] = accentBrush;
+        Resources["AccentColor"] = color;
+
+        if (_themeSidebarColors.TryGetValue(name, out var sideHex) && SidebarPanel != null)
+            SidebarPanel.Background = MkBrush(sideHex);
+
+        // Background watermark — NanoCore only, bottom-left of content area
+        if (BgLogoImage != null)
+            BgLogoImage.Visibility = name == "NanoCore"
+                ? System.Windows.Visibility.Visible
+                : System.Windows.Visibility.Collapsed;
+
+        // Nav button colour tokens
+        var accentHex = $"#{color.R:X2}{color.G:X2}{color.B:X2}";
+        switch (name)
+        {
+            case "NanoCore":
+                Resources["NavIconBrush"]           = MkBrush("#7A8FA8");
+                Resources["NavTextBrush"]           = MkBrush("#A8B4C8");
+                Resources["NavHoverBgBrush"]        = MkBrush("#24282E");
+                Resources["NavHoverIconBrush"]      = MkBrush("#C0CCDC");
+                Resources["NavHoverTextBrush"]      = MkBrush("#D4DCE8");
+                Resources["NavSelBgBrush"]          = MkBrush("#1E6B8A");
+                Resources["NavSelTextBrush"]        = MkBrush("#FFFFFF");
+                Resources["NavSelIconBrush"]        = MkBrush("#FFFFFF");
+                Resources["NavSectionBrush"]        = MkBrush("#4A6878");
+                Resources["SidebarCtrlBgBrush"]    = MkBrush("#1C2228");
+                Resources["SidebarCtrlBorderBrush"] = MkBrush("#2C3848");
+                Resources["SidebarCtrlTextBrush"]   = MkBrush("#5A7890");
+                break;
+
+            case "WinSeven":
+                Resources["NavIconBrush"]           = MkBrush("#3A5A8C");
+                Resources["NavTextBrush"]           = MkBrush("#22406A");
+                Resources["NavHoverBgBrush"]        = MkBrush("#D0E4F8");
+                Resources["NavHoverIconBrush"]      = MkBrush("#152F5A");
+                Resources["NavHoverTextBrush"]      = MkBrush("#152F5A");
+                Resources["NavSelBgBrush"]          = MkBrush("#1670C8");
+                Resources["NavSelTextBrush"]        = MkBrush("#FFFFFF");
+                Resources["NavSelIconBrush"]        = MkBrush("#FFFFFF");
+                Resources["NavSectionBrush"]        = MkBrush("#1A4898");
+                Resources["SidebarCtrlBgBrush"]    = MkBrush("#D8EBF8");
+                Resources["SidebarCtrlBorderBrush"] = MkBrush("#90BCD8");
+                Resources["SidebarCtrlTextBrush"]   = MkBrush("#1A3A7A");
+                break;
+
+            default:
+                Resources["NavIconBrush"]           = MkBrush("#404868");
+                Resources["NavTextBrush"]           = MkBrush("#505878");
+                Resources["NavHoverBgBrush"]        = MkBrush("#0E1128");
+                Resources["NavHoverIconBrush"]      = MkBrush("#6070A0");
+                Resources["NavHoverTextBrush"]      = MkBrush("#8090B8");
+                Resources["NavSelBgBrush"]          = MkBrush("#131628");
+                Resources["NavSelTextBrush"]        = MkBrush("#DDE0F0");
+                Resources["NavSelIconBrush"]        = MkBrush(accentHex);
+                Resources["NavSectionBrush"]        = MkBrush("#303560");
+                Resources["SidebarCtrlBgBrush"]    = MkBrush("#0D0E1A");
+                Resources["SidebarCtrlBorderBrush"] = MkBrush("#1C2040");
+                Resources["SidebarCtrlTextBrush"]   = MkBrush("#404878");
+                break;
         }
     }
 
