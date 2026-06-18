@@ -22,6 +22,7 @@
     <Resource Include="telegram.png" />
     <Resource Include="tiktok.png" />
     <Resource Include="serofondtransparent.png" />
+    <Resource Include="windows7.png" />
     <Resource Include="Resources\crypto\btc.png" />
     <Resource Include="Resources\crypto\eth.png" />
     <Resource Include="Resources\crypto\ltc.png" />

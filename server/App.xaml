@@ -36,6 +36,18 @@
         <SolidColorBrush x:Key="TextBrush"    Color="#DDE0F0" />
         <SolidColorBrush x:Key="DimBrush"     Color="#606880" />
 
+        <!-- DynamicResource theming tokens — overridden per-theme at Window level by ApplyTheme() -->
+        <SolidColorBrush x:Key="InputBgBrush"        Color="#0D0E1A"/>
+        <SolidColorBrush x:Key="InputBorderBrush"    Color="#1E2038"/>
+        <SolidColorBrush x:Key="ContentTextBrush"    Color="#DDE0F0"/>
+        <SolidColorBrush x:Key="LabelBrush"          Color="#A0AAC8"/>
+        <SolidColorBrush x:Key="FieldLabelBrush"     Color="#8090B4"/>
+        <SolidColorBrush x:Key="BtnBgBrush"          Color="#141526"/>
+        <SolidColorBrush x:Key="BtnBorderBrush"      Color="#1E2038"/>
+        <SolidColorBrush x:Key="BtnHoverBgBrush"     Color="#1A1B2E"/>
+        <SolidColorBrush x:Key="BtnHoverBorderBrush" Color="#2A2D50"/>
+        <SolidColorBrush x:Key="BtnPressedBgBrush"   Color="#0E0F1A"/>
+
         <!-- Primary gradient -->
         <LinearGradientBrush x:Key="PrimaryGradient" StartPoint="0,0" EndPoint="1,0">
             <GradientStop Color="#4A85F5" Offset="0" />
@@ -48,9 +60,9 @@
 
         <!-- ── Secondary button ───────────────────────────────── -->
         <Style x:Key="SBtn" TargetType="Button">
-            <Setter Property="Background"      Value="#141526" />
+            <Setter Property="Background"      Value="{DynamicResource BtnBgBrush}" />
             <Setter Property="Foreground"      Value="#DDE0F0" />
-            <Setter Property="BorderBrush"     Value="#1E2038" />
+            <Setter Property="BorderBrush"     Value="{DynamicResource BtnBorderBrush}" />
             <Setter Property="BorderThickness" Value="1" />
             <Setter Property="Padding"         Value="14,7" />
             <Setter Property="FontSize"        Value="12" />
@@ -69,11 +81,11 @@
                         </Border>
                         <ControlTemplate.Triggers>
                             <Trigger Property="IsMouseOver" Value="True">
-                                <Setter TargetName="bd" Property="Background"  Value="#1A1B2E" />
-                                <Setter TargetName="bd" Property="BorderBrush" Value="#2A2D50" />
+                                <Setter TargetName="bd" Property="Background"  Value="{DynamicResource BtnHoverBgBrush}" />
+                                <Setter TargetName="bd" Property="BorderBrush" Value="{DynamicResource BtnHoverBorderBrush}" />
                             </Trigger>
                             <Trigger Property="IsPressed" Value="True">
-                                <Setter TargetName="bd" Property="Background" Value="#0E0F1A" />
+                                <Setter TargetName="bd" Property="Background" Value="{DynamicResource BtnPressedBgBrush}" />
                             </Trigger>
                             <Trigger Property="IsEnabled" Value="False">
                                 <Setter TargetName="bd" Property="Opacity" Value="0.38" />
@@ -136,9 +148,9 @@
 
         <!-- ── TextBox ────────────────────────────────────────── -->
         <Style x:Key="STxt" TargetType="TextBox">
-            <Setter Property="Background"      Value="#0D0E1A" />
-            <Setter Property="Foreground"      Value="#DDE0F0" />
-            <Setter Property="BorderBrush"     Value="#1E2038" />
+            <Setter Property="Background"      Value="{DynamicResource InputBgBrush}" />
+            <Setter Property="Foreground"      Value="{DynamicResource ContentTextBrush}" />
+            <Setter Property="BorderBrush"     Value="{DynamicResource InputBorderBrush}" />
             <Setter Property="BorderThickness" Value="1" />
             <Setter Property="Padding"         Value="8,6" />
             <Setter Property="FontSize"        Value="12" />
@@ -262,7 +274,7 @@
 
         <!-- ── Section label ──────────────────────────────────── -->
         <Style x:Key="SLabel" TargetType="TextBlock">
-            <Setter Property="Foreground" Value="#A0AAC8" />
+            <Setter Property="Foreground" Value="{DynamicResource LabelBrush}" />
             <Setter Property="FontSize"   Value="10" />
             <Setter Property="FontWeight" Value="SemiBold" />
             <Setter Property="Margin"     Value="0,0,0,8" />
@@ -270,16 +282,16 @@
 
         <!-- ── Field label ────────────────────────────────────── -->
         <Style x:Key="SFieldLabel" TargetType="TextBlock">
-            <Setter Property="Foreground" Value="#8090B4" />
+            <Setter Property="Foreground" Value="{DynamicResource FieldLabelBrush}" />
             <Setter Property="FontSize"   Value="11" />
             <Setter Property="Margin"     Value="0,0,0,4" />
         </Style>
 
         <!-- ── ListBox ────────────────────────────────────────── -->
         <Style x:Key="SListBox" TargetType="ListBox">
-            <Setter Property="Background"      Value="#0D0E1A" />
-            <Setter Property="Foreground"      Value="#DDE0F0" />
-            <Setter Property="BorderBrush"     Value="#1E2038" />
+            <Setter Property="Background"      Value="{DynamicResource InputBgBrush}" />
+            <Setter Property="Foreground"      Value="{DynamicResource ContentTextBrush}" />
+            <Setter Property="BorderBrush"     Value="{DynamicResource InputBorderBrush}" />
             <Setter Property="BorderThickness" Value="1" />
             <Setter Property="Padding"         Value="4" />
             <Setter Property="FontSize"        Value="12" />
@@ -287,9 +299,9 @@
 
         <!-- ── ComboBox ───────────────────────────────────────── -->
         <Style x:Key="SCombo" TargetType="ComboBox">
-            <Setter Property="Background"      Value="#0D0E1A" />
-            <Setter Property="Foreground"      Value="#DDE0F0" />
-            <Setter Property="BorderBrush"     Value="#1E2038" />
+            <Setter Property="Background"      Value="{DynamicResource InputBgBrush}" />
+            <Setter Property="Foreground"      Value="{DynamicResource ContentTextBrush}" />
+            <Setter Property="BorderBrush"     Value="{DynamicResource InputBorderBrush}" />
             <Setter Property="BorderThickness" Value="1" />
             <Setter Property="Padding"         Value="8,4" />
             <Setter Property="FontSize"        Value="12" />
@@ -297,11 +309,9 @@
                 <Setter.Value>
                     <ControlTemplate TargetType="ComboBox">
                         <ControlTemplate.Resources>
-                            <!-- Override the system implicit TextBlock style so text stays
-                                 bright when the ComboBox is disabled (IsEnabled=False).
-                                 Without this, WPF's theme applies GrayTextBrush automatically. -->
+                            <!-- Prevent WPF's GrayTextBrush from overriding text when disabled -->
                             <Style TargetType="TextBlock">
-                                <Setter Property="Foreground" Value="#DDE0F0"/>
+                                <Setter Property="Foreground" Value="{DynamicResource ContentTextBrush}"/>
                             </Style>
                         </ControlTemplate.Resources>
                         <Grid>
@@ -368,12 +378,10 @@
                         </Grid>
                         <ControlTemplate.Triggers>
                             <Trigger Property="IsEnabled" Value="False">
-                                <!-- Keep text at full brightness — only flatten the background -->
-                                <Setter TargetName="Bd" Property="Background"  Value="#06070F"/>
-                                <Setter TargetName="Bd" Property="BorderBrush" Value="#0C0E1C"/>
+                                <Setter TargetName="Bd" Property="Opacity" Value="0.45"/>
                             </Trigger>
                             <Trigger Property="IsDropDownOpen" Value="True">
-                                <Setter TargetName="Bd" Property="BorderBrush" Value="#4F8EF7"/>
+                                <Setter TargetName="Bd" Property="BorderBrush" Value="{DynamicResource AccentBrush}"/>
                             </Trigger>
                         </ControlTemplate.Triggers>
                     </ControlTemplate>

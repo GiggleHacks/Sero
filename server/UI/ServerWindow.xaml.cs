@@ -5321,7 +5321,7 @@ Read-Host 'Press Enter to close'
         ["Matrix"]    = System.Windows.Media.Color.FromRgb(0x22, 0xC5, 0x5E), // green
         ["Ember"]     = System.Windows.Media.Color.FromRgb(0xF5, 0x9E, 0x0B), // amber
         ["NanoCore"]  = System.Windows.Media.Color.FromRgb(0x1D, 0x9E, 0xD0), // teal (NanoCore selected)
-        ["WinSeven"]  = System.Windows.Media.Color.FromRgb(0x16, 0x76, 0xD2), // Aero blue (Win7)
+        ["WinSeven"]  = System.Windows.Media.Color.FromRgb(0x50, 0xA0, 0xE8), // Aero blue accent (Win7)
     };
 
     private static readonly Dictionary<string, string> _themeSidebarColors = new()
@@ -5332,8 +5332,8 @@ Read-Host 'Press Enter to close'
         ["Phantom"]   = "#0D0A14",
         ["Matrix"]    = "#090E0A",
         ["Ember"]     = "#0E0D0A",
-        ["NanoCore"]  = "#252830", // NanoCore medium-dark charcoal
-        ["WinSeven"]  = "#EFF4FC", // Windows 7 Aero light sidebar
+        ["NanoCore"]  = "#2B2C32", // NanoCore dark charcoal sidebar (authentic)
+        ["WinSeven"]  = "#0E2244", // Windows 7 dark navy-blue sidebar
     };
 
     private void ApplyTheme(string name)
@@ -5367,48 +5367,70 @@ Read-Host 'Press Enter to close'
         switch (name)
         {
             case "NanoCore":
-                Resources["NavIconBrush"]           = MkBrush("#7A8FA8");
-                Resources["NavTextBrush"]           = MkBrush("#A8B4C8");
-                Resources["NavHoverBgBrush"]        = MkBrush("#24282E");
-                Resources["NavHoverIconBrush"]      = MkBrush("#C0CCDC");
-                Resources["NavHoverTextBrush"]      = MkBrush("#D4DCE8");
-                Resources["NavSelBgBrush"]          = MkBrush("#1E6B8A");
-                Resources["NavSelTextBrush"]        = MkBrush("#FFFFFF");
-                Resources["NavSelIconBrush"]        = MkBrush("#FFFFFF");
-                Resources["NavSectionBrush"]        = MkBrush("#4A6878");
-                Resources["SidebarCtrlBgBrush"]    = MkBrush("#1C2228");
-                Resources["SidebarCtrlBorderBrush"] = MkBrush("#2C3848");
-                Resources["SidebarCtrlTextBrush"]   = MkBrush("#5A7890");
-                Resources["WindowBgBrush"]          = MkBrush("#1A1C20");
-                Resources["TitleBgBrush"]           = MkBrush("#141618");
-                Resources["TitleBorderBrush"]       = MkBrush("#252830");
-                Resources["SectionBgBrush"]         = MkBrush("#D0171A1E");
-                Resources["SectionBorderBrush"]     = MkBrush("#2A303A");
-                Resources["ActivityBgBrush"]        = MkBrush("#C0141618");
+                // Authentic NanoCore aesthetic: medium dark gray body, dark charcoal sidebar
+                Resources["NavIconBrush"]           = MkBrush("#787888");
+                Resources["NavTextBrush"]           = MkBrush("#989898");
+                Resources["NavHoverBgBrush"]        = MkBrush("#32333C");
+                Resources["NavHoverIconBrush"]      = MkBrush("#C0C0D0");
+                Resources["NavHoverTextBrush"]      = MkBrush("#D0D0E0");
+                Resources["NavSelBgBrush"]          = MkBrush("#17181F");
+                Resources["NavSelTextBrush"]        = MkBrush("#E0E0F0");
+                Resources["NavSelIconBrush"]        = MkBrush("#1D9ED0"); // NanoCore teal
+                Resources["NavSectionBrush"]        = MkBrush("#565668");
+                Resources["SidebarCtrlBgBrush"]    = MkBrush("#252629");
+                Resources["SidebarCtrlBorderBrush"] = MkBrush("#373840");
+                Resources["SidebarCtrlTextBrush"]   = MkBrush("#6A6A80");
+                Resources["WindowBgBrush"]          = MkBrush("#3C3D45"); // medium dark gray
+                Resources["TitleBgBrush"]           = MkBrush("#1A1B20"); // very dark strip
+                Resources["TitleBorderBrush"]       = MkBrush("#262730");
+                Resources["SectionBgBrush"]         = MkBrush("#44454E"); // slightly lighter panels
+                Resources["SectionBorderBrush"]     = MkBrush("#55565F");
+                Resources["ActivityBgBrush"]        = MkBrush("#3C3D45");
+                Resources["InputBgBrush"]           = MkBrush("#494A54");
+                Resources["InputBorderBrush"]       = MkBrush("#606168");
+                Resources["ContentTextBrush"]       = MkBrush("#D8D8E8");
+                Resources["LabelBrush"]             = MkBrush("#909099");
+                Resources["FieldLabelBrush"]        = MkBrush("#787888");
+                Resources["BtnBgBrush"]             = MkBrush("#3C3D48");
+                Resources["BtnBorderBrush"]         = MkBrush("#55565E");
+                Resources["BtnHoverBgBrush"]        = MkBrush("#484958");
+                Resources["BtnHoverBorderBrush"]    = MkBrush("#60616A");
+                Resources["BtnPressedBgBrush"]      = MkBrush("#333340");
                 break;
 
             case "WinSeven":
-                Resources["NavIconBrush"]           = MkBrush("#3A5A8C");
-                Resources["NavTextBrush"]           = MkBrush("#22406A");
-                Resources["NavHoverBgBrush"]        = MkBrush("#D0E4F8");
-                Resources["NavHoverIconBrush"]      = MkBrush("#152F5A");
-                Resources["NavHoverTextBrush"]      = MkBrush("#152F5A");
-                Resources["NavSelBgBrush"]          = MkBrush("#1670C8");
+                // Windows 7 Aero inspired: dark navy body, Win7 blue title bar
+                Resources["NavIconBrush"]           = MkBrush("#4A78B0");
+                Resources["NavTextBrush"]           = MkBrush("#6090C0");
+                Resources["NavHoverBgBrush"]        = MkBrush("#142858");
+                Resources["NavHoverIconBrush"]      = MkBrush("#80B8E8");
+                Resources["NavHoverTextBrush"]      = MkBrush("#90C0F0");
+                Resources["NavSelBgBrush"]          = MkBrush("#1A5AB0"); // Win7 selection blue
                 Resources["NavSelTextBrush"]        = MkBrush("#FFFFFF");
-                Resources["NavSelIconBrush"]        = MkBrush("#FFFFFF");
-                Resources["NavSectionBrush"]        = MkBrush("#1A4898");
-                Resources["SidebarCtrlBgBrush"]    = MkBrush("#D8EBF8");
-                Resources["SidebarCtrlBorderBrush"] = MkBrush("#90BCD8");
-                Resources["SidebarCtrlTextBrush"]   = MkBrush("#1A3A7A");
-                Resources["WindowBgBrush"]          = MkBrush("#DCEAF8");
-                Resources["TitleBgBrush"]           = MkBrush("#1563B5");
+                Resources["NavSelIconBrush"]        = MkBrush("#78C0F8"); // bright Aero blue
+                Resources["NavSectionBrush"]        = MkBrush("#4878B0");
+                Resources["SidebarCtrlBgBrush"]    = MkBrush("#0A1E40");
+                Resources["SidebarCtrlBorderBrush"] = MkBrush("#163878");
+                Resources["SidebarCtrlTextBrush"]   = MkBrush("#4878B0");
+                Resources["WindowBgBrush"]          = MkBrush("#0D1A30"); // dark navy
+                Resources["TitleBgBrush"]           = MkBrush("#1563B5"); // Win7 blue title bar
                 Resources["TitleBorderBrush"]       = MkBrush("#0E4DA0");
-                Resources["SectionBgBrush"]         = MkBrush("#F0111222");
-                Resources["SectionBorderBrush"]     = MkBrush("#2850A8");
-                Resources["ActivityBgBrush"]        = MkBrush("#E8111222");
+                Resources["SectionBgBrush"]         = MkBrush("#152540"); // dark blue panels
+                Resources["SectionBorderBrush"]     = MkBrush("#1E4A90");
+                Resources["ActivityBgBrush"]        = MkBrush("#0D1A30");
+                Resources["InputBgBrush"]           = MkBrush("#091525");
+                Resources["InputBorderBrush"]       = MkBrush("#183870");
+                Resources["ContentTextBrush"]       = MkBrush("#C0D8F0");
+                Resources["LabelBrush"]             = MkBrush("#6090C0");
+                Resources["FieldLabelBrush"]        = MkBrush("#4878A8");
+                Resources["BtnBgBrush"]             = MkBrush("#0E2244");
+                Resources["BtnBorderBrush"]         = MkBrush("#1E3878");
+                Resources["BtnHoverBgBrush"]        = MkBrush("#163060");
+                Resources["BtnHoverBorderBrush"]    = MkBrush("#2850A0");
+                Resources["BtnPressedBgBrush"]      = MkBrush("#081828");
                 break;
 
-            default:
+            default: // SeroDark — deep dark navy, blue accent
                 Resources["NavIconBrush"]           = MkBrush("#404868");
                 Resources["NavTextBrush"]           = MkBrush("#505878");
                 Resources["NavHoverBgBrush"]        = MkBrush("#0E1128");
@@ -5427,6 +5449,16 @@ Read-Host 'Press Enter to close'
                 Resources["SectionBgBrush"]         = MkBrush("#D0111222");
                 Resources["SectionBorderBrush"]     = MkBrush("#1E2038");
                 Resources["ActivityBgBrush"]        = MkBrush("#C0111222");
+                Resources["InputBgBrush"]           = MkBrush("#0D0E1A");
+                Resources["InputBorderBrush"]       = MkBrush("#1E2038");
+                Resources["ContentTextBrush"]       = MkBrush("#DDE0F0");
+                Resources["LabelBrush"]             = MkBrush("#A0AAC8");
+                Resources["FieldLabelBrush"]        = MkBrush("#8090B4");
+                Resources["BtnBgBrush"]             = MkBrush("#141526");
+                Resources["BtnBorderBrush"]         = MkBrush("#1E2038");
+                Resources["BtnHoverBgBrush"]        = MkBrush("#1A1B2E");
+                Resources["BtnHoverBorderBrush"]    = MkBrush("#2A2D50");
+                Resources["BtnPressedBgBrush"]      = MkBrush("#0E0F1A");
                 break;
         }
     }
